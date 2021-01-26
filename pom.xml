@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (c) Piotr Morgwai Kotarbinski
+-->
+<project
+		xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+			http://maven.apache.org/maven-v4_0_0.xsd"
+	>
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>pl.morgwai.base</groupId>
+	<artifactId>guice-context-scopes</artifactId>
+	<version>1.0-SNAPSHOT</version>
+
+	<name>Server-side call context Guice Scopes base</name>
+	<description>Classes for building server-side call context Guice Scopes</description>
+	<url>https://github.com/morgwai/guice-context-scopes</url>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<url>https://github.com/morgwai/guice-context-scopes.git</url>
+		<connection>scm:git:https://github.com/morgwai/guice-context-scopes.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/morgwai/guice-context-scopes.git</developerConnection>
+	</scm>
+	<developers>
+		<developer>
+			<id>morgwai</id>
+			<name>Piotr Morgwai Kotarbinski</name>
+			<email>foss@morgwai.pl</email>
+			<url>http://morgwai.pl/</url>
+		</developer>
+	</developers>
+
+	<properties>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>5.0.0-BETA-1</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
