@@ -50,7 +50,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 			String name,
 			int poolSize,
 			@SuppressWarnings("rawtypes") ContextTracker... trackers) {
-		super(poolSize, poolSize, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+		super(poolSize, poolSize, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
 				new NamedThreadFactory(name));
 		this.name = name;
 		this.trackers = trackers;
@@ -65,9 +65,46 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 			ThreadFactory threadFactory,
 			RejectedExecutionHandler handler,
 			@SuppressWarnings("rawtypes") ContextTracker... trackers) {
-		super(poolSize, poolSize, 5, TimeUnit.SECONDS, workQueue, threadFactory, handler);
+		super(poolSize, poolSize, 0, TimeUnit.SECONDS, workQueue, threadFactory, handler);
 		this.name = name;
 		this.trackers = trackers;
+	}
+
+
+
+	private void runWithinAll(ServerCallContext[] ctxs, Runnable op) {
+		runWithinAll(0, ctxs, op);
+	}
+
+	@SuppressWarnings("unchecked")
+	private void runWithinAll(int i, ServerCallContext[] ctxs, Runnable op) {
+		if (i == ctxs.length) {
+			op.run();
+			return;
+		}
+		runWithinAll(
+			i + 1,
+			ctxs,
+			() -> trackers[i].runWithin(ctxs[i], op)
+		);
+	}
+
+
+
+	public <T> T callWithinAll(ServerCallContext[] ctxs, Callable<T> op) throws Exception {
+		return callWithinAll(0, ctxs, op);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T callWithinAll(int i, ServerCallContext[] ctxs, Callable<T> op) throws Exception {
+		if (i == ctxs.length) {
+			return op.call();
+		}
+		return (T) callWithinAll(
+			i + 1,
+			ctxs,
+			() -> trackers[i].callWithin(ctxs[i], op)
+		);
 	}
 
 
@@ -82,31 +119,10 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	@SuppressWarnings("unchecked")
-	private void setCurrentContexts(ServerCallContext[] ctxs) {
-		for (int i = 0; i < trackers.length; i++) {
-			trackers[i].setCurrentContext(ctxs[i]);
-		}
-	}
-
-
-
-	private void clearCurrentContexts() {
-		for (int i = 0; i < trackers.length; i++) {
-			trackers[i].clearCurrentContext();
-		}
-	}
-
-
-
 	@Override
 	public void execute(Runnable task) {
 		ServerCallContext[] ctxs = getCurrentContexts();
-		super.execute(() -> {
-			setCurrentContexts(ctxs);
-			task.run();
-			clearCurrentContexts();
-		});
+		super.execute(() -> runWithinAll(ctxs, task));
 	}
 
 
@@ -114,12 +130,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
 		ServerCallContext[] ctxs = getCurrentContexts();
-		return super.submit(() -> {
-			setCurrentContexts(ctxs);
-			T result = task.call();
-			clearCurrentContexts();
-			return result;
-		});
+		return super.submit(() -> callWithinAll(ctxs, task));
 	}
 
 
@@ -128,12 +139,9 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	public <T> Future<T> submit(Runnable task, T result) {
 		ServerCallContext[] ctxs = getCurrentContexts();
 		return super.submit(
-			() -> {
-				setCurrentContexts(ctxs);
-				task.run();
-				clearCurrentContexts();
-			},
-			result);
+			() -> runWithinAll(ctxs, task),
+			result
+		);
 	}
 
 
@@ -141,11 +149,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public Future<?> submit(Runnable task) {
 		ServerCallContext[] ctxs = getCurrentContexts();
-		return super.submit(() -> {
-			setCurrentContexts(ctxs);
-			task.run();
-			clearCurrentContexts();
-		});
+		return super.submit(() -> runWithinAll(ctxs, task));
 	}
 
 
@@ -161,12 +165,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 		ServerCallContext[] ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
-			wrappedTasks.add(() -> {
-				setCurrentContexts(ctxs);
-				T result = task.call();
-				clearCurrentContexts();
-				return result;
-			});
+			wrappedTasks.add(() -> callWithinAll(ctxs, task));
 		}
 		return super.invokeAll(wrappedTasks);
 	}
@@ -184,12 +183,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 		ServerCallContext[] ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
-			wrappedTasks.add(() -> {
-				setCurrentContexts(ctxs);
-				T result = task.call();
-				clearCurrentContexts();
-				return result;
-			});
+			wrappedTasks.add(() -> callWithinAll(ctxs, task));
 		}
 		return super.invokeAll(wrappedTasks, timeout, unit);
 	}
@@ -207,12 +201,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 		ServerCallContext[] ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
-			wrappedTasks.add(() -> {
-				setCurrentContexts(ctxs);
-				T result = task.call();
-				clearCurrentContexts();
-				return result;
-			});
+			wrappedTasks.add(() -> callWithinAll(ctxs, task));
 		}
 		return super.invokeAny(wrappedTasks);
 	}
@@ -230,12 +219,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 		ServerCallContext[] ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
-			wrappedTasks.add(() -> {
-				setCurrentContexts(ctxs);
-				T result = task.call();
-				clearCurrentContexts();
-				return result;
-			});
+			wrappedTasks.add(() -> callWithinAll(ctxs, task));
 		}
 		return super.invokeAny(wrappedTasks, timeout, unit);
 	}

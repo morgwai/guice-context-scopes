@@ -3,6 +3,8 @@
  */
 package pl.morgwai.base.guice.scopes;
 
+import java.util.concurrent.Callable;
+
 
 
 /**
@@ -16,12 +18,26 @@ public interface ContextTracker<Ctx extends ServerCallContext> {
 	Ctx getCurrentContext();
 
 	/**
-	 * Must be called whenever some server-side call gets dispatched to a new thread.
+	 * Runs operation within a given context.
 	 */
+	void runWithin(Ctx ctx, Runnable operation);
+
+	/**
+	 * Calls operation within a given context.
+	 */
+	<T> T callWithin(Ctx ctx, Callable<T> operation) throws Exception;
+
+	/**
+	 * @deprecated use {@link #runWithin(ServerCallContext, Runnable)} or
+	 * {@link #callWithin(ServerCallContext, Callable)}.
+	 */
+	@Deprecated
 	void setCurrentContext(Ctx ctx);
 
 	/**
-	 * Should be called when a given thread finishes processing of a given call.
+	 * @deprecated use {@link #runWithin(ServerCallContext, Runnable)} or
+	 * {@link #callWithin(ServerCallContext, Callable)}.
 	 */
+	@Deprecated
 	void clearCurrentContext();
 }
