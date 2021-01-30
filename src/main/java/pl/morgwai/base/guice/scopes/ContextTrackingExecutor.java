@@ -72,39 +72,38 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	private void runWithinAll(ServerCallContext<?>[] ctxs, Runnable op) {
-		runWithinAll(0, ctxs, op);
+	private static void runWithinAll(ServerCallContext<?>[] ctxs, Runnable operation) {
+		runWithinAll(0, ctxs, operation);
 	}
 
-	@SuppressWarnings("unchecked")
-	private void runWithinAll(int i, ServerCallContext<?>[] ctxs, Runnable op) {
+	private static void runWithinAll(int i, ServerCallContext<?>[] ctxs, Runnable operation) {
 		if (i == ctxs.length) {
-			op.run();
+			operation.run();
 			return;
 		}
 		runWithinAll(
 			i + 1,
 			ctxs,
-			() -> trackers[i].runWithin(ctxs[i], op)
+			() -> ctxs[i].runWithin(operation)
 		);
 	}
 
 
 
-	public <T> T callWithinAll(ServerCallContext<?>[] ctxs, Callable<T> op) throws Exception {
-		return callWithinAll(0, ctxs, op);
+	private static <T> T callWithinAll(ServerCallContext<?>[] ctxs, Callable<T> operation)
+			throws Exception {
+		return callWithinAll(0, ctxs, operation);
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> T callWithinAll(int i, ServerCallContext<?>[] ctxs, Callable<T> op) throws Exception
-	{
+	private static <T> T callWithinAll(int i, ServerCallContext<?>[] ctxs, Callable<T> operation)
+			throws Exception {
 		if (i == ctxs.length) {
-			return op.call();
+			return operation.call();
 		}
 		return (T) callWithinAll(
 			i + 1,
 			ctxs,
-			() -> trackers[i].callWithin(ctxs[i], op)
+			() -> ctxs[i].callWithin(operation)
 		);
 	}
 

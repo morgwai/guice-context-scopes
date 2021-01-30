@@ -3,41 +3,29 @@
  */
 package pl.morgwai.base.guice.scopes;
 
-import java.util.concurrent.Callable;
-
 
 
 /**
  * Allows to track which server-side call is handled by which thread.
  */
-public interface ContextTracker<Ctx extends ServerCallContext<Ctx>> {
+public abstract class ContextTracker<Ctx extends ServerCallContext<Ctx>> {
 
 	/**
 	 * @return call context of the calling thread.
 	 */
-	Ctx getCurrentContext();
+	public abstract Ctx getCurrentContext();
 
 	/**
-	 * Runs operation within a given context.
+	 * For internal use. Apps and deriving libs should rather use
+	 * {@link ServerCallContext#runWithin(Runnable)} and
+	 * {@link ServerCallContext#callWithin(java.util.concurrent.Callable)}.
 	 */
-	void runWithin(Ctx ctx, Runnable operation);
+	protected abstract void setCurrentContext(Ctx ctx);
 
 	/**
-	 * Calls operation within a given context.
+	 * For internal use. Apps and deriving libs should rather use
+	 * {@link ServerCallContext#runWithin(Runnable)} and
+	 * {@link ServerCallContext#callWithin(java.util.concurrent.Callable)}.
 	 */
-	<T> T callWithin(Ctx ctx, Callable<T> operation) throws Exception;
-
-	/**
-	 * @deprecated use {@link #runWithin(ServerCallContext, Runnable)} or
-	 * {@link #callWithin(ServerCallContext, Callable)}.
-	 */
-	@Deprecated
-	void setCurrentContext(Ctx ctx);
-
-	/**
-	 * @deprecated use {@link #runWithin(ServerCallContext, Runnable)} or
-	 * {@link #callWithin(ServerCallContext, Callable)}.
-	 */
-	@Deprecated
-	void clearCurrentContext();
+	protected abstract void clearCurrentContext();
 }
