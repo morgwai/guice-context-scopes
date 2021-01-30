@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 /**
  * A {@link ContextTracker} that uses <code>ThreadLocal</code> to store contexts.
  */
-public class ThreadLocalContextTracker<Ctx extends ServerCallContext>
+public class ThreadLocalContextTracker<Ctx extends ServerCallContext<Ctx>>
 		implements ContextTracker<Ctx> {
 
 

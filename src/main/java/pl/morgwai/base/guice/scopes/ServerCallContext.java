@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Stores attributes associated with some server-side call, such as a servlet request or an RPC.
  */
-public class ServerCallContext {
+public class ServerCallContext<Ctx extends ServerCallContext<Ctx>> {
 
 
 

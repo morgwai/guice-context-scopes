@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 /**
  * Allows to track which server-side call is handled by which thread.
  */
-public interface ContextTracker<Ctx extends ServerCallContext> {
+public interface ContextTracker<Ctx extends ServerCallContext<Ctx>> {
 
 	/**
 	 * @return call context of the calling thread.

@@ -11,7 +11,7 @@ import com.google.inject.Provider;
 /**
  * Scopes objects to a context of a call obtained from the associated {@link ContextTracker}.
  */
-public class ContextScope<Ctx extends ServerCallContext> implements Scope {
+public class ContextScope<Ctx extends ServerCallContext<Ctx>> implements Scope {
 
 
 
@@ -25,7 +25,7 @@ public class ContextScope<Ctx extends ServerCallContext> implements Scope {
 	@Override
 	public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
 		return () -> {
-			ServerCallContext ctx = tracker.getCurrentContext();
+			Ctx ctx = tracker.getCurrentContext();
 			if (ctx == null) {
 				throw new RuntimeException("no call context for this thread in scope " + name);
 			}
