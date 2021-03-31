@@ -73,6 +73,14 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 	private static void runWithinAll(ServerSideContext<?>[] ctxs, Runnable operation) {
+		if (ctxs.length == 1) {
+			ctxs[0].runWithinSelf(operation);
+			return;
+		}
+		if (ctxs.length == 2) {
+			ctxs[1].runWithinSelf(() -> ctxs[0].runWithinSelf(operation));
+			return;
+		}
 		runWithinAll(0, ctxs, operation);
 	}
 
@@ -92,6 +100,12 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	private static <T> T callWithinAll(ServerSideContext<?>[] ctxs, Callable<T> operation)
 			throws Exception {
+		if (ctxs.length == 1) {
+			return ctxs[0].callWithinSelf(operation);
+		}
+		if (ctxs.length == 2) {
+			return ctxs[1].callWithinSelf(() -> ctxs[0].callWithinSelf(operation));
+		}
 		return callWithinAll(0, ctxs, operation);
 	}
 
