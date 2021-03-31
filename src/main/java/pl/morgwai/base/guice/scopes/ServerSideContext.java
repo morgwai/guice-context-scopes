@@ -25,8 +25,11 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 	@SuppressWarnings("unchecked")
 	public void runWithinSelf(Runnable operation) {
 		tracker.setCurrentContext((Ctx) this);
-		operation.run();
-		tracker.clearCurrentContext();
+		try {
+			operation.run();
+		} finally {
+			tracker.clearCurrentContext();
+		}
 	}
 
 
