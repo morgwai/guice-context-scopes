@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
  * Stores attributes associated with some server-side call (such as a servlet request or an RPC)
  * and allows to run tasks within itself.
  */
-public abstract class ServerCallContext<Ctx extends ServerCallContext<Ctx>> {
+public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
 
 
@@ -23,7 +23,7 @@ public abstract class ServerCallContext<Ctx extends ServerCallContext<Ctx>> {
 
 
 	@SuppressWarnings("unchecked")
-	public void runWithin(Runnable operation) {
+	public void runWithinSelf(Runnable operation) {
 		tracker.setCurrentContext((Ctx) this);
 		operation.run();
 		tracker.clearCurrentContext();
@@ -32,7 +32,7 @@ public abstract class ServerCallContext<Ctx extends ServerCallContext<Ctx>> {
 
 
 	@SuppressWarnings("unchecked")
-	public <T> T callWithin(Callable<T> operation) throws Exception {
+	public <T> T callWithinSelf(Callable<T> operation) throws Exception {
 		tracker.setCurrentContext((Ctx) this);
 		try {
 			return operation.call();
@@ -61,7 +61,7 @@ public abstract class ServerCallContext<Ctx extends ServerCallContext<Ctx>> {
 
 
 
-	protected ServerCallContext(ContextTracker<Ctx> tracker) {
+	protected ServerSideContext(ContextTracker<Ctx> tracker) {
 		this.tracker = tracker;
 		attributes = new HashMap<>();
 	}

@@ -5,13 +5,14 @@ package pl.morgwai.base.guice.scopes;
 
 import com.google.inject.Key;
 import com.google.inject.Provider;
+import com.google.inject.Scope;
 
 
 
 /**
  * Scopes objects to a context of a call obtained from the associated {@link ContextTracker}.
  */
-public class ContextScope<Ctx extends ServerCallContext<Ctx>> implements Scope {
+public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 
 
 
@@ -37,13 +38,6 @@ public class ContextScope<Ctx extends ServerCallContext<Ctx>> implements Scope {
 			}
 			return instance;
 		};
-	}
-
-
-
-	@Override
-	public <T> void removeObjectFromScope(Key<T> key) {
-		tracker.getCurrentContext().removeAttribute(key);
 	}
 
 
