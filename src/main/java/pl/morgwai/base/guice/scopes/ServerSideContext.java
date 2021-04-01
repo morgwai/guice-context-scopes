@@ -5,44 +5,17 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 
 
 /**
- * Stores attributes associated with some server-side call (such as a servlet request or an RPC)
- * and allows to run tasks within itself.
+ * Stores attributes associated with some server-side call, such as a servlet request or an RPC.
  */
-public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
+public class ServerSideContext {
 
 
 
 	Map<Object, Object> attributes;
-	ContextTracker<Ctx> tracker;
-
-
-
-	@SuppressWarnings("unchecked")
-	public void runWithinSelf(Runnable operation) {
-		tracker.setCurrentContext((Ctx) this);
-		try {
-			operation.run();
-		} finally {
-			tracker.clearCurrentContext();
-		}
-	}
-
-
-
-	@SuppressWarnings("unchecked")
-	public <T> T callWithinSelf(Callable<T> operation) throws Exception {
-		tracker.setCurrentContext((Ctx) this);
-		try {
-			return operation.call();
-		} finally {
-			tracker.clearCurrentContext();
-		}
-	}
 
 
 
@@ -52,8 +25,8 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
 
 
-	public void removeAttribute(Object key) {
-		attributes.remove(key);
+	public Object removeAttribute(Object key) {
+		return attributes.remove(key);
 	}
 
 
@@ -64,8 +37,7 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
 
 
-	protected ServerSideContext(ContextTracker<Ctx> tracker) {
-		this.tracker = tracker;
+	public ServerSideContext() {
 		attributes = new HashMap<>();
 	}
 }

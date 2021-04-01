@@ -8,7 +8,7 @@ package pl.morgwai.base.guice.scopes;
 /**
  * A {@link ContextTracker} that uses <code>ThreadLocal</code> to store contexts.
  */
-public class ThreadLocalContextTracker<Ctx extends ServerSideContext<Ctx>>
+public class ThreadLocalContextTracker<Ctx extends TrackableContext<Ctx>>
 		extends ContextTracker<Ctx> {
 
 
