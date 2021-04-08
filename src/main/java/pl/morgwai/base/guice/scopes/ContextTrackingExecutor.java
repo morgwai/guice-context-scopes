@@ -5,6 +5,7 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -72,61 +73,42 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	private static void runWithinAll(TrackableContext<?>[] ctxs, Runnable operation) {
-		if (ctxs.length == 1) {
-			ctxs[0].runWithinSelf(operation);
+	private static void runWithinAll(List<TrackableContext<?>> ctxs, Runnable operation) {
+		if (ctxs.size() == 1) {
+			ctxs.get(0).runWithinSelf(operation);
 			return;
 		}
-		if (ctxs.length == 2) {
-			ctxs[1].runWithinSelf(() -> ctxs[0].runWithinSelf(operation));
-			return;
-		}
-		runWithinAll(0, ctxs, operation);
-	}
-
-	private static void runWithinAll(int i, TrackableContext<?>[] ctxs, Runnable operation) {
-		if (i == ctxs.length) {
-			operation.run();
+		if (ctxs.size() == 2) {
+			ctxs.get(1).runWithinSelf(() -> ctxs.get(0).runWithinSelf(operation));
 			return;
 		}
 		runWithinAll(
-			i + 1,
-			ctxs,
-			() -> ctxs[i].runWithinSelf(operation)
+			ctxs.subList(1, ctxs.size()),
+			() -> ctxs.get(0).runWithinSelf(operation)
 		);
 	}
 
 
 
-	private static <T> T callWithinAll(TrackableContext<?>[] ctxs, Callable<T> operation)
+	private static <T> T callWithinAll(List<TrackableContext<?>> ctxs, Callable<T> operation)
 			throws Exception {
-		if (ctxs.length == 1) {
-			return ctxs[0].callWithinSelf(operation);
+		if (ctxs.size() == 1) return ctxs.get(0).callWithinSelf(operation);
+		if (ctxs.size() == 2) {
+			return ctxs.get(1).callWithinSelf(() -> ctxs.get(0).callWithinSelf(operation));
 		}
-		if (ctxs.length == 2) {
-			return ctxs[1].callWithinSelf(() -> ctxs[0].callWithinSelf(operation));
-		}
-		return callWithinAll(0, ctxs, operation);
-	}
-
-	private static <T> T callWithinAll(int i, TrackableContext<?>[] ctxs, Callable<T> operation)
-			throws Exception {
-		if (i == ctxs.length) {
-			return operation.call();
-		}
-		return (T) callWithinAll(
-			i + 1,
-			ctxs,
-			() -> ctxs[i].callWithinSelf(operation)
+		return callWithinAll(
+			ctxs.subList(1, ctxs.size()),
+			() -> ctxs.get(0).callWithinSelf(operation)
 		);
 	}
 
 
 
-	private TrackableContext<?>[] getCurrentContexts() {
-		TrackableContext<?>[] ctxs = new TrackableContext[trackers.length];
+	private List<TrackableContext<?>> getCurrentContexts() {
+		List<TrackableContext<?>> ctxs = new LinkedList<>();
 		for (int i = 0; i < trackers.length; i++) {
-			ctxs[i] = trackers[i].getCurrentContext();
+			var ctx = trackers[i].getCurrentContext();
+			if (ctx != null) ctxs.add(ctx);
 		}
 		return ctxs;
 	}
@@ -135,7 +117,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public void execute(Runnable task) {
-		TrackableContext<?>[] ctxs = getCurrentContexts();
+		List<TrackableContext<?>> ctxs = getCurrentContexts();
 		super.execute(() -> runWithinAll(ctxs, task));
 	}
 
@@ -143,7 +125,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
-		TrackableContext<?>[] ctxs = getCurrentContexts();
+		List<TrackableContext<?>> ctxs = getCurrentContexts();
 		return super.submit(() -> callWithinAll(ctxs, task));
 	}
 
@@ -151,7 +133,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public <T> Future<T> submit(Runnable task, T result) {
-		TrackableContext<?>[] ctxs = getCurrentContexts();
+		List<TrackableContext<?>> ctxs = getCurrentContexts();
 		return super.submit(
 			() -> runWithinAll(ctxs, task),
 			result
@@ -162,7 +144,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public Future<?> submit(Runnable task) {
-		TrackableContext<?>[] ctxs = getCurrentContexts();
+		List<TrackableContext<?>> ctxs = getCurrentContexts();
 		return super.submit(() -> runWithinAll(ctxs, task));
 	}
 
@@ -176,7 +158,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException {
-		TrackableContext<?>[] ctxs = getCurrentContexts();
+		List<TrackableContext<?>> ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
 			wrappedTasks.add(() -> callWithinAll(ctxs, task));
@@ -194,7 +176,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout,
 			TimeUnit unit) throws InterruptedException {
-		TrackableContext<?>[] ctxs = getCurrentContexts();
+		List<TrackableContext<?>> ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
 			wrappedTasks.add(() -> callWithinAll(ctxs, task));
@@ -212,7 +194,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException, ExecutionException {
-		TrackableContext<?>[] ctxs = getCurrentContexts();
+		List<TrackableContext<?>> ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
 			wrappedTasks.add(() -> callWithinAll(ctxs, task));
@@ -230,7 +212,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
 			throws InterruptedException, ExecutionException, TimeoutException {
-		TrackableContext<?>[] ctxs = getCurrentContexts();
+		List<TrackableContext<?>> ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
 			wrappedTasks.add(() -> callWithinAll(ctxs, task));
