@@ -28,7 +28,7 @@ public class ContextScope<Ctx extends TrackableContext<Ctx>> implements Scope {
 		return () -> {
 			Ctx ctx = tracker.getCurrentContext();
 			if (ctx == null) {
-				throw new RuntimeException("no call context for this thread in scope " + name);
+				throw new RuntimeException("no context for this thread in scope " + name);
 			}
 			@SuppressWarnings("unchecked")
 			T instance = (T) ctx.getAttribute(key);
