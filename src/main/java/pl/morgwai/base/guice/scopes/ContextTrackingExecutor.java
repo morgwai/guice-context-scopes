@@ -22,18 +22,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
- * A <code>ThreadPoolExecutor</code> that upon dispatching automatically updates which thread
- * handles which {@link ServerSideContext} using supplied {@link #trackers}. As context
- * attributes are often not thread-safe, to avoid concurrency errors, dispatching should preferably
- * be the last instructions of the processing by the previous thread.<br/>
+ * A <code>ThreadPoolExecutor</code> that upon dispatching automatically updates which thread runs
+ * within which {@link ServerSideContext} using supplied {@link #trackers}.
+ * As context attributes are often not thread-safe, to avoid concurrency errors, dispatching should
+ * preferably be the last instruction of the processing by the previous thread.<br/>
  * Usually instances correspond 1-1 with some type of blocking or time consuming operations, such
  * as CPU/GPU intensive calculations or blocking network communication with external resources.<br/>
  * In case of network operations, a given threadPool size should usually correspond to the pool size
- * of the connections to a given resource.
+ * of the connections to a given resource.<br/>
  * In case CPU/GPU intensive operations, it should usually correspond to the number of given cores
  * available to the process.<br/>
- * Instances are usually created at app startup, stored on static vars and configured for injection
- * using <code>@Named</code> annotation.
+ * Instances are usually created at app startup, stored on static vars and/or configured for
+ * injection using <code>toInstance(...)</code> with <code>@Named</code> annotation.
  */
 public class ContextTrackingExecutor extends ThreadPoolExecutor {
 

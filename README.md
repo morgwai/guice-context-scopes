@@ -10,6 +10,7 @@ TODO ;-]
 
 
 
-## EXAMPLES
+## DERIVED LIBS
 
-See [grpc-scopes](https://github.com/morgwai/grpc-scopes)
+[gRPC Guice Scopes](https://github.com/morgwai/grpc-scopes)<br/>
+[Servlet and Websocket Guice Scopes](https://github.com/morgwai/servlet-scopes)

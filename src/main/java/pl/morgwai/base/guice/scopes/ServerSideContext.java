@@ -9,7 +9,8 @@ import java.util.Map;
 
 
 /**
- * Stores attributes associated with some server-side call, such as a servlet request or an RPC.
+ * Stores attributes associated with some server-side processing/call, such as a servlet request,
+ * an RPC or a session combining several received calls.
  */
 public class ServerSideContext {
 
