@@ -18,6 +18,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 
 
@@ -70,6 +71,31 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 		this.name = name;
 		this.trackers = trackers;
 	}
+
+
+
+	/**
+	 * Calls {@link #shutdown()} and waits <code>timeoutSeconds</code> after that calls
+	 * {@link #shutdownNow()}.
+	 * @return <code>null</code> if the executor was shutdown cleanly, list of remaining tasks
+	 *     otherwise.
+	 */
+	public List<Runnable> tryShutdownGracefully(long timeoutSeconds) {
+		shutdown();
+		try {
+			awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {}
+		if ( ! isTerminated()) {
+			List<Runnable> remianingTasks = shutdownNow();
+			log.warning(remianingTasks.size() + " tasks still remaining in executor " + name);
+			return remianingTasks;
+		} else {
+			log.info("executor" + name + " shutdown completed");
+			return null;
+		}
+	}
+
+	static final Logger log = Logger.getLogger(ContextTrackingExecutor.class.getName());
 
 
 
