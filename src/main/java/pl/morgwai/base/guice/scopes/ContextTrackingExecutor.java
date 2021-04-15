@@ -40,62 +40,26 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	String name;
-	public String getName() { return name; }
-
-	@SuppressWarnings("rawtypes")
-	ContextTracker[] trackers;
+	ContextTracker<?>[] trackers;
 
 
 
-	public ContextTrackingExecutor(
-			String name,
-			int poolSize,
-			@SuppressWarnings("rawtypes") ContextTracker... trackers) {
-		super(poolSize, poolSize, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-				new NamedThreadFactory(name));
-		this.name = name;
-		this.trackers = trackers;
+	@Override
+	public void execute(Runnable task) {
+		List<ServerSideContext<?>> ctxs = getCurrentContexts();
+		super.execute(() -> runWithinAll(ctxs, task));
 	}
 
 
 
-	public ContextTrackingExecutor(
-			String name,
-			int poolSize,
-			BlockingQueue<Runnable> workQueue,
-			ThreadFactory threadFactory,
-			RejectedExecutionHandler handler,
-			@SuppressWarnings("rawtypes") ContextTracker... trackers) {
-		super(poolSize, poolSize, 0, TimeUnit.SECONDS, workQueue, threadFactory, handler);
-		this.name = name;
-		this.trackers = trackers;
-	}
-
-
-
-	/**
-	 * Calls {@link #shutdown()} and waits <code>timeoutSeconds</code> after that calls
-	 * {@link #shutdownNow()}.
-	 * @return <code>null</code> if the executor was shutdown cleanly, list of remaining tasks
-	 *     otherwise.
-	 */
-	public List<Runnable> tryShutdownGracefully(long timeoutSeconds) {
-		shutdown();
-		try {
-			awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {}
-		if ( ! isTerminated()) {
-			List<Runnable> remianingTasks = shutdownNow();
-			log.warning(remianingTasks.size() + " tasks still remaining in executor " + name);
-			return remianingTasks;
-		} else {
-			log.info("executor" + name + " shutdown completed");
-			return null;
+	private List<ServerSideContext<?>> getCurrentContexts() {
+		List<ServerSideContext<?>> ctxs = new LinkedList<>();
+		for (int i = 0; i < trackers.length; i++) {
+			var ctx = trackers[i].getCurrentContext();
+			if (ctx != null) ctxs.add(ctx);
 		}
+		return ctxs;
 	}
-
-	static final Logger log = Logger.getLogger(ContextTrackingExecutor.class.getName());
 
 
 
@@ -126,25 +90,6 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 			ctxs.subList(1, ctxs.size()),
 			() -> ctxs.get(0).callWithinSelf(operation)
 		);
-	}
-
-
-
-	private List<ServerSideContext<?>> getCurrentContexts() {
-		List<ServerSideContext<?>> ctxs = new LinkedList<>();
-		for (int i = 0; i < trackers.length; i++) {
-			var ctx = trackers[i].getCurrentContext();
-			if (ctx != null) ctxs.add(ctx);
-		}
-		return ctxs;
-	}
-
-
-
-	@Override
-	public void execute(Runnable task) {
-		List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		super.execute(() -> runWithinAll(ctxs, task));
 	}
 
 
@@ -245,6 +190,60 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 		}
 		return super.invokeAny(wrappedTasks, timeout, unit);
 	}
+
+
+
+	public ContextTrackingExecutor(String name, int poolSize, ContextTracker<?>... trackers) {
+		super(poolSize, poolSize, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+				new NamedThreadFactory(name));
+		this.name = name;
+		this.trackers = trackers;
+	}
+
+
+
+	public ContextTrackingExecutor(
+			String name,
+			int poolSize,
+			BlockingQueue<Runnable> workQueue,
+			ThreadFactory threadFactory,
+			RejectedExecutionHandler handler,
+			ContextTracker<?>... trackers) {
+		super(poolSize, poolSize, 0, TimeUnit.SECONDS, workQueue, threadFactory, handler);
+		this.name = name;
+		this.trackers = trackers;
+	}
+
+
+
+	/**
+	 * Calls {@link #shutdown()} and waits <code>timeoutSeconds</code> after that calls
+	 * {@link #shutdownNow()}.
+	 * @return <code>null</code> if the executor was shutdown cleanly, list of remaining tasks
+	 *     otherwise.
+	 */
+	public List<Runnable> tryShutdownGracefully(long timeoutSeconds) {
+		shutdown();
+		try {
+			awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {}
+		if ( ! isTerminated()) {
+			List<Runnable> remianingTasks = shutdownNow();
+			log.warning(remianingTasks.size() + " tasks still remaining in executor " + name);
+			return remianingTasks;
+		} else {
+			log.info("executor" + name + " shutdown completed");
+			return null;
+		}
+	}
+
+	static final Logger log = Logger.getLogger(ContextTrackingExecutor.class.getName());
+
+	String name;
+	public String getName() { return name; }
+
+
+
 
 
 
