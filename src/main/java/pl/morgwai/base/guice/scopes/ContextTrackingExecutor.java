@@ -24,17 +24,21 @@ import java.util.logging.Logger;
 
 /**
  * A <code>ThreadPoolExecutor</code> that upon dispatching automatically updates which thread runs
- * within which {@link ServerSideContext} using supplied {@link #trackers}.
- * As context attributes are often not thread-safe, to avoid concurrency errors, dispatching should
- * preferably be the last instruction of the processing by the previous thread.<br/>
+ * within which {@link ServerSideContext} using supplied {@link #trackers}.<br/>
+ * <br/>
  * Usually instances correspond 1-1 with some type of blocking or time consuming operations, such
- * as CPU/GPU intensive calculations or blocking network communication with external resources.<br/>
+ * as CPU/GPU intensive calculations or blocking network communication.<br/>
  * In case of network operations, a given threadPool size should usually correspond to the pool size
  * of the connections to a given resource.<br/>
  * In case CPU/GPU intensive operations, it should usually correspond to the number of given cores
  * available to the process.<br/>
+ * <br/>
  * Instances are usually created at app startup, stored on static vars and/or configured for
- * injection using <code>toInstance(...)</code> with <code>@Named</code> annotation.
+ * injection using <code>toInstance(...)</code> with <code>@Named</code> annotation.<br/>
+ * <br/>
+ * Note: it is generally ok to handle a single context in multiple threads (for example by using
+ * one of <code>invokeAll(...)</code>/<code>invokeAny(...)</code> methods, or dispatching and then
+ * continuing work also on the original thread) as long as accessed scoped objects are thread-safe.
  */
 public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
@@ -121,11 +125,6 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	/**
-	 * @deprecated Accessing the same context from multiple threads is likely to cause concurrency
-	 * disasters as context attributes are often not thread-safe.
-	 */
-	@Deprecated
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException {
@@ -139,11 +138,6 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	/**
-	 * @deprecated Accessing the same context from multiple threads is likely to cause concurrency
-	 * disasters as context attributes are often not thread-safe.
-	 */
-	@Deprecated
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout,
 			TimeUnit unit) throws InterruptedException {
@@ -157,11 +151,6 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	/**
-	 * @deprecated Accessing the same context from multiple threads is likely to cause concurrency
-	 * disasters as context attributes are often not thread-safe.
-	 */
-	@Deprecated
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException, ExecutionException {
@@ -175,11 +164,6 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	/**
-	 * @deprecated Accessing the same context from multiple threads is likely to cause concurrency
-	 * disasters as context attributes are often not thread-safe.
-	 */
-	@Deprecated
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
 			throws InterruptedException, ExecutionException, TimeoutException {

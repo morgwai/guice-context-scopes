@@ -10,7 +10,10 @@ import com.google.inject.Scope;
 
 
 /**
- * Scopes objects to a context of a call obtained from the associated {@link ContextTracker}.
+ * Scopes objects to a context of a call obtained from the associated {@link ContextTracker}.<br/>
+ * Scopes are thread-safe as long as context attributes that are accessed by several threads are not
+ * accessed manually using {@link ServerSideContext}'s <code>{get,set,remove}Attribute(...)</code>
+ * methods.
  */
 public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 
@@ -30,13 +33,15 @@ public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 			if (ctx == null) {
 				throw new RuntimeException("no context for this thread in scope " + name);
 			}
-			@SuppressWarnings("unchecked")
-			T instance = (T) ctx.getAttribute(key);
-			if (instance == null) {
-				instance = unscoped.get();
-				ctx.setAttribute(key, instance);
+			synchronized (ctx) {
+				@SuppressWarnings("unchecked")
+				T instance = (T) ctx.getAttribute(key);
+				if (instance == null) {
+					instance = unscoped.get();
+					ctx.setAttribute(key, instance);
+				}
+				return instance;
 			}
-			return instance;
 		};
 	}
 

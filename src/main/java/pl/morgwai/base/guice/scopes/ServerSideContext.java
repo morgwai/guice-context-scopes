@@ -11,7 +11,11 @@ import java.util.concurrent.Callable;
 
 /**
  * Stores attributes associated with some server-side processing/call (such as a servlet request,
- * an RPC or a session combining several received calls) and allows to run operations within itself.
+ * an RPC or a session combining several received calls) and allows to run operations within
+ * itself.<br/>
+ * <br/>
+ * <b>Note:</b> Calls to {@link #getAttribute(Object)}, {@link #setAttribute(Object, Object)} and
+ * {@link #removeAttribute(Object)} are safe only if a single thread is accessing a given attribute.
  */
 public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
