@@ -12,7 +12,7 @@ import com.google.inject.Scope;
 /**
  * Scopes objects to a context of a call obtained from the associated {@link ContextTracker}.
  */
-public class ContextScope<Ctx extends TrackableContext<Ctx>> implements Scope {
+public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 
 
 

@@ -99,7 +99,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	private static void runWithinAll(List<TrackableContext<?>> ctxs, Runnable operation) {
+	private static void runWithinAll(List<ServerSideContext<?>> ctxs, Runnable operation) {
 		if (ctxs.size() == 1) {
 			ctxs.get(0).runWithinSelf(operation);
 			return;
@@ -116,7 +116,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	private static <T> T callWithinAll(List<TrackableContext<?>> ctxs, Callable<T> operation)
+	private static <T> T callWithinAll(List<ServerSideContext<?>> ctxs, Callable<T> operation)
 			throws Exception {
 		if (ctxs.size() == 1) return ctxs.get(0).callWithinSelf(operation);
 		if (ctxs.size() == 2) {
@@ -130,8 +130,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	private List<TrackableContext<?>> getCurrentContexts() {
-		List<TrackableContext<?>> ctxs = new LinkedList<>();
+	private List<ServerSideContext<?>> getCurrentContexts() {
+		List<ServerSideContext<?>> ctxs = new LinkedList<>();
 		for (int i = 0; i < trackers.length; i++) {
 			var ctx = trackers[i].getCurrentContext();
 			if (ctx != null) ctxs.add(ctx);
@@ -143,7 +143,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public void execute(Runnable task) {
-		List<TrackableContext<?>> ctxs = getCurrentContexts();
+		List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		super.execute(() -> runWithinAll(ctxs, task));
 	}
 
@@ -151,7 +151,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
-		List<TrackableContext<?>> ctxs = getCurrentContexts();
+		List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		return super.submit(() -> callWithinAll(ctxs, task));
 	}
 
@@ -159,7 +159,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public <T> Future<T> submit(Runnable task, T result) {
-		List<TrackableContext<?>> ctxs = getCurrentContexts();
+		List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		return super.submit(
 			() -> runWithinAll(ctxs, task),
 			result
@@ -170,7 +170,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public Future<?> submit(Runnable task) {
-		List<TrackableContext<?>> ctxs = getCurrentContexts();
+		List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		return super.submit(() -> runWithinAll(ctxs, task));
 	}
 
@@ -184,7 +184,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException {
-		List<TrackableContext<?>> ctxs = getCurrentContexts();
+		List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
 			wrappedTasks.add(() -> callWithinAll(ctxs, task));
@@ -202,7 +202,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout,
 			TimeUnit unit) throws InterruptedException {
-		List<TrackableContext<?>> ctxs = getCurrentContexts();
+		List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
 			wrappedTasks.add(() -> callWithinAll(ctxs, task));
@@ -220,7 +220,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException, ExecutionException {
-		List<TrackableContext<?>> ctxs = getCurrentContexts();
+		List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
 			wrappedTasks.add(() -> callWithinAll(ctxs, task));
@@ -238,7 +238,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
 			throws InterruptedException, ExecutionException, TimeoutException {
-		List<TrackableContext<?>> ctxs = getCurrentContexts();
+		List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
 		for(Callable<T> task: tasks) {
 			wrappedTasks.add(() -> callWithinAll(ctxs, task));
