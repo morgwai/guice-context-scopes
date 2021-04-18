@@ -1,6 +1,8 @@
 # Guice Context Scopes
 
-Classes for building Guice scopes, that get automatically transferred when dispatching work to other threads.
+Classes for building Guice scopes, that get automatically transferred when dispatching work to other threads.<br/>
+<br/>
+**latest release: [1.0-alpha1](https://search.maven.org/artifact/pl.morgwai.base/guice-context-scopes/1.0-alpha1/jar)**
 
 
 ## OVERVIEW
