@@ -50,6 +50,7 @@ Copyright (c) Piotr Morgwai Kotarbinski
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>5.0.1</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 
