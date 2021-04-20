@@ -14,8 +14,8 @@ Copyright (c) Piotr Morgwai Kotarbinski
 	<artifactId>guice-context-scopes</artifactId>
 	<version>1.0-SNAPSHOT</version>
 
-	<name>Server-side call context Guice Scopes base</name>
-	<description>Classes for building server-side call context Guice Scopes</description>
+	<name>Guice Context Scopes</name>
+	<description>Classes for building Guice scopes, that get automatically transferred when dispatching work to other threads</description>
 	<url>https://github.com/morgwai/guice-context-scopes</url>
 
 	<licenses>
