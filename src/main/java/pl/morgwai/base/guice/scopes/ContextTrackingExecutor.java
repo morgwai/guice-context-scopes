@@ -34,30 +34,43 @@ import java.util.logging.Logger;
  * Instances are usually created at app startup, stored on static vars and/or configured for
  * injection using <code>toInstance(...)</code> with <code>@Named</code> annotation.<br/>
  * <br/>
- * Note: it is generally ok to handle a single context in multiple threads (for example by using
- * one of <code>invokeAll(...)</code>/<code>invokeAny(...)</code> methods, or dispatching and then
- * continuing work also on the original thread) as long as accessed scoped objects are thread-safe.
+ * Note: as long as accessed scoped objects are thread-safe, it is generally ok to handle a single
+ * context in multiple threads (for example by using one of
+ * <code>invokeAll(...)</code> / <code>invokeAny(...)</code> methods, or dispatching and then
+ * continuing work also on the original thread).
  */
 public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	ContextTracker<?>[] trackers;
+	final ContextTracker<?>[] trackers;
+
+	final String name;
+	public String getName() { return name; }
+
+
+
+	public ContextTrackingExecutor(String name, int poolSize, ContextTracker<?>... trackers) {
+		super(poolSize, poolSize, 0l, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+				new NamedThreadFactory(name));
+		this.name = name;
+		this.trackers = trackers;
+	}
 
 
 
 	@Override
 	public void execute(Runnable task) {
-		List<ServerSideContext<?>> ctxs = getCurrentContexts();
+		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		super.execute(() -> runWithinAll(ctxs, task));
 	}
 
 
 
 	private List<ServerSideContext<?>> getCurrentContexts() {
-		List<ServerSideContext<?>> ctxs = new LinkedList<>();
+		final var ctxs = new LinkedList<ServerSideContext<?>>();
 		for (int i = 0; i < trackers.length; i++) {
-			var ctx = trackers[i].getCurrentContext();
+			final var ctx = trackers[i].getCurrentContext();
 			if (ctx != null) ctxs.add(ctx);
 		}
 		return ctxs;
@@ -98,7 +111,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
-		List<ServerSideContext<?>> ctxs = getCurrentContexts();
+		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		return super.submit(() -> callWithinAll(ctxs, task));
 	}
 
@@ -106,7 +119,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public <T> Future<T> submit(Runnable task, T result) {
-		List<ServerSideContext<?>> ctxs = getCurrentContexts();
+		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		return super.submit(
 			() -> runWithinAll(ctxs, task),
 			result
@@ -117,7 +130,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public Future<?> submit(Runnable task) {
-		List<ServerSideContext<?>> ctxs = getCurrentContexts();
+		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		return super.submit(() -> runWithinAll(ctxs, task));
 	}
 
@@ -126,12 +139,18 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException {
-		List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
-		for(Callable<T> task: tasks) {
+		return super.invokeAll(wrapTasks(tasks));
+	}
+
+
+
+	private <T> List<Callable<T>> wrapTasks(Collection<? extends Callable<T>> tasks) {
+		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
+		final var wrappedTasks = new ArrayList<Callable<T>>(tasks.size() + 1);
+		for(final var task: tasks) {
 			wrappedTasks.add(() -> callWithinAll(ctxs, task));
 		}
-		return super.invokeAll(wrappedTasks);
+		return wrappedTasks;
 	}
 
 
@@ -139,12 +158,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout,
 			TimeUnit unit) throws InterruptedException {
-		List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
-		for(Callable<T> task: tasks) {
-			wrappedTasks.add(() -> callWithinAll(ctxs, task));
-		}
-		return super.invokeAll(wrappedTasks, timeout, unit);
+		return super.invokeAll(wrapTasks(tasks), timeout, unit);
 	}
 
 
@@ -152,12 +166,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException, ExecutionException {
-		List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
-		for(Callable<T> task: tasks) {
-			wrappedTasks.add(() -> callWithinAll(ctxs, task));
-		}
-		return super.invokeAny(wrappedTasks);
+		return super.invokeAny(wrapTasks(tasks));
 	}
 
 
@@ -165,21 +174,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
 			throws InterruptedException, ExecutionException, TimeoutException {
-		List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		List<Callable<T>> wrappedTasks = new ArrayList<>(tasks.size() + 1);
-		for(Callable<T> task: tasks) {
-			wrappedTasks.add(() -> callWithinAll(ctxs, task));
-		}
-		return super.invokeAny(wrappedTasks, timeout, unit);
-	}
-
-
-
-	public ContextTrackingExecutor(String name, int poolSize, ContextTracker<?>... trackers) {
-		super(poolSize, poolSize, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-				new NamedThreadFactory(name));
-		this.name = name;
-		this.trackers = trackers;
+		return super.invokeAny(wrapTasks(tasks), timeout, unit);
 	}
 
 
@@ -188,10 +183,32 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 			String name,
 			int poolSize,
 			BlockingQueue<Runnable> workQueue,
+			ContextTracker<?>... trackers) {
+		super(poolSize, poolSize, 0l, TimeUnit.SECONDS, workQueue);
+		this.name = name;
+		this.trackers = trackers;
+	}
+
+
+
+	public ContextTrackingExecutor(
+			String name,
+			int corePoolSize,
+			int maximumPoolSize,
+			long keepAliveTime,
+			TimeUnit unit,
+			BlockingQueue<Runnable> workQueue,
 			ThreadFactory threadFactory,
 			RejectedExecutionHandler handler,
 			ContextTracker<?>... trackers) {
-		super(poolSize, poolSize, 0, TimeUnit.SECONDS, workQueue, threadFactory, handler);
+		super(
+				corePoolSize,
+				maximumPoolSize,
+				keepAliveTime,
+				unit,
+				workQueue,
+				threadFactory,
+				handler);
 		this.name = name;
 		this.trackers = trackers;
 	}
@@ -199,8 +216,9 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 	/**
-	 * Calls {@link #shutdown()} and waits <code>timeoutSeconds</code> after that calls
-	 * {@link #shutdownNow()}.
+	 * Calls {@link #shutdown()} and waits <code>timeoutSeconds</code> for termination. If it fails,
+	 * calls {@link #shutdownNow()}.
+	 * Logs outcome to {@link Logger} named after this class.
 	 * @return <code>null</code> if the executor was shutdown cleanly, list of remaining tasks
 	 *     otherwise.
 	 */
@@ -221,35 +239,26 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	static final Logger log = Logger.getLogger(ContextTrackingExecutor.class.getName());
 
-	String name;
-	public String getName() { return name; }
-
-
-
-
 
 
 	static class NamedThreadFactory implements ThreadFactory {
 
-
-
 		static final ThreadGroup contextTrackingExecutors;
-
-
-
-		static {
-			SecurityManager securityManager = System.getSecurityManager();
-			ThreadGroup parent = securityManager != null
-					? securityManager.getThreadGroup() : Thread.currentThread().getThreadGroup();
-			contextTrackingExecutors = new ThreadGroup(parent, "ContextTrackingExecutors");
-			contextTrackingExecutors.setDaemon(false);
-		}
-
-
 
 		final ThreadGroup threadGroup;
 		final AtomicInteger threadNumber;
 		final String namePrefix;
+
+
+
+		static {
+			final var securityManager = System.getSecurityManager();
+			final var parentThreadGroup = securityManager != null
+					? securityManager.getThreadGroup() : Thread.currentThread().getThreadGroup();
+			contextTrackingExecutors =
+					new ThreadGroup(parentThreadGroup, "ContextTrackingExecutors");
+			contextTrackingExecutors.setDaemon(false);
+		}
 
 
 

@@ -8,18 +8,15 @@ import com.google.inject.Scope;
 
 
 /**
- * Scopes objects to a context of a call obtained from the associated {@link ContextTracker}.<br/>
- * Scopes are thread-safe as long as context attributes that are accessed by several threads are not
- * accessed manually using {@link ServerSideContext}'s <code>{get,set,remove}Attribute(...)</code>
- * methods.
+ * Scopes objects to a call context obtained from the associated {@link ContextTracker}.
  */
 public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 
 
 
-	ContextTracker<Ctx> tracker;
+	final ContextTracker<Ctx> tracker;
 
-	String name;
+	final String name;
 	public String getName() { return name; }
 
 
@@ -27,13 +24,12 @@ public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 	@Override
 	public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
 		return () -> {
-			Ctx ctx = tracker.getCurrentContext();
+			final var ctx = tracker.getCurrentContext();
 			if (ctx == null) {
 				throw new RuntimeException("no context for this thread in scope " + name);
 			}
 			synchronized (ctx) {
-				@SuppressWarnings("unchecked")
-				T instance = (T) ctx.getAttribute(key);
+				T instance = ctx.getAttribute(key);
 				if (instance == null) {
 					instance = unscoped.get();
 					ctx.setAttribute(key, instance);
