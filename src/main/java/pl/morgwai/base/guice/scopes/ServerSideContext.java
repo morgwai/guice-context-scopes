@@ -1,9 +1,10 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 import com.google.inject.Key;
 
@@ -23,13 +24,12 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
 
 
-	final Map<Key<?>, Object> attributes;
+	final ConcurrentMap<Key<?>, Object> attributes = new ConcurrentHashMap<>();
 	final ContextTracker<Ctx> tracker;
 
 
 
 	protected ServerSideContext(ContextTracker<Ctx> tracker) {
-		this.attributes = new HashMap<>();
 		this.tracker = tracker;
 	}
 
@@ -70,10 +70,17 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 	 * @return removed attribute
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> T removeAttribute(Key<T> key) { return (T) attributes.remove(key); }
+	public <T> T removeAttribute(Key<T> key) {
+		return (T) attributes.remove(key);
+	}
 
-	<T> void setAttribute(Key<T> key, T attribute) { attributes.put(key, attribute); }
 
+
+	/**
+	 * For internal use only by {@link ContextScope#scope(Key, com.google.inject.Provider)}.
+	 */
 	@SuppressWarnings("unchecked")
-	<T> T getAttribute(Key<T> key) { return (T) attributes.get(key); }
+	<T> T getOrProduceAttribute(Key<T> key, Supplier<T> producer) {
+		return (T) attributes.computeIfAbsent(key, (ignored) -> producer.get());
+	}
 }

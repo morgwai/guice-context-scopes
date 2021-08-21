@@ -28,14 +28,7 @@ public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 			if (ctx == null) {
 				throw new RuntimeException("no context for this thread in scope " + name);
 			}
-			synchronized (ctx) {
-				T instance = ctx.getAttribute(key);
-				if (instance == null) {
-					instance = unscoped.get();
-					ctx.setAttribute(key, instance);
-				}
-				return instance;
-			}
+			return ctx.getOrProduceAttribute(key, () -> unscoped.get());
 		};
 	}
 
