@@ -26,7 +26,8 @@ public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 		return () -> {
 			final var ctx = tracker.getCurrentContext();
 			if (ctx == null) {
-				throw new RuntimeException("no context for this thread in scope " + name);
+				throw new RuntimeException("no context for thread "
+						+ Thread.currentThread().getName() + " in scope " + name);
 			}
 			return ctx.getOrProduceAttribute(key, () -> unscoped.get());
 		};
