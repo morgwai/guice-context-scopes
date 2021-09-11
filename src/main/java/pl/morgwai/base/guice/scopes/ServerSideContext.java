@@ -61,17 +61,14 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
 	/**
 	 * Removes the attribute given by <code>key</code> from this context. This is sometimes useful
-	 * to force the associated {@link ContextScope} to obtain new instance from the unscoped
+	 * to force the associated {@link ContextScope} to obtain a new instance from the unscoped
 	 * provider if the current one is not usable anymore (for example a timed-out connection, etc).
-	 * <br/><br/>
-	 * <b>NOTE:</b> this method is safe only if a given attribute is accessed only by 1 thread
-	 * within given context.
-	 *
-	 * @return removed attribute
+	 * <p>
+	 * <b>Note:</b> If multiple threads run within a given context, care must be taken to prevent
+	 * some of them from retaining the old stale instance.</p>
 	 */
-	@SuppressWarnings("unchecked")
-	public <T> T removeAttribute(Key<T> key) {
-		return (T) attributes.remove(key);
+	public void removeAttribute(Key<?> key) {
+		attributes.remove(key);
 	}
 
 
