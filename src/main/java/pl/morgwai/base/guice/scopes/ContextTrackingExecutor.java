@@ -68,7 +68,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public void execute(Runnable task) {
 		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		super.execute(() -> runWithinAll(ctxs, task));
+		super.execute(() -> executeWithinAll(ctxs, task));
 	}
 
 
@@ -84,33 +84,45 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	private static void runWithinAll(List<ServerSideContext<?>> ctxs, Runnable operation) {
-		if (ctxs.size() == 1) {
-			ctxs.get(0).executeWithinSelf(operation);
-			return;
+	private static void executeWithinAll(List<ServerSideContext<?>> ctxs, Runnable operation) {
+		switch (ctxs.size()) {
+			case 1:
+				ctxs.get(0).executeWithinSelf(operation);
+				return;
+			case 2:
+				ctxs.get(1).executeWithinSelf(() -> ctxs.get(0).executeWithinSelf(operation));
+				return;
+			case 0:
+				log.warn(Thread.currentThread().getName() + " is running outside of any context");
+				operation.run();
+				return;
+			default:
+				executeWithinAll(
+					ctxs.subList(1, ctxs.size()),
+					() -> ctxs.get(0).executeWithinSelf(operation)
+				);
 		}
-		if (ctxs.size() == 2) {
-			ctxs.get(1).executeWithinSelf(() -> ctxs.get(0).executeWithinSelf(operation));
-			return;
-		}
-		runWithinAll(
-			ctxs.subList(1, ctxs.size()),
-			() -> ctxs.get(0).executeWithinSelf(operation)
-		);
 	}
 
 
 
-	private static <T> T callWithinAll(List<ServerSideContext<?>> ctxs, Callable<T> operation)
+	private static <T> T executeWithinAll(List<ServerSideContext<?>> ctxs, Callable<T> operation)
 			throws Exception {
-		if (ctxs.size() == 1) return ctxs.get(0).executeWithinSelf(operation);
-		if (ctxs.size() == 2) {
-			return ctxs.get(1).executeWithinSelf(() -> ctxs.get(0).executeWithinSelf(operation));
+		switch (ctxs.size()) {
+			case 1:
+				return ctxs.get(0).executeWithinSelf(operation);
+			case 2:
+				return ctxs.get(1).executeWithinSelf(
+						() -> ctxs.get(0).executeWithinSelf(operation));
+			case 0:
+				log.warn(Thread.currentThread().getName() + " is running outside of any context");
+				return operation.call();
+			default:
+				return executeWithinAll(
+					ctxs.subList(1, ctxs.size()),
+					() -> ctxs.get(0).executeWithinSelf(operation)
+				);
 		}
-		return callWithinAll(
-			ctxs.subList(1, ctxs.size()),
-			() -> ctxs.get(0).executeWithinSelf(operation)
-		);
 	}
 
 
@@ -118,7 +130,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
 		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		return super.submit(() -> callWithinAll(ctxs, task));
+		return super.submit(() -> executeWithinAll(ctxs, task));
 	}
 
 
@@ -127,7 +139,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	public <T> Future<T> submit(Runnable task, T result) {
 		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		return super.submit(
-			() -> runWithinAll(ctxs, task),
+			() -> executeWithinAll(ctxs, task),
 			result
 		);
 	}
@@ -137,7 +149,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public Future<?> submit(Runnable task) {
 		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		return super.submit(() -> runWithinAll(ctxs, task));
+		return super.submit(() -> executeWithinAll(ctxs, task));
 	}
 
 
@@ -154,7 +166,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
 		final var wrappedTasks = new ArrayList<Callable<T>>(tasks.size() + 1);
 		for(final var task: tasks) {
-			wrappedTasks.add(() -> callWithinAll(ctxs, task));
+			wrappedTasks.add(() -> executeWithinAll(ctxs, task));
 		}
 		return wrappedTasks;
 	}
@@ -245,8 +257,6 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 		}
 	}
 
-	static final Logger log = LoggerFactory.getLogger(ContextTrackingExecutor.class.getName());
-
 
 
 	static class NamedThreadFactory implements ThreadFactory {
@@ -282,4 +292,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 			return new Thread(threadGroup, task, namePrefix + threadNumber.getAndIncrement());
 		}
 	}
+
+
+
+	static final Logger log = LoggerFactory.getLogger(ContextTrackingExecutor.class.getName());
 }
