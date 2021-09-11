@@ -225,8 +225,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	 * Calls {@link #shutdown()} and waits <code>timeoutSeconds</code> for termination. If it fails,
 	 * calls {@link #shutdownNow()}.
 	 * Logs outcome to {@link Logger} named after this class.
-	 * @return <code>null</code> if the executor was shutdown cleanly, list of remaining tasks
-	 *     otherwise.
+	 * @return <code>null</code> if the executor was shutdown cleanly, list of tasks returned by
+	 *     {@link #shutdownNow()} otherwise.
 	 */
 	public List<Runnable> tryShutdownGracefully(long timeoutSeconds) {
 		shutdown();
@@ -234,9 +234,11 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 			awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {}
 		if ( ! isTerminated()) {
-			List<Runnable> remianingTasks = shutdownNow();
-			log.warn(remianingTasks.size() + " tasks still remaining in executor " + name);
-			return remianingTasks;
+			final int activeCount = getActiveCount();
+			final List<Runnable> unstartedTasks = shutdownNow();
+			log.warn(activeCount + " active and " + unstartedTasks.size()
+					+ " unstarted tasks are still remaining in executor " + name);
+			return unstartedTasks;
 		} else {
 			log.info("executor " + name + " shutdown completed");
 			return null;
