@@ -23,23 +23,27 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * A <code>ThreadPoolExecutor</code> that upon dispatching automatically updates which thread runs
- * within which {@link ServerSideContext} using supplied {@link #trackers}.<br/>
- * <br/>
- * Usually instances correspond 1-1 with some type of blocking or time consuming operations, such
- * as CPU/GPU intensive calculations or blocking network communication.<br/>
+ * A {@link ThreadPoolExecutor} that upon task execution automatically updates which thread runs
+ * within which {@link ServerSideContext} using supplied {@link #trackers}.
+ * <p>
+ * Instances usually correspond 1-1 with some type of blocking or time consuming operations, such
+ * as CPU/GPU intensive calculations or blocking network communication with some resource.<br/>
  * In case of network operations, a given threadPool size should usually correspond to the pool size
- * of the connections to a given resource.<br/>
- * In case CPU/GPU intensive operations, it should usually correspond to the number of given cores
- * available to the process.<br/>
- * <br/>
+ * of the connections to the given resource.<br/>
+ * In case of CPU/GPU intensive operations, it should usually correspond to the number of given
+ * cores available to the process.</p>
+ * <p>
  * Instances are usually created at app startup, stored on static vars and/or configured for
- * injection using <code>toInstance(...)</code> with <code>@Named</code> annotation.<br/>
- * <br/>
- * Note: as long as accessed scoped objects are thread-safe, it is generally ok to handle a single
- * context in multiple threads (for example by using one of
- * <code>invokeAll(...)</code> / <code>invokeAny(...)</code> methods, or dispatching and then
- * continuing work also on the original thread).
+ * injection using<pre>
+ * bind(ContextTrackingExecutor.class)
+ *    .annotatedWith(Names.named("someOpTypeExecutor"))
+ *    .toInstance(...)</pre>
+ * and injected with
+ * <pre>@Named("someOpTypeExecutor") ContextTrackingExecutor someOpTypeExecutor</pre></p>
+ * <p>
+ * If multiple threads run within the same context (for example by using
+ * {@link #invokeAll(Collection)}), then the attributes they access must be thread-safe or properly
+ * synchronized.</p>
  */
 public class ContextTrackingExecutor extends ThreadPoolExecutor {
 

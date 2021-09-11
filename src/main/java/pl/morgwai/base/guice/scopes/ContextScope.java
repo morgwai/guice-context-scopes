@@ -35,15 +35,15 @@ public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 
 
 
-	@Override
-	public String toString() {
-		return name;
+	public ContextScope(String name, ContextTracker<Ctx> tracker) {
+		this.name = name;
+		this.tracker = tracker;
 	}
 
 
 
-	public ContextScope(String name, ContextTracker<Ctx> tracker) {
-		this.name = name;
-		this.tracker = tracker;
+	@Override
+	public String toString() {
+		return name;
 	}
 }

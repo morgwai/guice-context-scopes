@@ -15,24 +15,29 @@ public class ContextTracker<Ctx extends ServerSideContext<Ctx>> {
 
 
 	/**
-	 * @return call context of the calling thread.
+	 * @return context which the calling thread is running within.
 	 */
 	public Ctx getCurrentContext() {
 		return currentContex.get();
 	}
 
+
+
 	/**
+	 * Sets the context for the current thread to {@code ctx}.
 	 * For internal use. Apps and deriving libs should rather use
-	 * {@link ServerSideContext#executeWithinSelf(Runnable)} and
 	 * {@link ServerSideContext#executeWithinSelf(java.util.concurrent.Callable)}.
 	 */
 	void setCurrentContext(Ctx ctx) {
 		currentContex.set(ctx);
 	}
 
+
+
 	/**
+	 * Dissociates the current thread from the current context. Should be called to prevent
+	 * retaining of otherwise unused attributes that can be garbage-collected.
 	 * For internal use. Apps and deriving libs should rather use
-	 * {@link ServerSideContext#executeWithinSelf(Runnable)} and
 	 * {@link ServerSideContext#executeWithinSelf(java.util.concurrent.Callable)}.
 	 */
 	void clearCurrentContext() {

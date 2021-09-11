@@ -13,12 +13,15 @@ import com.google.inject.Provider;
 /**
  * Stores attributes associated with some server-side processing/call (such as a servlet request
  * processing, an RPC or a session combining several received calls) and allows to execute
- * operations within itself.<br/>
- * If many threads run within the same context, the attributes that they access must be thread-safe
- * or properly synchronized.<br/>
- * <br/>
+ * operations within itself.
+ * <p>
+ * Overriding classes must use themselves as {@code Ctx} type argument.</p>
+ * <p>
  * Overriding classes usually add properties and methods specific to a given type of call, like
- * given call's arguments etc.
+ * given call's arguments etc.</p>
+ * <p>
+ * If many threads run within the same context, the attributes that they access must be thread-safe
+ * or properly synchronized.</p>
  */
 public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
@@ -64,7 +67,7 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 	 * to force the associated {@link ContextScope} to obtain a new instance from the unscoped
 	 * provider if the current one is not usable anymore (for example a timed-out connection, etc).
 	 * <p>
-	 * <b>Note:</b> If multiple threads run within a given context, care must be taken to prevent
+	 * <b>Note:</b> If multiple threads run within the same context, care must be taken to prevent
 	 * some of them from retaining the old stale instance.</p>
 	 */
 	public void removeAttribute(Key<?> key) {
