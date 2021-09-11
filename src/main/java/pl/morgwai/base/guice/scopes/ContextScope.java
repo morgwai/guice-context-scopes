@@ -29,7 +29,7 @@ public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 				throw new RuntimeException("no context for thread "
 						+ Thread.currentThread().getName() + " in scope " + name);
 			}
-			return ctx.getOrProduceAttribute(key, () -> unscoped.get());
+			return ctx.provideAttributeIfAbsent(key, unscoped);
 		};
 	}
 

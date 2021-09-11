@@ -4,9 +4,9 @@ package pl.morgwai.base.guice.scopes;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Supplier;
 
 import com.google.inject.Key;
+import com.google.inject.Provider;
 
 
 
@@ -77,7 +77,7 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 	 * For internal use only by {@link ContextScope#scope(Key, com.google.inject.Provider)}.
 	 */
 	@SuppressWarnings("unchecked")
-	<T> T getOrProduceAttribute(Key<T> key, Supplier<T> producer) {
-		return (T) attributes.computeIfAbsent(key, (ignored) -> producer.get());
+	<T> T provideAttributeIfAbsent(Key<T> key, Provider<T> provider) {
+		return (T) attributes.computeIfAbsent(key, (ignored) -> provider.get());
 	}
 }
