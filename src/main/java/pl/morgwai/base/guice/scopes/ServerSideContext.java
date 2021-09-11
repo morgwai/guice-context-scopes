@@ -12,8 +12,8 @@ import com.google.inject.Key;
 
 /**
  * Stores attributes associated with some server-side processing/call (such as a servlet request
- * processing, an RPC or a session combining several received calls) and allows to run operations
- * within itself.<br/>
+ * processing, an RPC or a session combining several received calls) and allows to execute
+ * operations within itself.<br/>
  * If many threads run within the same context, the attributes that they access must be thread-safe
  * or properly synchronized.<br/>
  * <br/>
@@ -36,7 +36,7 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
 
 	@SuppressWarnings("unchecked")
-	public void runWithinSelf(Runnable operation) {
+	public void executeWithinSelf(Runnable operation) {
 		tracker.setCurrentContext((Ctx) this);
 		try {
 			operation.run();
@@ -48,7 +48,7 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
 
 	@SuppressWarnings("unchecked")
-	public <T> T callWithinSelf(Callable<T> operation) throws Exception {
+	public <T> T executeWithinSelf(Callable<T> operation) throws Exception {
 		tracker.setCurrentContext((Ctx) this);
 		try {
 			return operation.call();

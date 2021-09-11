@@ -82,16 +82,16 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	private static void runWithinAll(List<ServerSideContext<?>> ctxs, Runnable operation) {
 		if (ctxs.size() == 1) {
-			ctxs.get(0).runWithinSelf(operation);
+			ctxs.get(0).executeWithinSelf(operation);
 			return;
 		}
 		if (ctxs.size() == 2) {
-			ctxs.get(1).runWithinSelf(() -> ctxs.get(0).runWithinSelf(operation));
+			ctxs.get(1).executeWithinSelf(() -> ctxs.get(0).executeWithinSelf(operation));
 			return;
 		}
 		runWithinAll(
 			ctxs.subList(1, ctxs.size()),
-			() -> ctxs.get(0).runWithinSelf(operation)
+			() -> ctxs.get(0).executeWithinSelf(operation)
 		);
 	}
 
@@ -99,13 +99,13 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	private static <T> T callWithinAll(List<ServerSideContext<?>> ctxs, Callable<T> operation)
 			throws Exception {
-		if (ctxs.size() == 1) return ctxs.get(0).callWithinSelf(operation);
+		if (ctxs.size() == 1) return ctxs.get(0).executeWithinSelf(operation);
 		if (ctxs.size() == 2) {
-			return ctxs.get(1).callWithinSelf(() -> ctxs.get(0).callWithinSelf(operation));
+			return ctxs.get(1).executeWithinSelf(() -> ctxs.get(0).executeWithinSelf(operation));
 		}
 		return callWithinAll(
 			ctxs.subList(1, ctxs.size()),
-			() -> ctxs.get(0).callWithinSelf(operation)
+			() -> ctxs.get(0).executeWithinSelf(operation)
 		);
 	}
 

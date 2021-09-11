@@ -23,8 +23,8 @@ public class ContextTracker<Ctx extends ServerSideContext<Ctx>> {
 
 	/**
 	 * For internal use. Apps and deriving libs should rather use
-	 * {@link ServerSideContext#runWithinSelf(Runnable)} and
-	 * {@link ServerSideContext#callWithinSelf(java.util.concurrent.Callable)}.
+	 * {@link ServerSideContext#executeWithinSelf(Runnable)} and
+	 * {@link ServerSideContext#executeWithinSelf(java.util.concurrent.Callable)}.
 	 */
 	void setCurrentContext(Ctx ctx) {
 		currentContex.set(ctx);
@@ -32,8 +32,8 @@ public class ContextTracker<Ctx extends ServerSideContext<Ctx>> {
 
 	/**
 	 * For internal use. Apps and deriving libs should rather use
-	 * {@link ServerSideContext#runWithinSelf(Runnable)} and
-	 * {@link ServerSideContext#callWithinSelf(java.util.concurrent.Callable)}.
+	 * {@link ServerSideContext#executeWithinSelf(Runnable)} and
+	 * {@link ServerSideContext#executeWithinSelf(java.util.concurrent.Callable)}.
 	 */
 	void clearCurrentContext() {
 		currentContex.remove();
