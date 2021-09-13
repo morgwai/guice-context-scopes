@@ -1,6 +1,8 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
+import java.util.concurrent.Callable;
+
 
 
 /**
@@ -23,24 +25,23 @@ public class ContextTracker<Ctx extends ServerSideContext<Ctx>> {
 
 
 
-	/**
-	 * Sets the context for the current thread to {@code ctx}.
-	 * For internal use. Apps and deriving libs should rather use
-	 * {@link ServerSideContext#executeWithinSelf(java.util.concurrent.Callable)}.
-	 */
-	void setCurrentContext(Ctx ctx) {
+	void trackWhileExecuting(Ctx ctx, Runnable operation) {
 		currentContex.set(ctx);
+		try {
+			operation.run();
+		} finally {
+			currentContex.remove();
+		}
 	}
 
 
 
-	/**
-	 * Dissociates the current thread from the current context. Should be called to prevent
-	 * retaining of otherwise unused attributes that can be garbage-collected.
-	 * For internal use. Apps and deriving libs should rather use
-	 * {@link ServerSideContext#executeWithinSelf(java.util.concurrent.Callable)}.
-	 */
-	void clearCurrentContext() {
-		currentContex.remove();
+	<T> T trackWhileExecuting(Ctx ctx, Callable<T> operation) throws Exception {
+		currentContex.set(ctx);
+		try {
+			return operation.call();
+		} finally {
+			currentContex.remove();
+		}
 	}
 }

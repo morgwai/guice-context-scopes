@@ -40,24 +40,14 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 
 	@SuppressWarnings("unchecked")
 	public void executeWithinSelf(Runnable operation) {
-		tracker.setCurrentContext((Ctx) this);
-		try {
-			operation.run();
-		} finally {
-			tracker.clearCurrentContext();
-		}
+		tracker.trackWhileExecuting((Ctx) this, operation);
 	}
 
 
 
 	@SuppressWarnings("unchecked")
 	public <T> T executeWithinSelf(Callable<T> operation) throws Exception {
-		tracker.setCurrentContext((Ctx) this);
-		try {
-			return operation.call();
-		} finally {
-			tracker.clearCurrentContext();
-		}
+		return tracker.trackWhileExecuting((Ctx) this, operation);
 	}
 
 
