@@ -21,15 +21,39 @@ public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 
 
 
+	/**
+	 * @throws RuntimeException if there's no context for the current thread. This most commonly
+	 * happens when providing a callback to some async method without transferring the context.
+	 * This can be fixed similarly to the below code:
+	 * <Pre>
+	 *class MyClass {
+	 *
+	 *    &commat;Inject ContextTracker&lt;ContextT&gt; tracker;
+	 *
+	 *    void myMethod(Object param) {
+	 *        // myMethod code
+	 *        var ctx = tracker.getCurrentContext();
+	 *        someAsyncMethod(param, (callbackParam) ->
+	 *            ctx.executeWithinSelf(() -> {
+	 *                // callback code
+	 *            }
+	 *        ));
+	 *    }
+	 *}</pre>
+	 */
 	@Override
 	public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
 		return () -> {
-			final var ctx = tracker.getCurrentContext();
-			if (ctx == null) {
+			try {
+				return tracker.getCurrentContext().provideAttributeIfAbsent(key, unscoped);
+			} catch (NullPointerException e) {
+				// NPE here is a result of a bug that will be usually eliminated in development
+				// phase and not happen in production, so we catch NPE instead of checking manually
+				// each time.
 				throw new RuntimeException("no context for thread "
-						+ Thread.currentThread().getName() + " in scope " + name);
+						+ Thread.currentThread().getName() + " in scope " + name
+						+ ". See javadoc for ContextScope.scope(...)");
 			}
-			return ctx.provideAttributeIfAbsent(key, unscoped);
 		};
 	}
 
