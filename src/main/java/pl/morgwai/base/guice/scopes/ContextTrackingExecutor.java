@@ -1,9 +1,8 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -16,6 +15,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,24 +67,29 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public void execute(Runnable task) {
-		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		super.execute(() -> executeWithinAll(ctxs, task));
+		final var activeCtxs = getActiveContexts(trackers);
+		super.execute(() -> executeWithinAll(activeCtxs, task));
 	}
 
 
 
-	private List<ServerSideContext<?>> getCurrentContexts() {
-		final var ctxs = new LinkedList<ServerSideContext<?>>();
-		for (int i = 0; i < trackers.length; i++) {
-			final var ctx = trackers[i].getCurrentContext();
-			if (ctx != null) ctxs.add(ctx);
-		}
-		return ctxs;
+	/**
+	 * Retrieves all active contexts from supplied trackers.
+	 */
+	public static List<ServerSideContext<?>> getActiveContexts(ContextTracker<?>... trackers) {
+		return Arrays.stream(trackers)
+				.map((tracker) -> tracker.getCurrentContext())
+				.filter((ctx) -> ctx != null)
+				.collect(Collectors.toList());
 	}
 
 
 
-	private static void executeWithinAll(List<ServerSideContext<?>> ctxs, Runnable operation) {
+	/**
+	 * Executes {@code operation} within all contexts supplied via {@code ctxs}.
+	 * @see #getActiveContexts(ContextTracker...)
+	 */
+	public static void executeWithinAll(List<ServerSideContext<?>> ctxs, Runnable operation) {
 		switch (ctxs.size()) {
 			case 1:
 				ctxs.get(0).executeWithinSelf(operation);
@@ -106,7 +111,11 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	private static <T> T executeWithinAll(List<ServerSideContext<?>> ctxs, Callable<T> operation)
+	/**
+	 * Executes {@code operation} within all contexts supplied via {@code ctxs}.
+	 * @see #getActiveContexts(ContextTracker...)
+	 */
+	public static <T> T executeWithinAll(List<ServerSideContext<?>> ctxs, Callable<T> operation)
 			throws Exception {
 		switch (ctxs.size()) {
 			case 1:
@@ -129,17 +138,17 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
-		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		return super.submit(() -> executeWithinAll(ctxs, task));
+		final var activeCtxs = getActiveContexts(trackers);
+		return super.submit(() -> executeWithinAll(activeCtxs, task));
 	}
 
 
 
 	@Override
 	public <T> Future<T> submit(Runnable task, T result) {
-		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
+		final var activeCtxs = getActiveContexts(trackers);
 		return super.submit(
-			() -> executeWithinAll(ctxs, task),
+			() -> executeWithinAll(activeCtxs, task),
 			result
 		);
 	}
@@ -148,8 +157,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	@Override
 	public Future<?> submit(Runnable task) {
-		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		return super.submit(() -> executeWithinAll(ctxs, task));
+		final var activeCtxs = getActiveContexts(trackers);
+		return super.submit(() -> executeWithinAll(activeCtxs, task));
 	}
 
 
@@ -163,12 +172,10 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 	private <T> List<Callable<T>> wrapTasks(Collection<? extends Callable<T>> tasks) {
-		final List<ServerSideContext<?>> ctxs = getCurrentContexts();
-		final var wrappedTasks = new ArrayList<Callable<T>>(tasks.size() + 1);
-		for(final var task: tasks) {
-			wrappedTasks.add(() -> executeWithinAll(ctxs, task));
-		}
-		return wrappedTasks;
+		final var activeCtxs = getActiveContexts(trackers);
+		return tasks.stream()
+				.map((task) -> (Callable<T>) () -> executeWithinAll(activeCtxs, task))
+				.collect(Collectors.toList());
 	}
 
 
