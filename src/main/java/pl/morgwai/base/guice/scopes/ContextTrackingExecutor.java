@@ -272,7 +272,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 		static {
 			final var securityManager = System.getSecurityManager();
 			final var parentThreadGroup = securityManager != null
-					? securityManager.getThreadGroup() : Thread.currentThread().getThreadGroup();
+					? securityManager.getThreadGroup()
+					: Thread.currentThread().getThreadGroup();
 			contextTrackingExecutors =
 					new ThreadGroup(parentThreadGroup, "ContextTrackingExecutors");
 			contextTrackingExecutors.setDaemon(false);
@@ -288,6 +289,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
+		@Override
 		public Thread newThread(Runnable task) {
 			return new Thread(threadGroup, task, namePrefix + threadNumber.getAndIncrement());
 		}
