@@ -8,11 +8,11 @@ import java.util.concurrent.Callable;
 /**
  * Allows to track which server-side call is handled by which thread.
  */
-public class ContextTracker<Ctx extends ServerSideContext<Ctx>> {
+public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 
 
 
-	private final ThreadLocal<Ctx> currentContex = new ThreadLocal<>();
+	private final ThreadLocal<CtxT> currentContex = new ThreadLocal<>();
 
 
 
@@ -20,13 +20,13 @@ public class ContextTracker<Ctx extends ServerSideContext<Ctx>> {
 	 * @return context which the calling thread is running within.
 	 * @see ContextTrackingExecutor#getActiveContexts(ContextTracker...)
 	 */
-	public Ctx getCurrentContext() {
+	public CtxT getCurrentContext() {
 		return currentContex.get();
 	}
 
 
 
-	void trackWhileExecuting(Ctx ctx, Runnable operation) {
+	void trackWhileExecuting(CtxT ctx, Runnable operation) {
 		currentContex.set(ctx);
 		try {
 			operation.run();
@@ -37,7 +37,7 @@ public class ContextTracker<Ctx extends ServerSideContext<Ctx>> {
 
 
 
-	<T> T trackWhileExecuting(Ctx ctx, Callable<T> operation) throws Exception {
+	<T> T trackWhileExecuting(CtxT ctx, Callable<T> operation) throws Exception {
 		currentContex.set(ctx);
 		try {
 			return operation.call();

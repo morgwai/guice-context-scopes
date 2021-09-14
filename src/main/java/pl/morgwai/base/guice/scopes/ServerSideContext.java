@@ -23,16 +23,16 @@ import com.google.inject.Provider;
  * If many threads run within the same context, the attributes that they access must be thread-safe
  * or properly synchronized.</p>
  */
-public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
+public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 
 	final ConcurrentMap<Key<?>, Object> attributes = new ConcurrentHashMap<>();
-	final ContextTracker<Ctx> tracker;
+	final ContextTracker<CtxT> tracker;
 
 
 
-	protected ServerSideContext(ContextTracker<Ctx> tracker) {
+	protected ServerSideContext(ContextTracker<CtxT> tracker) {
 		this.tracker = tracker;
 	}
 
@@ -43,7 +43,7 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 	 */
 	@SuppressWarnings("unchecked")
 	public void executeWithinSelf(Runnable operation) {
-		tracker.trackWhileExecuting((Ctx) this, operation);
+		tracker.trackWhileExecuting((CtxT) this, operation);
 	}
 
 
@@ -53,7 +53,7 @@ public abstract class ServerSideContext<Ctx extends ServerSideContext<Ctx>> {
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T executeWithinSelf(Callable<T> operation) throws Exception {
-		return tracker.trackWhileExecuting((Ctx) this, operation);
+		return tracker.trackWhileExecuting((CtxT) this, operation);
 	}
 
 

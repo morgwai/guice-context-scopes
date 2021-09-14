@@ -10,11 +10,11 @@ import com.google.inject.Scope;
 /**
  * Scopes objects to a call context obtained from the associated {@link ContextTracker}.
  */
-public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
+public class ContextScope<CtxT extends ServerSideContext<CtxT>> implements Scope {
 
 
 
-	final ContextTracker<Ctx> tracker;
+	final ContextTracker<CtxT> tracker;
 
 	final String name;
 	public String getName() { return name; }
@@ -61,7 +61,7 @@ public class ContextScope<Ctx extends ServerSideContext<Ctx>> implements Scope {
 
 
 
-	public ContextScope(String name, ContextTracker<Ctx> tracker) {
+	public ContextScope(String name, ContextTracker<CtxT> tracker) {
 		this.name = name;
 		this.tracker = tracker;
 	}
