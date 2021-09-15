@@ -171,7 +171,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	private <T> List<Callable<T>> wrapTasks(Collection<? extends Callable<T>> tasks) {
+	<T> List<Callable<T>> wrapTasks(Collection<? extends Callable<T>> tasks) {
 		final var activeCtxs = getActiveContexts(trackers);
 		return tasks.stream()
 				.map((task) -> (Callable<T>) () -> executeWithinAll(activeCtxs, task))
