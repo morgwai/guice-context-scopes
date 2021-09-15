@@ -209,7 +209,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 			int poolSize,
 			BlockingQueue<Runnable> workQueue,
 			ContextTracker<?>... trackers) {
-		super(poolSize, poolSize, 0l, TimeUnit.SECONDS, workQueue);
+		super(poolSize, poolSize, 0l, TimeUnit.SECONDS, workQueue, new NamedThreadFactory(name));
 		this.name = name;
 		this.trackers = trackers;
 	}
