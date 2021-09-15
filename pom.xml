@@ -41,13 +41,14 @@
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<guice.version>5.0.1</guice.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
-			<version>5.0.1</version>
+			<version>${guice.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -102,6 +103,9 @@
 				<version>3.2.0</version>
 				<configuration>
 					<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+					<links>
+						<link>https://google.github.io/guice/api-docs/${guice.version}/javadoc</link>
+					</links>
 				</configuration>
 				<executions>
 					<execution>

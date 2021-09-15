@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A {@link ThreadPoolExecutor} that upon task execution automatically updates which thread runs
- * within which {@link ServerSideContext} using supplied {@link #trackers}.
+ * within which {@link ServerSideContext} using {@link ContextTracker}s supplied via constructor.
  * <p>
  * Instances usually correspond 1-1 with some type of blocking or time consuming operations, such
  * as CPU/GPU intensive calculations or blocking network communication with some resource.<br/>
@@ -34,12 +34,16 @@ import org.slf4j.LoggerFactory;
  * cores available to the process.</p>
  * <p>
  * Instances are usually created at app startup, stored on static vars and/or configured for
- * injection using<pre>
- * bind(ContextTrackingExecutor.class)
+ * injection using</p>
+ * <pre>
+ *bind(ContextTrackingExecutor.class)
  *    .annotatedWith(Names.named("someOpTypeExecutor"))
  *    .toInstance(...)</pre>
- * and injected with
- * <pre>@Named("someOpTypeExecutor") ContextTrackingExecutor someOpTypeExecutor</pre></p>
+ * <p>
+ * and injected with</p>
+ * <pre>
+ *&commat;Named("someOpTypeExecutor")
+ *ContextTrackingExecutor someOpTypeExecutor</pre></p>
  * <p>
  * If multiple threads run within the same context (for example by using
  * {@link #invokeAll(Collection)}), then the attributes they access must be thread-safe or properly
@@ -86,7 +90,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 	/**
-	 * Executes {@code operation} within all contexts supplied via {@code ctxs}.
+	 * Executes {@code operation} synchronously (on the current thread) within all contexts supplied
+	 * via {@code ctxs}.
 	 * @see #getActiveContexts(ContextTracker...)
 	 */
 	public static void executeWithinAll(List<ServerSideContext<?>> ctxs, Runnable operation) {
@@ -112,7 +117,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 	/**
-	 * Executes {@code operation} within all contexts supplied via {@code ctxs}.
+	 * Executes {@code operation} synchronously (on the current thread) within all contexts supplied
+	 * via {@code ctxs}.
 	 * @see #getActiveContexts(ContextTracker...)
 	 */
 	public static <T> T executeWithinAll(List<ServerSideContext<?>> ctxs, Callable<T> operation)

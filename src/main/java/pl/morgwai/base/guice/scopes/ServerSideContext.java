@@ -15,13 +15,13 @@ import com.google.inject.Provider;
  * processing, an RPC or a session combining several received calls) and allows to execute
  * operations within itself.
  * <p>
- * Overriding classes must use themselves as {@code Ctx} type argument.</p>
+ * Overriding classes must use themselves as {@code CtxT} type argument.</p>
  * <p>
  * Overriding classes usually add properties and methods specific to a given type of call, like
  * given call's arguments etc.</p>
  * <p>
- * If many threads run within the same context, the attributes that they access must be thread-safe
- * or properly synchronized.</p>
+ * If multiple threads run within the same context, the attributes that they access must be
+ * thread-safe or properly synchronized.</p>
  */
 public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
@@ -39,6 +39,8 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
+	 * Sets itself as the current context for the current thread and executes {@code operation}
+	 * synchronously. Afterwards clears the current context.
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)
 	 */
 	@SuppressWarnings("unchecked")
@@ -49,6 +51,8 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
+	 * Sets itself as the current context for the current thread and executes {@code operation}
+	 * synchronously. Afterwards clears the current context.
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Callable)
 	 */
 	@SuppressWarnings("unchecked")
@@ -73,7 +77,9 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
-	 * For internal use only by {@link ContextScope#scope(Key, com.google.inject.Provider)}.
+	 * Obtains the attribute given by {@code key} or asks {@code provider} for a new one if it is
+	 * not currently present.
+	 * For internal use by {@link ContextScope#scope(Key, com.google.inject.Provider)}.
 	 */
 	@SuppressWarnings("unchecked")
 	<T> T provideAttributeIfAbsent(Key<T> key, Provider<T> provider) {

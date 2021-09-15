@@ -21,12 +21,19 @@ public class ContextScope<CtxT extends ServerSideContext<CtxT>> implements Scope
 
 
 
+	public ContextScope(String name, ContextTracker<CtxT> tracker) {
+		this.name = name;
+		this.tracker = tracker;
+	}
+
+
+
 	/**
 	 * @throws RuntimeException if there's no context for the current thread. This most commonly
 	 * happens when providing a callback to some async method without transferring the context.
 	 * Use static helper methods {@link ContextTrackingExecutor#getActiveCount()} and
 	 * {@link ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)} to fix it:
-	 * <Pre>
+	 * <pre>
 	 *class MyClass {
 	 *
 	 *    &commat;Inject ContextTracker&lt;ContextT1&gt; tracker1;
@@ -57,13 +64,6 @@ public class ContextScope<CtxT extends ServerSideContext<CtxT>> implements Scope
 						+ ". See javadoc for ContextScope.scope(...)");
 			}
 		};
-	}
-
-
-
-	public ContextScope(String name, ContextTracker<CtxT> tracker) {
-		this.name = name;
-		this.tracker = tracker;
 	}
 
 

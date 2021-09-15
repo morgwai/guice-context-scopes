@@ -17,7 +17,7 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
-	 * @return context which the calling thread is running within.
+	 * Returns context which the calling thread is running within.
 	 * @see ContextTrackingExecutor#getActiveContexts(ContextTracker...)
 	 */
 	public CtxT getCurrentContext() {
