@@ -272,15 +272,41 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
-	static class NamedThreadFactory implements ThreadFactory {
+	/**
+	 * A thread factory that names new threads based on its own name. Each instance has an
+	 * associated thread group (named after itself), which newly created threads will belong to.
+	 * All such instance associated thread groups have a common parent (named
+	 * {@value #PARENT_THREAD_GROUP_NAME}), which in turn is a child of the system default thread
+	 * group (obtained from system security manager under normal circumstances).
+	 */
+	public static class NamedThreadFactory implements ThreadFactory {
 
 		static final ThreadGroup contextTrackingExecutors;
 
+		final AtomicInteger threadNumber = new AtomicInteger(1);
 		final ThreadGroup threadGroup;
-		final AtomicInteger threadNumber;
 		final String namePrefix;
 
 
+
+		NamedThreadFactory(String name) {
+			threadGroup = new ThreadGroup(contextTrackingExecutors, name);
+			namePrefix = name + "-thread-";
+		}
+
+
+
+		/**
+		 * Creates a new thread named {@code <thisFactoryName>-thread-<sequenceNumber>}.
+		 */
+		@Override
+		public Thread newThread(Runnable task) {
+			return new Thread(threadGroup, task, namePrefix + threadNumber.getAndIncrement());
+		}
+
+
+
+		public static final String PARENT_THREAD_GROUP_NAME = "ContextTrackingExecutors";
 
 		static {
 			final var securityManager = System.getSecurityManager();
@@ -288,23 +314,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 					? securityManager.getThreadGroup()
 					: Thread.currentThread().getThreadGroup();
 			contextTrackingExecutors =
-					new ThreadGroup(parentThreadGroup, "ContextTrackingExecutors");
+					new ThreadGroup(parentThreadGroup, PARENT_THREAD_GROUP_NAME);
 			contextTrackingExecutors.setDaemon(false);
-		}
-
-
-
-		NamedThreadFactory(String name) {
-			threadGroup = new ThreadGroup(contextTrackingExecutors, name);
-			threadNumber = new AtomicInteger(1);
-			namePrefix = name + "-thread-";
-		}
-
-
-
-		@Override
-		public Thread newThread(Runnable task) {
-			return new Thread(threadGroup, task, namePrefix + threadNumber.getAndIncrement());
 		}
 	}
 
