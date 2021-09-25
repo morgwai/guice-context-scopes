@@ -41,6 +41,7 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 	/**
 	 * Sets itself as the current context for the current thread and executes {@code operation}
 	 * synchronously. Afterwards clears the current context.
+	 *
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)
 	 */
 	@SuppressWarnings("unchecked")
@@ -53,6 +54,7 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 	/**
 	 * Sets itself as the current context for the current thread and executes {@code operation}
 	 * synchronously. Afterwards clears the current context.
+	 *
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Callable)
 	 */
 	@SuppressWarnings("unchecked")
@@ -77,8 +79,8 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
-	 * Obtains the attribute given by {@code key} or asks {@code provider} for a new one if it is
-	 * not currently present.
+	 * Obtains the attribute given by {@code key}. If it is not yet present in this context,
+	 * asks {@code provider} for a new instance and stores the result for subsequent calls.
 	 * For internal use by {@link ContextScope#scope(Key, com.google.inject.Provider)}.
 	 */
 	@SuppressWarnings("unchecked")

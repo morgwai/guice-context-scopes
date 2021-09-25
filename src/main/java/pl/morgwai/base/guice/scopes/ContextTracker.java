@@ -18,6 +18,7 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 
 	/**
 	 * Returns context which the calling thread is running within.
+	 *
 	 * @see ContextTrackingExecutor#getActiveContexts(ContextTracker...)
 	 */
 	public CtxT getCurrentContext() {
@@ -26,6 +27,9 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 
 
 
+	/**
+	 * For internal use by {@link ServerSideContext#executeWithinSelf(Runnable)}.
+	 */
 	void trackWhileExecuting(CtxT ctx, Runnable operation) {
 		currentContex.set(ctx);
 		try {
@@ -37,6 +41,9 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 
 
 
+	/**
+	 * For internal use by {@link ServerSideContext#executeWithinSelf(Callable)}.
+	 */
 	<T> T trackWhileExecuting(CtxT ctx, Callable<T> operation) throws Exception {
 		currentContex.set(ctx);
 		try {

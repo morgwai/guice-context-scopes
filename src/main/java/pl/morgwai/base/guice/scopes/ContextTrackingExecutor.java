@@ -60,11 +60,12 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
+	/**
+	 * Constructs a fixed size executor using {@link NamedThreadFactory} and an unbound
+	 * {@link LinkedBlockingQueue}.
+	 */
 	public ContextTrackingExecutor(String name, int poolSize, ContextTracker<?>... trackers) {
-		super(poolSize, poolSize, 0l, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-				new NamedThreadFactory(name));
-		this.name = name;
-		this.trackers = trackers;
+		this(name, poolSize, new LinkedBlockingQueue<>(), trackers);
 	}
 
 
@@ -78,7 +79,12 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 	/**
-	 * Retrieves all active contexts from supplied trackers.
+	 * Retrieves all active contexts from {@code trackers}. The returned list can be then used
+	 * as an argument to {@link #executeWithinAll(List, Callable)} to transfer the contexts after
+	 * a switch to another thread.
+	 * <p>
+	 * Libraries usually bind {@code ContextTracker<?>[]} to an instance containing all possible
+	 * trackers for use as an argument for this method.</p>
 	 */
 	public static List<ServerSideContext<?>> getActiveContexts(ContextTracker<?>... trackers) {
 		return Arrays.stream(trackers)
@@ -91,7 +97,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	/**
 	 * Executes {@code operation} synchronously (on the current thread) within all contexts supplied
-	 * via {@code ctxs}.
+	 * via {@code ctxs}. Used to transfer active contexts after a switch to another thread.
+	 *
 	 * @see #getActiveContexts(ContextTracker...)
 	 */
 	public static void executeWithinAll(List<ServerSideContext<?>> ctxs, Runnable operation) {
@@ -118,7 +125,8 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 	/**
 	 * Executes {@code operation} synchronously (on the current thread) within all contexts supplied
-	 * via {@code ctxs}.
+	 * via {@code ctxs}. Used to transfer active contexts after a switch to another thread.
+	 *
 	 * @see #getActiveContexts(ContextTracker...)
 	 */
 	public static <T> T executeWithinAll(List<ServerSideContext<?>> ctxs, Callable<T> operation)
@@ -210,6 +218,9 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
+	/**
+	 * Constructs a fixed size executor using {@link NamedThreadFactory}.
+	 */
 	public ContextTrackingExecutor(
 			String name,
 			int poolSize,
@@ -222,6 +233,10 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
+	/**
+	 * See {@link ThreadPoolExecutor#ThreadPoolExecutor(int, int, long, TimeUnit, BlockingQueue,
+	 * ThreadFactory, RejectedExecutionHandler) super}.
+	 */
 	public ContextTrackingExecutor(
 			String name,
 			int corePoolSize,
@@ -306,6 +321,10 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 
+		/**
+		 * Name of the parent of all thread groups associated with {@link ContextTrackingExecutor}
+		 * instances.
+		 */
 		public static final String PARENT_THREAD_GROUP_NAME = "ContextTrackingExecutors";
 
 		static {
