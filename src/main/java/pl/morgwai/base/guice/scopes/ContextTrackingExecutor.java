@@ -2,19 +2,18 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -46,11 +45,12 @@ import org.slf4j.LoggerFactory;
  *&commat;Named("someOpTypeExecutor")
  *ContextTrackingExecutor someOpTypeExecutor</pre></p>
  * <p>
- * If multiple threads run within the same context (for example by using
- * {@link #invokeAll(Collection)}), then the attributes they access must be thread-safe or properly
- * synchronized.</p>
+ * At app shutdown {@link #tryShutdownGracefully(long)} should be called on every instance.</p>
+ * <p>
+ * If multiple threads run within the same context, then the attributes they access must be
+ * thread-safe or properly synchronized.</p>
  */
-public class ContextTrackingExecutor implements ExecutorService {
+public class ContextTrackingExecutor implements Executor {
 
 
 
@@ -83,6 +83,26 @@ public class ContextTrackingExecutor implements ExecutorService {
 	public void execute(Runnable task) {
 		final var activeCtxs = getActiveContexts(trackers);
 		backingExecutor.execute(() -> executeWithinAll(activeCtxs, task));
+	}
+
+
+
+	/**
+	 * Convenience method to execute a {@link Callable}.
+	 */
+	public <T> CompletableFuture<T> execute(Callable<T> task) {
+		return CompletableFuture.supplyAsync(
+			() -> {
+				try {
+					return task.call();
+				} catch (CompletionException e) {
+					throw e;
+				} catch (Exception e) {
+					throw new CompletionException(e);
+				}
+			},
+			this
+		);
 	}
 
 
@@ -159,74 +179,6 @@ public class ContextTrackingExecutor implements ExecutorService {
 
 
 
-	@Override
-	public <T> Future<T> submit(Callable<T> task) {
-		final var activeCtxs = getActiveContexts(trackers);
-		return backingExecutor.submit(() -> executeWithinAll(activeCtxs, task));
-	}
-
-
-
-	@Override
-	public <T> Future<T> submit(Runnable task, T result) {
-		final var activeCtxs = getActiveContexts(trackers);
-		return backingExecutor.submit(
-			() -> executeWithinAll(activeCtxs, task),
-			result
-		);
-	}
-
-
-
-	@Override
-	public Future<?> submit(Runnable task) {
-		final var activeCtxs = getActiveContexts(trackers);
-		return backingExecutor.submit(() -> executeWithinAll(activeCtxs, task));
-	}
-
-
-
-	@Override
-	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
-			throws InterruptedException {
-		return backingExecutor.invokeAll(wrapTasks(tasks));
-	}
-
-
-
-	<T> List<Callable<T>> wrapTasks(Collection<? extends Callable<T>> tasks) {
-		final var activeCtxs = getActiveContexts(trackers);
-		return tasks.stream()
-				.map((task) -> (Callable<T>) () -> executeWithinAll(activeCtxs, task))
-				.collect(Collectors.toList());
-	}
-
-
-
-	@Override
-	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout,
-			TimeUnit unit) throws InterruptedException {
-		return backingExecutor.invokeAll(wrapTasks(tasks), timeout, unit);
-	}
-
-
-
-	@Override
-	public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
-			throws InterruptedException, ExecutionException {
-		return backingExecutor.invokeAny(wrapTasks(tasks));
-	}
-
-
-
-	@Override
-	public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-			throws InterruptedException, ExecutionException, TimeoutException {
-		return backingExecutor.invokeAny(wrapTasks(tasks), timeout, unit);
-	}
-
-
-
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
 	 * {@link NamedThreadFactory} and throws a
@@ -291,49 +243,26 @@ public class ContextTrackingExecutor implements ExecutorService {
 
 
 	/**
-	 * Calls {@link #shutdown()} and waits <code>timeoutSeconds</code> for termination. If it fails,
-	 * calls {@link #shutdownNow()}.
+	 * Calls {@link #shutdown()} and awaits up to <code>timeoutSeconds</code> for termination.
+	 * If it fails, calls {@link #shutdownNow()}.<br/>
 	 * Logs outcome to {@link Logger} named after this class.
+	 * <p>
+	 * Should be called at app shutdown.</p>
 	 * @return <code>null</code> if the executor was shutdown cleanly, list of tasks returned by
 	 *     {@link #shutdownNow()} otherwise.
 	 */
-	public List<Runnable> tryShutdownGracefully(long timeoutSeconds) {
-		shutdown();
+	public List<Runnable> tryShutdownGracefully(int timeoutSeconds) {
+		backingExecutor.shutdown();
 		try {
-			awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
+			backingExecutor.awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {}
-		if ( ! isTerminated()) {
+		if ( ! backingExecutor.isTerminated()) {
 			log.warn("executor " + name + " hasn't shutdown cleanly");
-			return shutdownNow();
+			return backingExecutor.shutdownNow();
 		} else {
 			log.info("executor " + name + " shutdown completed");
 			return null;
 		}
-	}
-
-	@Override
-	public void shutdown() {
-		backingExecutor.shutdown();
-	}
-
-	@Override
-	public List<Runnable> shutdownNow() {
-		return backingExecutor.shutdownNow();
-	}
-
-	@Override
-	public boolean isShutdown() {
-		return backingExecutor.isShutdown();
-	}
-
-	@Override
-	public boolean isTerminated() {
-		return backingExecutor.isTerminated();
-	}
-
-	@Override
-	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-		return backingExecutor.awaitTermination(timeout, unit);
 	}
 
 

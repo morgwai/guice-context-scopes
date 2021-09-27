@@ -2,8 +2,6 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -99,78 +97,26 @@ public class ContextTrackingExecutorTest {
 
 
 	@Test
-	public void testWrapTasks() throws Exception {
-		final var ctx1 = new TestContext1(tracker1);
-		final var ctx3 = new TestContext3(tracker3);
-		final int numberOfTasks = 5;
-		final var tasks = new ArrayList<Callable<Void>>(numberOfTasks);
-		final boolean[] executed = new boolean[numberOfTasks];
-		for (int i = 0; i < numberOfTasks; i++) {
-			final Integer taskNumber = Integer.valueOf(i);
-			tasks.add(() -> {
-				final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
-				assertEquals("there should be 2 active ctxs",  2, activeCtxs.size());
-				assertTrue("ctx1 should be active", activeCtxs.contains(ctx1));
-				assertTrue("ctx3 should be active", activeCtxs.contains(ctx3));
-				executed[taskNumber] = true;
-				return null;
-			});
-		}
-
-		List<?>[] resultHolder = {null};
-		ctx1.executeWithinSelf(
-			() -> ctx3.executeWithinSelf(() -> {
-				resultHolder[0] = executor.wrapTasks(tasks);
-			})
-		);
-		@SuppressWarnings("unchecked")
-		List<Callable<Void>> result = (List<Callable<Void>>) resultHolder[0];
-
-		assertEquals("", numberOfTasks, result.size());
-		for (var task: result) task.call();
-		for (int i = 0; i < numberOfTasks; i++) {
-			assertTrue("task " + i + "should be executed", executed[i]);
-		}
-	}
-
-
-
-	@Test
-	public void testInvokeAll() throws Exception {
+	public void testExecuteCallable() throws Exception {
 		final AssertionError[] errorHolder = {null};
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx3 = new TestContext3(tracker3);
-		final int numberOfTasks = 5;
-		final var tasks = new ArrayList<Callable<Void>>(numberOfTasks);
-		final boolean[] executed = new boolean[numberOfTasks];
-		for (int i = 0; i < numberOfTasks; i++) {
-			final Integer taskNumber = Integer.valueOf(i);
-			tasks.add(() -> {
-				final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
-				try {
-					assertEquals("there should be 2 active ctxs",  2, activeCtxs.size());
-					assertTrue("ctx1 should be active", activeCtxs.contains(ctx1));
-					assertTrue("ctx3 should be active", activeCtxs.contains(ctx3));
-					synchronized (executed) {
-						executed[taskNumber] = true;
-					}
-				} catch (AssertionError e) {
-					errorHolder[0] = e;
-				}
-				return null;
-			});
-		}
-
-		ctx1.executeWithinSelf(
+		String result = "result";
+		var callFuture = ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(() -> {
-				executor.invokeAll(tasks);
-				return null;
+				return executor.execute(() -> {
+					try {
+						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
+						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+						return result;
+					} catch (AssertionError e) {
+						errorHolder[0] = e;
+						throw e;
+					}
+				});
 			})
 		);
-
-		for (int i = 0; i < numberOfTasks; i++) {
-			assertTrue("task " + i + "should be executed", executed[i]);
-		}
+		assertSame("result should match", result, callFuture.get(500l, TimeUnit.MILLISECONDS));
 		if (errorHolder[0] != null) throw errorHolder[0];
 	}
 
