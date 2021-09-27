@@ -28,20 +28,20 @@ import org.slf4j.LoggerFactory;
  * when executing a task. By default backed by a fixed size {@link ThreadPoolExecutor}.
  * <p>
  * Instances usually correspond 1-1 with some type of blocking or time consuming operations, such
- * as CPU/GPU intensive calculations or blocking network communication with some resource.<br/>
+ * as CPU intensive calculations or blocking network communication with some resource.<br/>
  * In case of network operations, a given threadPool size should usually correspond to the pool size
  * of the connections to the given resource.<br/>
- * In case of CPU/GPU intensive operations, it should usually correspond to the number of given
- * cores available to the process.</p>
+ * In case of CPU intensive operations, it should usually correspond to the number of cores
+ * available to the process ({@link Runtime#availableProcessors()}).</p>
  * <p>
- * Instances are usually created at app startup, stored on static vars and/or configured for
- * injection using</p>
+ * Instances are usually created at app startup, stored on static vars and/or bound for
+ * injection with a specific {@link com.google.inject.name.Names#named(String) name}:</p>
  * <pre>
  *bind(ContextTrackingExecutor.class)
  *    .annotatedWith(Names.named("someOpTypeExecutor"))
  *    .toInstance(...)</pre>
  * <p>
- * and injected with</p>
+ * and then injected using @{@link com.google.inject.name.Named Named} annotation:</p>
  * <pre>
  *&commat;Named("someOpTypeExecutor")
  *ContextTrackingExecutor someOpTypeExecutor</pre></p>
