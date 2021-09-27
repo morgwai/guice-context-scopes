@@ -10,7 +10,7 @@
 
 	<groupId>pl.morgwai.base</groupId>
 	<artifactId>guice-context-scopes</artifactId>
-	<version>1.1-SNAPSHOT</version>
+	<version>2.0-SNAPSHOT</version>
 
 	<name>Guice Context Scopes</name>
 	<description>Classes for building Guice scopes, that get automatically transferred when dispatching work to other threads</description>

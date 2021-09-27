@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -23,8 +24,8 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * A {@link ThreadPoolExecutor} that upon task execution automatically updates which thread runs
- * within which {@link ServerSideContext} using {@link ContextTracker}s supplied via constructor.
+ * An executor that automatically updates which thread runs within which {@link ServerSideContext}
+ * when executing a task. By default backed by a fixed size {@link ThreadPoolExecutor}.
  * <p>
  * Instances usually correspond 1-1 with some type of blocking or time consuming operations, such
  * as CPU/GPU intensive calculations or blocking network communication with some resource.<br/>
@@ -49,11 +50,16 @@ import org.slf4j.LoggerFactory;
  * {@link #invokeAll(Collection)}), then the attributes they access must be thread-safe or properly
  * synchronized.</p>
  */
-public class ContextTrackingExecutor extends ThreadPoolExecutor {
+public class ContextTrackingExecutor implements ExecutorService {
 
 
 
 	final ContextTracker<?>[] trackers;
+
+	final ExecutorService backingExecutor;
+
+	final int poolSize;
+	public int getPoolSize() { return poolSize; }
 
 	final String name;
 	public String getName() { return name; }
@@ -61,8 +67,11 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 
 
 	/**
-	 * Constructs a fixed size executor using {@link NamedThreadFactory} and an unbound
-	 * {@link LinkedBlockingQueue}.
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
+	 * {@link NamedThreadFactory} and an unbound {@link LinkedBlockingQueue}.
+	 * <p>
+	 * To avoid {@link OutOfMemoryError}s, an external mechanism that limits maximum number of tasks
+	 * (such as a load balancer or frontend) should be used.</p>
 	 */
 	public ContextTrackingExecutor(String name, int poolSize, ContextTracker<?>... trackers) {
 		this(name, poolSize, new LinkedBlockingQueue<>(), trackers);
@@ -73,7 +82,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public void execute(Runnable task) {
 		final var activeCtxs = getActiveContexts(trackers);
-		super.execute(() -> executeWithinAll(activeCtxs, task));
+		backingExecutor.execute(() -> executeWithinAll(activeCtxs, task));
 	}
 
 
@@ -153,7 +162,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
 		final var activeCtxs = getActiveContexts(trackers);
-		return super.submit(() -> executeWithinAll(activeCtxs, task));
+		return backingExecutor.submit(() -> executeWithinAll(activeCtxs, task));
 	}
 
 
@@ -161,7 +170,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> Future<T> submit(Runnable task, T result) {
 		final var activeCtxs = getActiveContexts(trackers);
-		return super.submit(
+		return backingExecutor.submit(
 			() -> executeWithinAll(activeCtxs, task),
 			result
 		);
@@ -172,7 +181,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public Future<?> submit(Runnable task) {
 		final var activeCtxs = getActiveContexts(trackers);
-		return super.submit(() -> executeWithinAll(activeCtxs, task));
+		return backingExecutor.submit(() -> executeWithinAll(activeCtxs, task));
 	}
 
 
@@ -180,7 +189,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException {
-		return super.invokeAll(wrapTasks(tasks));
+		return backingExecutor.invokeAll(wrapTasks(tasks));
 	}
 
 
@@ -197,7 +206,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout,
 			TimeUnit unit) throws InterruptedException {
-		return super.invokeAll(wrapTasks(tasks), timeout, unit);
+		return backingExecutor.invokeAll(wrapTasks(tasks), timeout, unit);
 	}
 
 
@@ -205,7 +214,7 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException, ExecutionException {
-		return super.invokeAny(wrapTasks(tasks));
+		return backingExecutor.invokeAny(wrapTasks(tasks));
 	}
 
 
@@ -213,49 +222,69 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
 			throws InterruptedException, ExecutionException, TimeoutException {
-		return super.invokeAny(wrapTasks(tasks), timeout, unit);
+		return backingExecutor.invokeAny(wrapTasks(tasks), timeout, unit);
 	}
 
 
 
 	/**
-	 * Constructs a fixed size executor using {@link NamedThreadFactory}.
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
+	 * {@link NamedThreadFactory} and throws a
+	 * {@link java.util.concurrent.RejectedExecutionException} if {@code workQueue} is full.
+	 * <p>
+	 * A {@link java.util.concurrent.RejectedExecutionException} should usually be handled by
+	 * informing the client that the service has temporarily exceeded its capacity (for example a
+	 * gRPC can send status {@code UNAVAILABLE(14)} and a servlet can send status
+	 * {@code 503 Service Unavailable}).</p>
 	 */
 	public ContextTrackingExecutor(
 			String name,
 			int poolSize,
 			BlockingQueue<Runnable> workQueue,
 			ContextTracker<?>... trackers) {
-		super(poolSize, poolSize, 0l, TimeUnit.SECONDS, workQueue, new NamedThreadFactory(name));
 		this.name = name;
+		this.poolSize = poolSize;
 		this.trackers = trackers;
+		backingExecutor = new ThreadPoolExecutor(
+				poolSize, poolSize, 0l, TimeUnit.SECONDS, workQueue, new NamedThreadFactory(name));
 	}
 
 
 
 	/**
-	 * See {@link ThreadPoolExecutor#ThreadPoolExecutor(int, int, long, TimeUnit, BlockingQueue,
-	 * ThreadFactory, RejectedExecutionHandler) super}.
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor}.
+	 *
+	 * @see ThreadPoolExecutor#ThreadPoolExecutor(int, int, long, TimeUnit, BlockingQueue,
+	 * ThreadFactory, RejectedExecutionHandler)
 	 */
 	public ContextTrackingExecutor(
 			String name,
-			int corePoolSize,
-			int maximumPoolSize,
-			long keepAliveTime,
-			TimeUnit unit,
+			int poolSize,
 			BlockingQueue<Runnable> workQueue,
 			ThreadFactory threadFactory,
 			RejectedExecutionHandler handler,
 			ContextTracker<?>... trackers) {
-		super(
-				corePoolSize,
-				maximumPoolSize,
-				keepAliveTime,
-				unit,
-				workQueue,
-				threadFactory,
-				handler);
 		this.name = name;
+		this.poolSize = poolSize;
+		this.trackers = trackers;
+		backingExecutor = new ThreadPoolExecutor(
+				poolSize, poolSize, 0l, TimeUnit.SECONDS, workQueue, threadFactory, handler);
+	}
+
+
+
+	/**
+	 * Constructs an instance backed by {@code backingExecutor}.
+	 * {@code poolSize} is informative only, to be returned by {@link #getPoolSize()}.
+	 */
+	public ContextTrackingExecutor(
+			String name,
+			ExecutorService backingExecutor,
+			int poolSize,
+			ContextTracker<?>... trackers) {
+		this.name = name;
+		this.backingExecutor = backingExecutor;
+		this.poolSize = poolSize;
 		this.trackers = trackers;
 	}
 
@@ -274,15 +303,37 @@ public class ContextTrackingExecutor extends ThreadPoolExecutor {
 			awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {}
 		if ( ! isTerminated()) {
-			final int activeCount = getActiveCount();
-			final List<Runnable> unstartedTasks = shutdownNow();
-			log.warn(activeCount + " active and " + unstartedTasks.size()
-					+ " unstarted tasks are still remaining in executor " + name);
-			return unstartedTasks;
+			log.warn("executor " + name + " hasn't shutdown cleanly");
+			return shutdownNow();
 		} else {
 			log.info("executor " + name + " shutdown completed");
 			return null;
 		}
+	}
+
+	@Override
+	public void shutdown() {
+		backingExecutor.shutdown();
+	}
+
+	@Override
+	public List<Runnable> shutdownNow() {
+		return backingExecutor.shutdownNow();
+	}
+
+	@Override
+	public boolean isShutdown() {
+		return backingExecutor.isShutdown();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return backingExecutor.isTerminated();
+	}
+
+	@Override
+	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+		return backingExecutor.awaitTermination(timeout, unit);
 	}
 
 
