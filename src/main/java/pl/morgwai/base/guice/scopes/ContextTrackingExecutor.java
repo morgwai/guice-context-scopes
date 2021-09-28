@@ -55,7 +55,7 @@ public class ContextTrackingExecutor implements Executor {
 
 	final ContextTracker<?>[] trackers;
 
-	final ExecutorService backingExecutor;
+	protected final ExecutorService backingExecutor;
 
 	final int poolSize;
 	public int getPoolSize() { return poolSize; }
@@ -319,5 +319,6 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
-	static final Logger log = LoggerFactory.getLogger(ContextTrackingExecutor.class.getName());
+	protected static final Logger log =
+			LoggerFactory.getLogger(ContextTrackingExecutor.class.getName());
 }
