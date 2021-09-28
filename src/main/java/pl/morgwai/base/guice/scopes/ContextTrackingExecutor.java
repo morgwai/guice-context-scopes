@@ -10,7 +10,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -181,13 +180,12 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
-	 * {@link NamedThreadFactory} and throws a
-	 * {@link java.util.concurrent.RejectedExecutionException} if {@code workQueue} is full.
+	 * {@link NamedThreadFactory}.
 	 * <p>
-	 * A {@link java.util.concurrent.RejectedExecutionException} should usually be handled by
-	 * informing the client that the service has temporarily exceeded its capacity (for example a
-	 * gRPC can send status {@code UNAVAILABLE(14)} and a servlet can send status
-	 * {@code 503 Service Unavailable}).</p>
+	 * Throws a {@link java.util.concurrent.RejectedExecutionException} if {@code workQueue} is
+	 * full. It should usually be handled by informing the client that the service has temporarily
+	 * exceeded its capacity (for example a gRPC can send status {@code UNAVAILABLE(14)} and a
+	 * servlet can send status {@code 503 Service Unavailable}).</p>
 	 */
 	public ContextTrackingExecutor(
 			String name,
@@ -205,22 +203,23 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor}.
-	 *
-	 * @see ThreadPoolExecutor#ThreadPoolExecutor(int, int, long, TimeUnit, BlockingQueue,
-	 * ThreadFactory, RejectedExecutionHandler)
+	 * <p>
+	 * Throws a {@link java.util.concurrent.RejectedExecutionException} if {@code workQueue} is
+	 * full. It should usually be handled by informing the client that the service has temporarily
+	 * exceeded its capacity (for example a gRPC can send status {@code UNAVAILABLE(14)} and a
+	 * servlet can send status {@code 503 Service Unavailable}).</p>
 	 */
 	public ContextTrackingExecutor(
 			String name,
 			int poolSize,
 			BlockingQueue<Runnable> workQueue,
 			ThreadFactory threadFactory,
-			RejectedExecutionHandler handler,
 			ContextTracker<?>... trackers) {
 		this.name = name;
 		this.poolSize = poolSize;
 		this.trackers = trackers;
 		backingExecutor = new ThreadPoolExecutor(
-				poolSize, poolSize, 0l, TimeUnit.SECONDS, workQueue, threadFactory, handler);
+				poolSize, poolSize, 0l, TimeUnit.SECONDS, workQueue, threadFactory);
 	}
 
 

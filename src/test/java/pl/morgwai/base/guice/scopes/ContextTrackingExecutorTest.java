@@ -3,6 +3,8 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.ArrayList;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,8 +25,10 @@ public class ContextTrackingExecutorTest {
 	final ContextTracker<TestContext3> tracker3 = new ContextTracker<>();
 	final ContextTracker<?>[] allTrackers = {tracker1, tracker2, tracker3};
 
+	static final int POOL_SIZE = 2;
+	static final int QUEUE_SIZE = 1;
 	final ContextTrackingExecutor executor = new ContextTrackingExecutor(
-			"testExecutor", 4, allTrackers);
+			"testExecutor", POOL_SIZE, new LinkedBlockingQueue<>(QUEUE_SIZE), allTrackers);
 
 
 
@@ -118,6 +122,23 @@ public class ContextTrackingExecutorTest {
 		);
 		assertSame("result should match", result, callFuture.get(500l, TimeUnit.MILLISECONDS));
 		if (errorHolder[0] != null) throw errorHolder[0];
+	}
+
+
+
+	@Test
+	public void testExecutionRejection() throws Exception {
+		final var ctx1 = new TestContext1(tracker1);
+		try {
+			ctx1.executeWithinSelf(() -> {
+				for (int i = 0; i < POOL_SIZE + QUEUE_SIZE + 1; i++) executor.execute(() -> {
+					try {
+						Thread.sleep(100l);
+					} catch (InterruptedException e) {}
+				});
+			});
+			fail("exception should be thrown");
+		} catch (RejectedExecutionException e) {}
 	}
 
 
