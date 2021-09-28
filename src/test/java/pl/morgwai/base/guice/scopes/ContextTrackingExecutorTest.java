@@ -4,7 +4,12 @@ package pl.morgwai.base.guice.scopes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import org.junit.After;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -66,10 +71,11 @@ public class ContextTrackingExecutorTest {
 
 
 	@Test
-	public void testExecute() {
+	public void testExecute() throws Exception {
 		final AssertionError[] errorHolder = {null};
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx3 = new TestContext3(tracker3);
+		var barrier = new CyclicBarrier(2);
 		ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(() -> {
 				executor.execute(() -> {
@@ -78,10 +84,15 @@ public class ContextTrackingExecutorTest {
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
 					} catch (AssertionError e) {
 						errorHolder[0] = e;
+					} finally {
+						try {
+							barrier.await();
+						} catch (Exception e) {}
 					}
 				});
 			})
 		);
+		barrier.await(500l, TimeUnit.MILLISECONDS);
 		if (errorHolder[0] != null) throw errorHolder[0];
 	}
 
@@ -161,6 +172,14 @@ public class ContextTrackingExecutorTest {
 			assertTrue("task " + i + "should be executed", executed[i]);
 		}
 		if (errorHolder[0] != null) throw errorHolder[0];
+	}
+
+
+
+	@After
+	public void shutdown() {
+		Logger.getLogger(ContextTrackingExecutor.class.getName()).setLevel(Level.WARNING);
+		executor.tryShutdownGracefully(1);
 	}
 
 
