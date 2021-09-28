@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  *&commat;Named("someOpTypeExecutor")
  *ContextTrackingExecutor someOpTypeExecutor</pre></p>
  * <p>
- * At app shutdown {@link #tryShutdownGracefully(long)} should be called on every instance.</p>
+ * At app shutdown {@link #tryShutdownGracefully(int)} should be called on every instance.</p>
  * <p>
  * If multiple threads run within the same context, then the attributes they access must be
  * thread-safe or properly synchronized.</p>
@@ -242,13 +242,13 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Calls {@link #shutdown()} and awaits up to <code>timeoutSeconds</code> for termination.
-	 * If it fails, calls {@link #shutdownNow()}.<br/>
+	 * Calls {@code backingExecutor.shutdown()} and awaits up to <code>timeoutSeconds</code> for
+	 * termination. If it fails, calls {@code backingExecutor.shutdownNow()}.<br/>
 	 * Logs outcome to {@link Logger} named after this class.
 	 * <p>
 	 * Should be called at app shutdown.</p>
 	 * @return <code>null</code> if the executor was shutdown cleanly, list of tasks returned by
-	 *     {@link #shutdownNow()} otherwise.
+	 *     {@code backingExecutor.shutdownNow()} otherwise.
 	 */
 	public List<Runnable> tryShutdownGracefully(int timeoutSeconds) {
 		backingExecutor.shutdown();
