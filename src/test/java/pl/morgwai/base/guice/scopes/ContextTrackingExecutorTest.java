@@ -129,16 +129,51 @@ public class ContextTrackingExecutorTest {
 	@Test
 	public void testExecutionRejection() throws Exception {
 		final var ctx1 = new TestContext1(tracker1);
-		try {
-			ctx1.executeWithinSelf(() -> {
-				for (int i = 0; i < POOL_SIZE + QUEUE_SIZE + 1; i++) executor.execute(() -> {
+		var barrier = new CyclicBarrier(POOL_SIZE + 1);
+		ctx1.executeWithinSelf(() -> {
+			for (int i = 0; i < POOL_SIZE; i++) {
+				executor.execute(() -> {
 					try {
-						Thread.sleep(100l);
-					} catch (InterruptedException e) {}
+						barrier.await(500l, TimeUnit.MILLISECONDS);
+					} catch (Exception e) {}
 				});
-			});
-			fail("exception should be thrown");
-		} catch (RejectedExecutionException e) {}
+			}
+			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});
+			try {
+				executor.execute(() -> {});
+				fail("RejectedExecutionException should be thrown");
+			} catch (RejectedExecutionException e) {  // expected
+			} finally {
+				barrier.await(500l, TimeUnit.MILLISECONDS);
+			}
+			return null;
+		});
+	}
+
+
+
+	@Test
+	public void testCallableExecutionRejection() throws Exception {
+		final var ctx1 = new TestContext1(tracker1);
+		var barrier = new CyclicBarrier(POOL_SIZE + 1);
+		ctx1.executeWithinSelf(() -> {
+			for (int i = 0; i < POOL_SIZE; i++) {
+				executor.execute(() -> {
+					try {
+						barrier.await(500l, TimeUnit.MILLISECONDS);
+					} catch (Exception e) {}
+				});
+			}
+			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});
+			try {
+				executor.execute(() -> "result");
+				fail("RejectedExecutionException should be thrown");
+			} catch (RejectedExecutionException e) {  // expected
+			} finally {
+				barrier.await(500l, TimeUnit.MILLISECONDS);
+			}
+			return null;
+		});
 	}
 
 
