@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.junit.After;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -182,6 +183,13 @@ public class ContextTrackingExecutorTest {
 	public void shutdown() {
 		Logger.getLogger(ContextTrackingExecutor.class.getName()).setLevel(Level.WARNING);
 		executor.tryShutdownGracefully(1);
+	}
+
+
+
+	@BeforeClass
+	public static void setupLogging() {
+		for (final var handler: Logger.getLogger("").getHandlers()) handler.setLevel(Level.SEVERE);
 	}
 
 
