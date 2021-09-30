@@ -1,7 +1,8 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -54,21 +55,52 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx2 = new TestContext2(tracker2);
 		final var ctx3 = new TestContext3(tracker3);
-		final var allCtxs = new ArrayList<ServerSideContext<?>>(3);
-		allCtxs.add(ctx1);
-		allCtxs.add(ctx2);
-		allCtxs.add(ctx3);
-		ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
-			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
-			assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
-			assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
-			return null;
-		});
+		List<ServerSideContext<?>> allCtxs = Arrays.asList(ctx1, ctx2, ctx3);
 		ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
 			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 			assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
 			assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
 		});
+	}
+
+
+
+	@Test
+	public void testExecuteWithinAllCallable() throws Exception {
+		final var ctx1 = new TestContext1(tracker1);
+		final var ctx2 = new TestContext2(tracker2);
+		final var ctx3 = new TestContext3(tracker3);
+		List<ServerSideContext<?>> allCtxs = Arrays.asList(ctx1, ctx2, ctx3);
+		String result = "result";
+		var obtained = ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
+			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
+			assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
+			assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+			return result;
+		});
+		assertSame("result should match", result, obtained);
+	}
+
+
+
+	@Test
+	public void testExecuteWithinAllThrows() {
+		final var ctx1 = new TestContext1(tracker1);
+		final var ctx2 = new TestContext2(tracker2);
+		final var ctx3 = new TestContext3(tracker3);
+		List<ServerSideContext<?>> allCtxs = Arrays.asList(ctx1, ctx2, ctx3);
+		var thrown = new Exception();
+		try {
+			ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
+				assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
+				assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
+				assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+				throw thrown;
+			});
+			fail("exception should be thrown");
+		} catch (Exception caught) {
+			assertSame("caught exception should be the same as thrown", thrown,  caught);
+		}
 	}
 
 

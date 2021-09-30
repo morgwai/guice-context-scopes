@@ -164,23 +164,20 @@ public class ContextTrackingExecutor implements Executor {
 	 *
 	 * @see #getActiveContexts(ContextTracker...)
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> T executeWithinAll(List<ServerSideContext<?>> contexts, Callable<T> operation)
 			throws Exception {
-		switch (contexts.size()) {
-			case 1:
-				return contexts.get(0).executeWithinSelf(operation);
-			case 2:
-				return contexts.get(1).executeWithinSelf(
-						() -> contexts.get(0).executeWithinSelf(operation));
-			case 0:
-				log.warn(Thread.currentThread().getName() + " is running outside of any context");
-				return operation.call();
-			default:
-				return executeWithinAll(
-					contexts.subList(1, contexts.size()),
-					() -> contexts.get(0).executeWithinSelf(operation)
-				);
-		}
+		final Object[] resultHolder = {null};
+		final Exception[] exceptionHolder = {null};
+		executeWithinAll(contexts, () -> {
+			try {
+				resultHolder[0] = operation.call();
+			} catch (Exception e) {
+				exceptionHolder[0] = e;
+			}
+		});
+		if (exceptionHolder[0] != null) throw exceptionHolder[0];
+		return (T) resultHolder[0];
 	}
 
 
