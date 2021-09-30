@@ -270,6 +270,15 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
+	/**
+	 * Calls {@code backingExecutor.isShutdown()}.
+	 */
+	public boolean isShutdown() {
+		return backingExecutor.isShutdown();
+	}
+
+
+
 	// in addition to a RejectedExecutionException, logs a warning if the executor is overloaded
 	final RejectedExecutionHandler rejectionHandler = (task, executor) -> {
 		if (executor.isShutdown()) {
