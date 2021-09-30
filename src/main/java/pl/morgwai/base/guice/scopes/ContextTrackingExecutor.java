@@ -69,7 +69,7 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
-	 * {@link NamedThreadFactory} and an unbound {@link LinkedBlockingQueue}.
+	 * {@link NamedThreadFactory NamedThreadFactory} and an unbound {@link LinkedBlockingQueue}.
 	 * <p>
 	 * To avoid {@link OutOfMemoryError}s, an external mechanism that limits maximum number of tasks
 	 * (such as a load balancer or a frontend proxy) should be used.</p>
@@ -82,6 +82,7 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Convenience method to execute a {@link Callable}.
+	 * @see #execute(Runnable)
 	 */
 	public <T> CompletableFuture<T> execute(Callable<T> task) {
 		return CompletableFuture.supplyAsync(
@@ -100,6 +101,9 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
+	/**
+	 * Executes {@code task} within all contexts that were active when this method was called.
+	 */
 	@Override
 	public void execute(Runnable task) {
 		final var activeCtxs = getActiveContexts(trackers);
@@ -110,7 +114,7 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Retrieves all active contexts from {@code trackers}. The returned list can be then used
-	 * as an argument to {@link #executeWithinAll(List, Callable)} to transfer the contexts after
+	 * as an argument to {@link #executeWithinAll(List, Runnable)} to transfer the contexts after
 	 * a switch to another thread.
 	 * <p>
 	 * Libraries usually bind {@code ContextTracker<?>[]} to an instance containing all possible
@@ -126,18 +130,19 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Executes {@code operation} synchronously (on the current thread) within all contexts supplied
-	 * via {@code ctxs}. Used to transfer active contexts after a switch to another thread.
+	 * Executes {@code operation} on the current thread within all {@code contexts}.
+	 * Used to transfer active contexts after a switch to another thread.
 	 *
 	 * @see #getActiveContexts(ContextTracker...)
 	 */
-	public static void executeWithinAll(List<ServerSideContext<?>> ctxs, Runnable operation) {
-		switch (ctxs.size()) {
+	public static void executeWithinAll(List<ServerSideContext<?>> contexts, Runnable operation) {
+		switch (contexts.size()) {
 			case 1:
-				ctxs.get(0).executeWithinSelf(operation);
+				contexts.get(0).executeWithinSelf(operation);
 				return;
 			case 2:
-				ctxs.get(1).executeWithinSelf(() -> ctxs.get(0).executeWithinSelf(operation));
+				contexts.get(1).executeWithinSelf(
+						() -> contexts.get(0).executeWithinSelf(operation));
 				return;
 			case 0:
 				log.warn(Thread.currentThread().getName() + " is running outside of any context");
@@ -145,8 +150,8 @@ public class ContextTrackingExecutor implements Executor {
 				return;
 			default:
 				executeWithinAll(
-					ctxs.subList(1, ctxs.size()),
-					() -> ctxs.get(0).executeWithinSelf(operation)
+					contexts.subList(1, contexts.size()),
+					() -> contexts.get(0).executeWithinSelf(operation)
 				);
 		}
 	}
@@ -154,26 +159,26 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Executes {@code operation} synchronously (on the current thread) within all contexts supplied
-	 * via {@code ctxs}. Used to transfer active contexts after a switch to another thread.
+	 * Executes {@code operation} on the current thread within all {@code contexts}.
+	 * Used to transfer active contexts after a switch to another thread.
 	 *
 	 * @see #getActiveContexts(ContextTracker...)
 	 */
-	public static <T> T executeWithinAll(List<ServerSideContext<?>> ctxs, Callable<T> operation)
+	public static <T> T executeWithinAll(List<ServerSideContext<?>> contexts, Callable<T> operation)
 			throws Exception {
-		switch (ctxs.size()) {
+		switch (contexts.size()) {
 			case 1:
-				return ctxs.get(0).executeWithinSelf(operation);
+				return contexts.get(0).executeWithinSelf(operation);
 			case 2:
-				return ctxs.get(1).executeWithinSelf(
-						() -> ctxs.get(0).executeWithinSelf(operation));
+				return contexts.get(1).executeWithinSelf(
+						() -> contexts.get(0).executeWithinSelf(operation));
 			case 0:
 				log.warn(Thread.currentThread().getName() + " is running outside of any context");
 				return operation.call();
 			default:
 				return executeWithinAll(
-					ctxs.subList(1, ctxs.size()),
-					() -> ctxs.get(0).executeWithinSelf(operation)
+					contexts.subList(1, contexts.size()),
+					() -> contexts.get(0).executeWithinSelf(operation)
 				);
 		}
 	}
@@ -182,7 +187,7 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
-	 * {@link NamedThreadFactory}.
+	 * {@link NamedThreadFactory NamedThreadFactory}.
 	 * <p>
 	 * {@link #execute(Runnable)} throws a {@link RejectedExecutionException} if {@code workQueue}
 	 * is full. It should usually be handled by informing the client that the service has
