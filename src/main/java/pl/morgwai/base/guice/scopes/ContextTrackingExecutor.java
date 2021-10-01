@@ -313,7 +313,7 @@ public class ContextTrackingExecutor implements Executor {
 		/**
 		 * Constructs a factory that will assign {@link Thread#NORM_PRIORITY} to created threads.
 		 */
-		NamedThreadFactory(String name) {
+		public NamedThreadFactory(String name) {
 			this(name, Thread.NORM_PRIORITY);
 		}
 
@@ -322,7 +322,7 @@ public class ContextTrackingExecutor implements Executor {
 		/**
 		 * Constructs a factory that will assign {@code priority} to created threads.
 		 */
-		NamedThreadFactory(String name, int priority) {
+		public NamedThreadFactory(String name, int priority) {
 			threadGroup = new ThreadGroup(contextTrackingExecutors, name);
 			threadGroup.setMaxPriority(priority);
 			namePrefix = name + "-thread-";
