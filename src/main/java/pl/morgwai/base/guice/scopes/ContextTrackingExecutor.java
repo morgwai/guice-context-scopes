@@ -37,14 +37,14 @@ import org.slf4j.LoggerFactory;
  * Instances are usually created at app startup, stored on static vars and/or bound for
  * injection with a specific {@link com.google.inject.name.Names#named(String) name}:</p>
  * <pre>
- *bind(ContextTrackingExecutor.class)
- *    .annotatedWith(Names.named("someOpTypeExecutor"))
- *    .toInstance(...)</pre>
+ * bind(ContextTrackingExecutor.class)
+ *     .annotatedWith(Names.named("someOpTypeExecutor"))
+ *     .toInstance(...)</pre>
  * <p>
  * and then injected using @{@link com.google.inject.name.Named Named} annotation:</p>
  * <pre>
- *&commat;Named("someOpTypeExecutor")
- *ContextTrackingExecutor someOpTypeExecutor</pre></p>
+ * &commat;Named("someOpTypeExecutor")
+ * ContextTrackingExecutor someOpTypeExecutor</pre></p>
  * <p>
  * At app shutdown {@link #tryShutdownGracefully(int)} should be called on every instance.</p>
  * <p>

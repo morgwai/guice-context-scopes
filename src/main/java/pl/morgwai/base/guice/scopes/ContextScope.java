@@ -34,21 +34,21 @@ public class ContextScope<CtxT extends ServerSideContext<CtxT>> implements Scope
 	 * static helper methods {@link ContextTrackingExecutor#getActiveContexts(ContextTracker...)}
 	 * and {@link ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)} to fix it:
 	 * <pre>
-	 *class MyClass {
+	 * class MyClass {
 	 *
-	 *    &commat;Inject ContextTracker&lt;ContextT1&gt; tracker1;
-	 *    &commat;Inject ContextTracker&lt;ContextT2&gt; tracker2;
+	 *     &commat;Inject ContextTracker&lt;ContextT1&gt; tracker1;
+	 *     &commat;Inject ContextTracker&lt;ContextT2&gt; tracker2;
 	 *
-	 *    void myMethod(Object param) {
-	 *        // myMethod code
-	 *        var activeCtxList = ContextTrackingExecutor.getActiveContexts(tracker1, tracker2);
-	 *        someAsyncMethod(param, (callbackParam) -&gt;
-	 *            ContextTrackingExecutor.executeWithinAll(activeCtxList, () -&gt; {
-	 *                // callback code
-	 *            }
-	 *        ));
-	 *    }
-	 *}</pre>
+	 *     void myMethod(Object param) {
+	 *         // myMethod code
+	 *         var activeCtxList = ContextTrackingExecutor.getActiveContexts(tracker1, tracker2);
+	 *         someAsyncMethod(param, (callbackParam) -&gt;
+	 *             ContextTrackingExecutor.executeWithinAll(activeCtxList, () -&gt; {
+	 *                 // callback code
+	 *             }
+	 *         ));
+	 *     }
+	 * }</pre>
 	 */
 	@Override
 	public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
