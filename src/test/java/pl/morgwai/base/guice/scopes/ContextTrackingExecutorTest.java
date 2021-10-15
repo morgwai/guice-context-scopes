@@ -51,7 +51,7 @@ public class ContextTrackingExecutorTest {
 
 
 	@Test
-	public void testExecuteWithinAll() throws Exception {
+	public void testExecuteWithinAll() {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx2 = new TestContext2(tracker2);
 		final var ctx3 = new TestContext3(tracker3);
@@ -112,8 +112,8 @@ public class ContextTrackingExecutorTest {
 		final var ctx3 = new TestContext3(tracker3);
 		var barrier = new CyclicBarrier(2);
 		ctx1.executeWithinSelf(
-			() -> ctx3.executeWithinSelf(() -> {
-				executor.execute(() -> {
+			() -> ctx3.executeWithinSelf(
+				() -> executor.execute(() -> {
 					try {
 						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
@@ -122,10 +122,10 @@ public class ContextTrackingExecutorTest {
 					} finally {
 						try {
 							barrier.await();
-						} catch (Exception e) {}
+						} catch (Exception ignored) {}
 					}
-				});
-			})
+				})
+			)
 		);
 		barrier.await(500l, TimeUnit.MILLISECONDS);
 		if (errorHolder[0] != null) throw errorHolder[0];
@@ -140,8 +140,8 @@ public class ContextTrackingExecutorTest {
 		final var ctx3 = new TestContext3(tracker3);
 		String result = "result";
 		var callFuture = ctx1.executeWithinSelf(
-			() -> ctx3.executeWithinSelf(() -> {
-				return executor.execute(() -> {
+			() -> ctx3.executeWithinSelf(
+				() -> executor.execute(() -> {
 					try {
 						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
@@ -150,8 +150,8 @@ public class ContextTrackingExecutorTest {
 						errorHolder[0] = e;
 						throw e;
 					}
-				});
-			})
+				})
+			)
 		);
 		assertSame("result should match", result, callFuture.get(500l, TimeUnit.MILLISECONDS));
 		if (errorHolder[0] != null) throw errorHolder[0];
@@ -168,7 +168,7 @@ public class ContextTrackingExecutorTest {
 				executor.execute(() -> {
 					try {
 						barrier.await(500l, TimeUnit.MILLISECONDS);
-					} catch (Exception e) {}
+					} catch (Exception ignored) {}
 				});
 			}
 			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});
@@ -194,7 +194,7 @@ public class ContextTrackingExecutorTest {
 				executor.execute(() -> {
 					try {
 						barrier.await(500l, TimeUnit.MILLISECONDS);
-					} catch (Exception e) {}
+					} catch (Exception ignored) {}
 				});
 			}
 			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});

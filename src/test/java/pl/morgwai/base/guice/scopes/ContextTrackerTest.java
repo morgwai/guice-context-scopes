@@ -19,9 +19,8 @@ public class ContextTrackerTest {
 	public void testTracking() {
 		final var ctx = new TestContext(tracker);
 		assertNull("context should be unset initially", tracker.getCurrentContext());
-		ctx.executeWithinSelf(() -> {
-			assertSame("context should be set", ctx, tracker.getCurrentContext());
-		});
+		ctx.executeWithinSelf(
+				() -> assertSame("context should be set", ctx, tracker.getCurrentContext()));
 		assertNull("context should be cleared", tracker.getCurrentContext());
 	}
 
@@ -36,10 +35,10 @@ public class ContextTrackerTest {
 			final var thread = new Thread(() -> {
 				try {
 					assertNull("context should be unset initially", tracker.getCurrentContext());
-					ctx.executeWithinSelf(() -> {
-						assertSame("context should be set",
-								originalCtx, tracker.getCurrentContext());
-					});
+					ctx.executeWithinSelf(
+						() -> assertSame("context should be set",
+								originalCtx, tracker.getCurrentContext())
+					);
 					assertNull("context should be cleared", tracker.getCurrentContext());
 				} catch (AssertionError e) {
 					errorHolder[0] = e;

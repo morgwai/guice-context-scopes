@@ -42,7 +42,7 @@ public class ContextScopeTest {
 		try {
 			scope.scope(key, provider).get();
 			fail("scoping outside of any context should throw a RuntimeException");
-		} catch (RuntimeException e) {}
+		} catch (RuntimeException ignored) {}
 	}
 
 

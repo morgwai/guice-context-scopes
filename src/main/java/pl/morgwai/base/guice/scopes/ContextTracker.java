@@ -12,7 +12,7 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 
 
 
-	private final ThreadLocal<CtxT> currentContex = new ThreadLocal<>();
+	private final ThreadLocal<CtxT> currentContext = new ThreadLocal<>();
 
 
 
@@ -22,7 +22,7 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 	 * @see ContextTrackingExecutor#getActiveContexts(ContextTracker...)
 	 */
 	public CtxT getCurrentContext() {
-		return currentContex.get();
+		return currentContext.get();
 	}
 
 
@@ -31,11 +31,11 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 	 * For internal use by {@link ServerSideContext#executeWithinSelf(Runnable)}.
 	 */
 	void trackWhileExecuting(CtxT ctx, Runnable operation) {
-		currentContex.set(ctx);
+		currentContext.set(ctx);
 		try {
 			operation.run();
 		} finally {
-			currentContex.remove();
+			currentContext.remove();
 		}
 	}
 
@@ -45,11 +45,11 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 	 * For internal use by {@link ServerSideContext#executeWithinSelf(Callable)}.
 	 */
 	<T> T trackWhileExecuting(CtxT ctx, Callable<T> operation) throws Exception {
-		currentContex.set(ctx);
+		currentContext.set(ctx);
 		try {
 			return operation.call();
 		} finally {
-			currentContex.remove();
+			currentContext.remove();
 		}
 	}
 }
