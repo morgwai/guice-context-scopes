@@ -4,9 +4,6 @@ plugins {
 	id 'maven-publish'
 }
 
-group = 'pl.morgwai.base'
-version = '2.2-SNAPSHOT'
-
 java {
 	sourceCompatibility = JavaVersion.VERSION_11
 	targetCompatibility = JavaVersion.VERSION_11
@@ -16,15 +13,6 @@ repositories {
 	mavenCentral() 
 }
 
-dependencies {
-	implementation 'org.slf4j:slf4j-api:1.7.32'
-	compileOnly 'com.google.inject:guice:5.0.1'
-
-	testImplementation 'junit:junit:4.13.2'
-	testImplementation 'org.slf4j:slf4j-jdk14:1.7.32'
-	testImplementation 'com.google.inject:guice:5.0.1'
-}
-
 publishing {
 	publications {
 		maven(MavenPublication) {
@@ -32,3 +20,4 @@ publishing {
 		}
 	}
 }
+
