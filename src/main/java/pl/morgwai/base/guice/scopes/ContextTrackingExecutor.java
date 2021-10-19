@@ -4,6 +4,7 @@ package pl.morgwai.base.guice.scopes;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -21,9 +22,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 
 
@@ -109,7 +107,7 @@ public class ContextTrackingExecutor implements Executor {
 	 * Executes {@code task} within all contexts that were active when this method was called.
 	 */
 	@Override
-	public void execute(@Nonnull Runnable task) {
+	public void execute(Runnable task) {
 		final var activeCtxs = getActiveContexts(trackers);
 		backingExecutor.execute(() -> executeWithinAll(activeCtxs, task));
 	}
@@ -257,21 +255,20 @@ public class ContextTrackingExecutor implements Executor {
 	 * Logs outcome to {@link Logger} named after this class.
 	 * <p>
 	 * Should be called at app shutdown.</p>
-	 * @return <code>null</code> if the executor was shutdown cleanly, list of tasks returned by
-	 *     {@code backingExecutor.shutdownNow()} otherwise.
+	 * @return {@link Optional#empty() empty} if the executor was shutdown cleanly, list of tasks
+	 *     returned by {@code backingExecutor.shutdownNow()} otherwise.
 	 */
-	@Nullable
-	public List<Runnable> tryShutdownGracefully(int timeoutSeconds) {
+	public Optional<List<Runnable>> tryShutdownGracefully(int timeoutSeconds) {
 		backingExecutor.shutdown();
 		try {
 			backingExecutor.awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
 		} catch (InterruptedException ignored) {}
 		if ( ! backingExecutor.isTerminated()) {
 			log.warn("executor " + name + " hasn't shutdown cleanly");
-			return backingExecutor.shutdownNow();
+			return Optional.of(backingExecutor.shutdownNow());
 		} else {
 			log.info("executor " + name + " shutdown completed");
-			return null;
+			return Optional.empty();
 		}
 	}
 
@@ -339,7 +336,7 @@ public class ContextTrackingExecutor implements Executor {
 		 * Creates a new thread named {@code <thisFactoryName>-thread-<sequenceNumber>}.
 		 */
 		@Override
-		public Thread newThread(@Nonnull Runnable task) {
+		public Thread newThread(Runnable task) {
 			var thread = new Thread(threadGroup, task, namePrefix + threadNumber.getAndIncrement());
 			thread.setPriority(threadGroup.getMaxPriority());
 			return thread;
