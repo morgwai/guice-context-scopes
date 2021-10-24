@@ -147,7 +147,11 @@ public class ContextTrackingExecutor implements Executor {
 						() -> contexts.get(0).executeWithinSelf(operation));
 				return;
 			case 0:
-				log.warn(Thread.currentThread().getName() + " is running outside of any context");
+				if (log.isWarnEnabled()) {
+					log.warn(
+							Thread.currentThread().getName() + " is running outside of any context",
+							new Exception("unthrown stack tracer"));
+				}
 				operation.run();
 				return;
 			default:
