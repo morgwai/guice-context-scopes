@@ -107,6 +107,13 @@
 					<links>
 						<link>https://google.github.io/guice/api-docs/${guice.version}/javadoc</link>
 					</links>
+					<offlineLinks>
+						<!-- to setup offline javadoc generation run ./setup-offline-javadocs.sh -->
+						<offlineLink>
+							<url>https://google.github.io/guice/api-docs/${guice.version}/javadoc</url>
+							<location>${settings.localRepository}/com/google/inject/guice/${guice.version}</location>
+						</offlineLink>
+					</offlineLinks>
 				</configuration>
 				<executions>
 					<execution>
