@@ -1,6 +1,7 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 
 
@@ -19,7 +20,7 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 	/**
 	 * Returns context which the calling thread is running within.
 	 *
-	 * @see ContextTrackingExecutor#getActiveContexts(ContextTracker...)
+	 * @see ContextTrackingExecutor#getActiveContexts(List)
 	 */
 	public CtxT getCurrentContext() {
 		return currentContext.get();

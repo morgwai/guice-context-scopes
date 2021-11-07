@@ -1,7 +1,6 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,7 +56,7 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
-	final ContextTracker<?>[] trackers;
+	final List<ContextTracker<?>> trackers;
 
 	final ExecutorService backingExecutor;
 
@@ -76,7 +75,7 @@ public class ContextTrackingExecutor implements Executor {
 	 * To avoid {@link OutOfMemoryError}s, an external mechanism that limits maximum number of tasks
 	 * (such as a load balancer or a frontend proxy) should be used.</p>
 	 */
-	public ContextTrackingExecutor(String name, int poolSize, ContextTracker<?>... trackers) {
+	public ContextTrackingExecutor(String name, int poolSize, List<ContextTracker<?>> trackers) {
 		this(name, poolSize, new LinkedBlockingQueue<>(), trackers);
 	}
 
@@ -119,11 +118,11 @@ public class ContextTrackingExecutor implements Executor {
 	 * as an argument to {@link #executeWithinAll(List, Runnable)} to transfer the contexts after
 	 * a switch to another thread.
 	 * <p>
-	 * Libraries usually bind {@code ContextTracker<?>[]} to an instance containing all possible
+	 * Libraries usually bind {@code List<ContextTracker<?>>} to an instance containing all possible
 	 * trackers for use as an argument for this method.</p>
 	 */
-	public static List<ServerSideContext<?>> getActiveContexts(ContextTracker<?>... trackers) {
-		return Arrays.stream(trackers)
+	public static List<ServerSideContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
+		return trackers.stream()
 				.map(ContextTracker::getCurrentContext)
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
@@ -135,7 +134,7 @@ public class ContextTrackingExecutor implements Executor {
 	 * Executes {@code operation} on the current thread within all {@code contexts}.
 	 * Used to transfer active contexts after a switch to another thread.
 	 *
-	 * @see #getActiveContexts(ContextTracker...)
+	 * @see #getActiveContexts(List)
 	 */
 	public static void executeWithinAll(List<ServerSideContext<?>> contexts, Runnable operation) {
 		switch (contexts.size()) {
@@ -168,7 +167,7 @@ public class ContextTrackingExecutor implements Executor {
 	 * Executes {@code operation} on the current thread within all {@code contexts}.
 	 * Used to transfer active contexts after a switch to another thread.
 	 *
-	 * @see #getActiveContexts(ContextTracker...)
+	 * @see #getActiveContexts(List)
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T executeWithinAll(List<ServerSideContext<?>> contexts, Callable<T> operation)
@@ -201,7 +200,7 @@ public class ContextTrackingExecutor implements Executor {
 			String name,
 			int poolSize,
 			BlockingQueue<Runnable> workQueue,
-			ContextTracker<?>... trackers) {
+			List<ContextTracker<?>> trackers) {
 		this.name = name;
 		this.poolSize = poolSize;
 		this.trackers = trackers;
@@ -225,7 +224,7 @@ public class ContextTrackingExecutor implements Executor {
 			int poolSize,
 			BlockingQueue<Runnable> workQueue,
 			ThreadFactory threadFactory,
-			ContextTracker<?>... trackers) {
+			List<ContextTracker<?>> trackers) {
 		this.name = name;
 		this.poolSize = poolSize;
 		this.trackers = trackers;
@@ -244,7 +243,7 @@ public class ContextTrackingExecutor implements Executor {
 			String name,
 			ExecutorService backingExecutor,
 			int poolSize,
-			ContextTracker<?>... trackers) {
+			List<ContextTracker<?>> trackers) {
 		this.name = name;
 		this.backingExecutor = backingExecutor;
 		this.poolSize = poolSize;

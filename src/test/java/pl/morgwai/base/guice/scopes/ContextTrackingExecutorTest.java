@@ -1,7 +1,6 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -25,7 +24,7 @@ public class ContextTrackingExecutorTest {
 	final ContextTracker<TestContext1> tracker1 = new ContextTracker<>();
 	final ContextTracker<TestContext2> tracker2 = new ContextTracker<>();
 	final ContextTracker<TestContext3> tracker3 = new ContextTracker<>();
-	final ContextTracker<?>[] allTrackers = {tracker1, tracker2, tracker3};
+	final List<ContextTracker<?>> allTrackers = List.of(tracker1, tracker2, tracker3);
 
 	static final int POOL_SIZE = 2;
 	static final int QUEUE_SIZE = 1;
@@ -55,7 +54,7 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx2 = new TestContext2(tracker2);
 		final var ctx3 = new TestContext3(tracker3);
-		List<ServerSideContext<?>> allCtxs = Arrays.asList(ctx1, ctx2, ctx3);
+		List<ServerSideContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 		ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
 			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 			assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
@@ -70,7 +69,7 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx2 = new TestContext2(tracker2);
 		final var ctx3 = new TestContext3(tracker3);
-		List<ServerSideContext<?>> allCtxs = Arrays.asList(ctx1, ctx2, ctx3);
+		List<ServerSideContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 		String result = "result";
 		var obtained = ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
 			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
@@ -88,7 +87,7 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx2 = new TestContext2(tracker2);
 		final var ctx3 = new TestContext3(tracker3);
-		List<ServerSideContext<?>> allCtxs = Arrays.asList(ctx1, ctx2, ctx3);
+		List<ServerSideContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 		var thrown = new Exception();
 		try {
 			ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
