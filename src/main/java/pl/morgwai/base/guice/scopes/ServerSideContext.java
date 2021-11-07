@@ -28,7 +28,7 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 
-	final ConcurrentMap<Key<?>, Object> scopedObjects = new ConcurrentHashMap<>();
+	private final ConcurrentMap<Key<?>, Object> scopedObjects = new ConcurrentHashMap<>();
 	final ContextTracker<CtxT> tracker;
 
 

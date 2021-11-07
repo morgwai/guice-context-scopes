@@ -56,9 +56,9 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
-	final List<ContextTracker<?>> trackers;
+	private final List<ContextTracker<?>> trackers;
 
-	final ExecutorService backingExecutor;
+	private final ExecutorService backingExecutor;
 
 	final int poolSize;
 	public int getPoolSize() { return poolSize; }
