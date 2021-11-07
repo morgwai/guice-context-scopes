@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 /**
  * Allows to track which server-side call is handled by which thread.
  */
-public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
+public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 
 
 
@@ -29,7 +29,7 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
-	 * For internal use by {@link ServerSideContext#executeWithinSelf(Runnable)}.
+	 * For internal use by {@link TrackableContext#executeWithinSelf(Runnable)}.
 	 */
 	void trackWhileExecuting(CtxT ctx, Runnable operation) {
 		currentContext.set(ctx);
@@ -43,7 +43,7 @@ public class ContextTracker<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
-	 * For internal use by {@link ServerSideContext#executeWithinSelf(Callable)}.
+	 * For internal use by {@link TrackableContext#executeWithinSelf(Callable)}.
 	 */
 	<T> T trackWhileExecuting(CtxT ctx, Callable<T> operation) throws Exception {
 		currentContext.set(ctx);

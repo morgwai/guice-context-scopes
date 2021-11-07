@@ -53,7 +53,7 @@ public class ContextTrackerTest {
 
 
 
-	static class TestContext extends ServerSideContext<TestContext> {
+	static class TestContext extends TrackableContext<TestContext> {
 		TestContext(ContextTracker<TestContext> tracker) { super(tracker); }
 	}
 }

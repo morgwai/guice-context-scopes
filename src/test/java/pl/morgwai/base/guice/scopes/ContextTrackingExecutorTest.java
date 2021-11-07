@@ -54,7 +54,7 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx2 = new TestContext2(tracker2);
 		final var ctx3 = new TestContext3(tracker3);
-		List<ServerSideContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
+		List<TrackableContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 		ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
 			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 			assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
@@ -69,7 +69,7 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx2 = new TestContext2(tracker2);
 		final var ctx3 = new TestContext3(tracker3);
-		List<ServerSideContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
+		List<TrackableContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 		String result = "result";
 		var obtained = ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
 			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
@@ -87,7 +87,7 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx2 = new TestContext2(tracker2);
 		final var ctx3 = new TestContext3(tracker3);
-		List<ServerSideContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
+		List<TrackableContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 		var thrown = new Exception();
 		try {
 			ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
@@ -225,13 +225,13 @@ public class ContextTrackingExecutorTest {
 
 
 
-	static class TestContext1 extends ServerSideContext<TestContext1> {
+	static class TestContext1 extends TrackableContext<TestContext1> {
 		TestContext1(ContextTracker<TestContext1> tracker) { super(tracker); }
 	}
-	static class TestContext2 extends ServerSideContext<TestContext2> {
+	static class TestContext2 extends TrackableContext<TestContext2> {
 		TestContext2(ContextTracker<TestContext2> tracker) { super(tracker); }
 	}
-	static class TestContext3 extends ServerSideContext<TestContext3> {
+	static class TestContext3 extends TrackableContext<TestContext3> {
 		TestContext3(ContextTracker<TestContext3> tracker) { super(tracker); }
 	}
 }

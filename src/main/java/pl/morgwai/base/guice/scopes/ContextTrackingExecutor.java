@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * An executor that automatically updates which thread runs within which {@link ServerSideContext}
+ * An executor that automatically updates which thread runs within which {@link TrackableContext}
  * when executing a task. By default backed by a fixed size {@link ThreadPoolExecutor}.
  * <p>
  * Instances usually correspond 1-1 with some type of blocking or time consuming operations, such
@@ -121,7 +121,7 @@ public class ContextTrackingExecutor implements Executor {
 	 * Libraries usually bind {@code List<ContextTracker<?>>} to an instance containing all possible
 	 * trackers for use as an argument for this method.</p>
 	 */
-	public static List<ServerSideContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
+	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
 		return trackers.stream()
 				.map(ContextTracker::getCurrentContext)
 				.filter(Objects::nonNull)
@@ -136,7 +136,7 @@ public class ContextTrackingExecutor implements Executor {
 	 *
 	 * @see #getActiveContexts(List)
 	 */
-	public static void executeWithinAll(List<ServerSideContext<?>> contexts, Runnable operation) {
+	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable operation) {
 		switch (contexts.size()) {
 			case 1:
 				contexts.get(0).executeWithinSelf(operation);
@@ -170,7 +170,7 @@ public class ContextTrackingExecutor implements Executor {
 	 * @see #getActiveContexts(List)
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T executeWithinAll(List<ServerSideContext<?>> contexts, Callable<T> operation)
+	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> operation)
 			throws Exception {
 		final Object[] resultHolder = {null};
 		final Exception[] exceptionHolder = {null};
