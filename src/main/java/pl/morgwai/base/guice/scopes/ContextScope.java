@@ -10,7 +10,7 @@ import com.google.inject.Scope;
 
 
 /**
- * Scopes objects to a call context obtained from the associated {@link ContextTracker}.
+ * Scopes objects to a context obtained from the associated {@link ContextTracker}.
  */
 public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope {
 
@@ -56,16 +56,21 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 	public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
 		return () -> {
 			try {
-				return tracker.getCurrentContext().provideIfAbsent(key, unscoped);
+				return getContext().provideIfAbsent(key, unscoped);
 			} catch (NullPointerException e) {
-				// NPE here is a result of a bug that will be usually eliminated in development
-				// phase and not happen in production, so we catch NPE instead of checking manually
-				// each time.
+				// result of a bug that will be fixed in development phase: don't check manually
+				// in production each time.
 				throw new RuntimeException("no context for thread "
 						+ Thread.currentThread().getName() + " in scope " + name
 						+ ". See javadoc for ContextScope.scope(...)");
 			}
 		};
+	}
+
+
+
+	protected ServerSideContext getContext() {
+		return tracker.getCurrentContext();
 	}
 
 
