@@ -11,9 +11,10 @@ import com.google.inject.Provider;
 
 
 /**
- * Stores attributes associated with some server-side processing/call (such as a servlet request
- * processing, an RPC or a session combining several received calls) and allows to execute
- * operations within itself.
+ * Stores objects scoped to some server-side processing/call (such as an RPC, a servlet
+ * request processing, a session combining several calls etc) and allows to execute
+ * operations within itself. Operation executed within a given context can obtain stored objects
+ * using {@link Provider}s scoped to an associated {@link ContextScope}.
  * <p>
  * Overriding classes must use themselves as {@code CtxT} type argument.</p>
  * <p>
@@ -27,7 +28,7 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 
-	final ConcurrentMap<Key<?>, Object> attributes = new ConcurrentHashMap<>();
+	final ConcurrentMap<Key<?>, Object> scopedObjects = new ConcurrentHashMap<>();
 	final ContextTracker<CtxT> tracker;
 
 
@@ -39,7 +40,7 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
-	 * Sets itself as the current context for the current thread and executes {@code operation}
+	 * Sets itself as the current context of the current thread and executes {@code operation}
 	 * synchronously. Afterwards clears the current context.
 	 *
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)
@@ -52,7 +53,7 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
-	 * Sets itself as the current context for the current thread and executes {@code operation}
+	 * Sets itself as the current context of the current thread and executes {@code operation}
 	 * synchronously. Afterwards clears the current context.
 	 *
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Callable)
@@ -65,26 +66,26 @@ public abstract class ServerSideContext<CtxT extends ServerSideContext<CtxT>> {
 
 
 	/**
-	 * Removes the attribute given by <code>key</code> from this context. This is sometimes useful
+	 * Removes the object given by <code>key</code> from this context. This is sometimes useful
 	 * to force the associated {@link ContextScope} to obtain a new instance from the unscoped
 	 * provider if the current one is not usable anymore (for example a timed-out connection, etc).
 	 * <p>
 	 * <b>Note:</b> If multiple threads run within the same context, care must be taken to prevent
 	 * some of them from retaining the old stale instance.</p>
 	 */
-	public void removeAttribute(Key<?> key) {
-		attributes.remove(key);
+	public void removeScopedObject(Key<?> key) {
+		scopedObjects.remove(key);
 	}
 
 
 
 	/**
-	 * Obtains the attribute given by {@code key}. If it is not yet present in this context,
+	 * Obtains the object given by {@code key}. If it is not yet present in this context,
 	 * asks {@code provider} for a new instance and stores the result for subsequent calls.
-	 * For internal use by {@link ContextScope#scope(Key, com.google.inject.Provider)}.
+	 * For internal use by {@link ContextScope#scope(Key, Provider)}.
 	 */
 	@SuppressWarnings("unchecked")
-	<T> T provideAttributeIfAbsent(Key<T> key, Provider<T> provider) {
-		return (T) attributes.computeIfAbsent(key, (ignored) -> provider.get());
+	<T> T provideIfAbsent(Key<T> key, Provider<T> provider) {
+		return (T) scopedObjects.computeIfAbsent(key, (ignored) -> provider.get());
 	}
 }

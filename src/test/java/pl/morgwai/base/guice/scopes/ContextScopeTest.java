@@ -53,7 +53,7 @@ public class ContextScopeTest {
 		ctx.executeWithinSelf(() -> {
 			final var scoped = scope.scope(key, provider);
 			final Integer scopedInt = scoped.get();
-			ctx.removeAttribute(key);
+			ctx.removeScopedObject(key);
 			final Integer newScopedInt = scoped.get();
 			assertNotEquals("after removing, scoped provider should provide a new value",
 					scopedInt, newScopedInt);

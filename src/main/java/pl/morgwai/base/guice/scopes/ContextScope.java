@@ -56,7 +56,7 @@ public class ContextScope<CtxT extends ServerSideContext<CtxT>> implements Scope
 	public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
 		return () -> {
 			try {
-				return tracker.getCurrentContext().provideAttributeIfAbsent(key, unscoped);
+				return tracker.getCurrentContext().provideIfAbsent(key, unscoped);
 			} catch (NullPointerException e) {
 				// NPE here is a result of a bug that will be usually eliminated in development
 				// phase and not happen in production, so we catch NPE instead of checking manually
