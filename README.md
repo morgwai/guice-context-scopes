@@ -14,7 +14,7 @@ To ease this up, this lib formally introduces a notion of a [ServerSideContext](
 <br/>
 To automate the whole process, [ContextTrackingExecutor](src/main/java/pl/morgwai/base/guice/scopes/ContextTrackingExecutor.java) was introduced (backed by a fixed size `ThreadPoolExecutor` by default) that automatically transfers contexts when executing a task.<br/>
 <br/>
-Hint: in cases when it's not possible to avoid thread switching without the use of `ContextTrackingExecutor` (for example when passing callbacks to some async calls), static helper methods `getActiveContexts(ContextTracker...)` and `executeWithinAll(List<ServerSideContext>, Runnable)` defined in `ContextTrackingExecutor` can be used to transfer context manually:
+Hint: in cases when it's not possible to avoid thread switching without the use of `ContextTrackingExecutor` (for example when passing callbacks to some async calls), static helper methods `getActiveContexts(List<ContextTracker<?>>)` and `executeWithinAll(List<TrackableContext>, Runnable)` defined in `ContextTrackingExecutor` can be used to transfer context manually:
 
 ```java
 class MyClass {
@@ -24,7 +24,7 @@ class MyClass {
 
     void myMethod(Object param) {
         // myMethod code
-        var activeCtxList = ContextTrackingExecutor.getActiveContexts(tracker1, tracker2);
+        var activeCtxList = ContextTrackingExecutor.getActiveContexts(List.of(tracker1, tracker2));
         someAsyncMethod(param, (callbackParam) ->
             ContextTrackingExecutor.executeWithinAll(activeCtxList, () -> {
                 // callback code
@@ -33,7 +33,7 @@ class MyClass {
     }
 }
 ```
-Deriving libs are strongly encouraged to automatically bind `ContextTracker<?>[]` to an instance containing all possible trackers, so that users don't need to enlist them manually.
+Deriving libs are strongly encouraged to automatically bind `List<ContextTracker<?>>` to an instance containing all possible trackers, so that users don't need to enlist them manually.
 
 
 ## DERIVED LIBS
