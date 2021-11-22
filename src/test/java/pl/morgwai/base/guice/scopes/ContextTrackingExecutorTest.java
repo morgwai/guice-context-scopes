@@ -2,6 +2,7 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -37,6 +38,7 @@ public class ContextTrackingExecutorTest {
 	public void testGetActiveContexts() {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx3 = new TestContext3(tracker3);
+
 		ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(() -> {
 				final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
@@ -55,7 +57,8 @@ public class ContextTrackingExecutorTest {
 		final var ctx2 = new TestContext2(tracker2);
 		final var ctx3 = new TestContext3(tracker3);
 		List<TrackableContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
-		ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
+
+		ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {  // method under test
 			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 			assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
 			assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
@@ -71,7 +74,8 @@ public class ContextTrackingExecutorTest {
 		final var ctx3 = new TestContext3(tracker3);
 		List<TrackableContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 		String result = "result";
-		var obtained = ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
+
+		var obtained = ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {// method under test
 			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 			assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
 			assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
@@ -89,12 +93,13 @@ public class ContextTrackingExecutorTest {
 		final var ctx3 = new TestContext3(tracker3);
 		List<TrackableContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 		var thrown = new Exception();
+
 		try {
 			ContextTrackingExecutor.executeWithinAll(allCtxs, () -> {
 				assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 				assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
 				assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
-				throw thrown;
+				throw thrown;  // event under test
 			});
 			fail("exception should be thrown");
 		} catch (Exception caught) {
@@ -109,24 +114,23 @@ public class ContextTrackingExecutorTest {
 		final AssertionError[] errorHolder = {null};
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx3 = new TestContext3(tracker3);
-		var barrier = new CyclicBarrier(2);
+		var latch = new CountDownLatch(1);
+
 		ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(
-				() -> executor.execute(() -> {
+				() -> executor.execute(() -> {  // method under test
 					try {
 						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
 					} catch (AssertionError e) {
 						errorHolder[0] = e;
 					} finally {
-						try {
-							barrier.await();
-						} catch (Exception ignored) {}
+						latch.countDown();
 					}
 				})
 			)
 		);
-		barrier.await(500l, TimeUnit.MILLISECONDS);
+		latch.await(500l, TimeUnit.MILLISECONDS);
 		if (errorHolder[0] != null) throw errorHolder[0];
 	}
 
@@ -138,9 +142,10 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		final var ctx3 = new TestContext3(tracker3);
 		String result = "result";
+
 		var callFuture = ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(
-				() -> executor.execute(() -> {
+				() -> executor.execute(() -> {  // method under test
 					try {
 						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
@@ -163,16 +168,17 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		var barrier = new CyclicBarrier(POOL_SIZE + 1);
 		ctx1.executeWithinSelf(() -> {
-			for (int i = 0; i < POOL_SIZE; i++) {
+			for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
 				executor.execute(() -> {
 					try {
 						barrier.await(500l, TimeUnit.MILLISECONDS);
 					} catch (Exception ignored) {}
 				});
 			}
-			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});
+			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
+
 			try {
-				executor.execute(() -> {});
+				executor.execute(() -> {});  // method under test
 				fail("RejectedExecutionException should be thrown");
 			} catch (RejectedExecutionException e) {  // expected
 			} finally {
@@ -189,16 +195,17 @@ public class ContextTrackingExecutorTest {
 		final var ctx1 = new TestContext1(tracker1);
 		var barrier = new CyclicBarrier(POOL_SIZE + 1);
 		ctx1.executeWithinSelf(() -> {
-			for (int i = 0; i < POOL_SIZE; i++) {
+			for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
 				executor.execute(() -> {
 					try {
 						barrier.await(500l, TimeUnit.MILLISECONDS);
 					} catch (Exception ignored) {}
 				});
 			}
-			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});
+			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
+
 			try {
-				executor.execute(() -> "result");
+				executor.execute(() -> "result");  // method under test
 				fail("RejectedExecutionException should be thrown");
 			} catch (RejectedExecutionException e) {  // expected
 			} finally {
@@ -212,7 +219,6 @@ public class ContextTrackingExecutorTest {
 
 	@After
 	public void shutdown() {
-		Logger.getLogger(ContextTrackingExecutor.class.getName()).setLevel(Level.WARNING);
 		executor.tryShutdownGracefully(1);
 	}
 
