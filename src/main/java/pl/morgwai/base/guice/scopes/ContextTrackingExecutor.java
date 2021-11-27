@@ -47,7 +47,8 @@ import org.slf4j.LoggerFactory;
  * &commat;Named("someOpTypeExecutor")
  * ContextTrackingExecutor someOpTypeExecutor</pre></p>
  * <p>
- * At app shutdown {@link #tryShutdownGracefully(int)} should be called on every instance.</p>
+ * At app shutdown {@link #shutdown()} followed by {@link #enforceTermination(long, TimeUnit)}
+ * should be called on every instance.</p>
  * <p>
  * If multiple threads run within the same context, then the attributes they access must be
  * thread-safe or properly synchronized.</p>
@@ -194,6 +195,18 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
+	// in addition to a RejectedExecutionException, logs a warning if the executor is overloaded
+	final RejectedExecutionHandler rejectionHandler = (task, executor) -> {
+		if (executor.isShutdown()) {
+			throw new RejectedExecutionException(getName() + " rejected a task due to shutdown");
+		} else {
+			log.warn("executor " + getName() + " is overloaded");
+			throw new RejectedExecutionException(getName() + " rejected a task due to overload");
+		}
+	};
+
+
+
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
 	 * {@link NamedThreadFactory NamedThreadFactory}.
@@ -260,32 +273,16 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Calls {@code backingExecutor.shutdown()} and awaits up to <code>timeoutSeconds</code> for
-	 * termination. If it fails, calls {@code backingExecutor.shutdownNow()}.<br/>
-	 * Logs outcome to {@link Logger} named after this class.
-	 * <p>
-	 * Should be called at app shutdown.</p>
-	 * @return {@link Optional#empty() empty} if the executor was shutdown cleanly, list of tasks
-	 *     returned by {@code backingExecutor.shutdownNow()} otherwise.
+	 * Calls {@link ExecutorService#shutdown() backingExecutor.shutdown()}.
 	 */
-	public Optional<List<Runnable>> tryShutdownGracefully(int timeoutSeconds) {
+	public void shutdown() {
 		backingExecutor.shutdown();
-		try {
-			backingExecutor.awaitTermination(timeoutSeconds, TimeUnit.SECONDS);
-		} catch (InterruptedException ignored) {}
-		if ( ! backingExecutor.isTerminated()) {
-			log.warn("executor " + name + " hasn't shutdown cleanly");
-			return Optional.of(backingExecutor.shutdownNow());
-		} else {
-			log.info("executor " + name + " shutdown completed");
-			return Optional.empty();
-		}
 	}
 
 
 
 	/**
-	 * Calls {@code backingExecutor.isShutdown()}.
+	 * Calls {@link ExecutorService#isShutdown() backingExecutor.isShutdown()}.
 	 */
 	public boolean isShutdown() {
 		return backingExecutor.isShutdown();
@@ -293,15 +290,77 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
-	// in addition to a RejectedExecutionException, logs a warning if the executor is overloaded
-	final RejectedExecutionHandler rejectionHandler = (task, executor) -> {
-		if (executor.isShutdown()) {
-			throw new RejectedExecutionException(getName() + " rejected a task due to shutdown");
-		} else {
-			log.warn("executor " + getName() + " is overloaded");
-			throw new RejectedExecutionException(getName() + " rejected a task due to overload");
+	/**
+	 * Calls {@link ExecutorService#isTerminated() backingExecutor.isTerminated()}.
+	 */
+	public boolean isTerminated() {
+		return backingExecutor.isTerminated();
+	}
+
+
+
+	/**
+	 * {@link #awaitTermination(long, TimeUnit) Awaits} up to {@code timeoutMillis} for termination
+	 * and if executor fails to do so either due to timeout or interrupt {@link #shutdownNow()} is
+	 * called.<br/>
+	 * Logs outcome to {@link Logger} named after this class.
+	 * <p>
+	 * Should be called at app shutdown.</p>
+	 * @return {@link Optional#empty() empty} if the executor was shutdown cleanly, list of tasks
+	 *     returned by {@code backingExecutor.shutdownNow()} otherwise.
+	 * @see ExecutorService#awaitTermination(long, TimeUnit)
+	 * @see ExecutorService#shutdownNow()
+	 */
+	public Optional<List<Runnable>> enforceTermination(long timeout, TimeUnit unit)
+			throws InterruptedException {
+		try {
+			if (awaitTermination(timeout, unit)) {
+				log.info("executor " + name + " shutdown completed");
+				return Optional.empty();
+			} else {
+				log.warn("executor " + name + " hasn't shutdown cleanly");
+				return Optional.of(backingExecutor.shutdownNow());
+			}
+		} catch (InterruptedException e) {
+			log.warn("executor " + name + " hasn't shutdown cleanly");
+			backingExecutor.shutdownNow();
+			throw e;
 		}
-	};
+	}
+
+
+
+	/**
+	 * Calls {@link ExecutorService#awaitTermination(long, TimeUnit)
+	 * backingExecutor.awaitTermination(...)}.
+	 * @see #enforceTermination(long, TimeUnit)
+	 */
+	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+		return backingExecutor.awaitTermination(timeout, unit);
+	}
+
+
+
+	/**
+	 * Keeps calling {@link ExecutorService#awaitTermination(long, TimeUnit)
+	 * backingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)} until it returns
+	 * {@code true}.
+	 * @see #enforceTermination(long, TimeUnit)
+	 * @see #awaitTermination(long, TimeUnit)
+	 */
+	public void awaitTermination() throws InterruptedException {
+		while ( ! backingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS));
+	}
+
+
+
+	/**
+	 * Calls {@link ExecutorService#shutdown() backingExecutor.shutdownNow()}.
+	 * @see #enforceTermination(long, TimeUnit)
+	 */
+	public List<Runnable> shutdownNow() {
+		return backingExecutor.shutdownNow();
+	}
 
 
 

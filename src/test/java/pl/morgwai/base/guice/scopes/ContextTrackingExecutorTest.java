@@ -218,8 +218,9 @@ public class ContextTrackingExecutorTest {
 
 
 	@After
-	public void shutdown() {
-		executor.tryShutdownGracefully(1);
+	public void shutdown() throws InterruptedException {
+		executor.shutdown();
+		executor.enforceTermination(100l, TimeUnit.MILLISECONDS);
 	}
 
 
