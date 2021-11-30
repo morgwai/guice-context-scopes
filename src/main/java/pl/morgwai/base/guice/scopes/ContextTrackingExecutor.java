@@ -187,6 +187,13 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
+	@Override
+	public String toString() {
+		return "ContextTrackingExecutor { name = \"" + name + "\" }";
+	}
+
+
+
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
 	 * {@link NamedThreadFactory NamedThreadFactory}.
