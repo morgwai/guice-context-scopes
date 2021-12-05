@@ -2,8 +2,8 @@
 
 Classes for building Guice scopes, that get automatically transferred when dispatching work to other threads.<br/>
 <br/>
-**latest release: [4.0](https://search.maven.org/artifact/pl.morgwai.base/guice-context-scopes/4.0/jar)**
-([javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/4.0))
+**latest release: [5.0](https://search.maven.org/artifact/pl.morgwai.base/guice-context-scopes/5.0/jar)**
+([javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/5.0))
 
 
 ## OVERVIEW
