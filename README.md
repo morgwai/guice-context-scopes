@@ -25,8 +25,9 @@ class MyClass {
     void myMethod(Object param) {
         // myMethod code
         var activeCtxList = ContextTrackingExecutor.getActiveContexts(List.of(tracker1, tracker2));
-        someAsyncMethod(param, (callbackParam) ->
-            ContextTrackingExecutor.executeWithinAll(activeCtxList, () -> {
+        someAsyncMethod(
+            param,
+            (callbackParam) -> ContextTrackingExecutor.executeWithinAll(activeCtxList, () -> {
                 // callback code
             }
         ));
