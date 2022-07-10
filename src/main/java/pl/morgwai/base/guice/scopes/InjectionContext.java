@@ -10,7 +10,7 @@ import com.google.inject.Provider;
 
 
 /**
- * Stores objects scoped to some processing/call, such as an RPC, a servlet
+ * Stores objects scoped to some processing/call/request/session, such as an RPC, a servlet
  * request processing, a session combining several calls etc. Stored objects can be obtained using
  * {@link Provider}s bound in the associated {@link ContextScope}.
  * <p>
@@ -19,6 +19,10 @@ import com.google.inject.Provider;
  * <p>
  * If multiple threads run within the same context, the attributes that they access must be
  * thread-safe or properly synchronized.</p>
+ * <p>
+ * Note: most context classes should rather override {@link TrackableContext} subclass instead of
+ * this one. The main exception are contexts that are induced by another contexts: see
+ * {@link InducedContextScope}.</p>
  */
 public abstract class InjectionContext {
 

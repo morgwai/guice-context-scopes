@@ -6,7 +6,7 @@ import java.util.concurrent.Callable;
 
 
 /**
- * A {@link InjectionContext} that can be tracked across threads by executing closures within it.
+ * An {@link InjectionContext} that can be tracked across threads by executing tasks within it.
  * <p>
  * Overriding classes must use themselves as {@code CtxT} type argument.</p>
  */

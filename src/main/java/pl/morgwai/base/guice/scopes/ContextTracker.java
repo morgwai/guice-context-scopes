@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 
 
 /**
- * Allows to track which server-side call is handled by which thread.
+ * Allows to track which thread is in which context.
  */
 public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 
@@ -18,7 +18,7 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 
 
 	/**
-	 * Returns context which the calling thread is running within.
+	 * Returns context of the current thread.
 	 *
 	 * @see ContextTrackingExecutor#getActiveContexts(List)
 	 */
