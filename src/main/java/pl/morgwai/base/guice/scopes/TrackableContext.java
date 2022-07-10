@@ -6,12 +6,12 @@ import java.util.concurrent.Callable;
 
 
 /**
- * A {@link ServerSideContext} that can be tracked across threads by executing closures within it.
+ * A {@link InjectionContext} that can be tracked across threads by executing closures within it.
  * <p>
  * Overriding classes must use themselves as {@code CtxT} type argument.</p>
  */
 public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
-		extends ServerSideContext {
+		extends InjectionContext {
 
 
 

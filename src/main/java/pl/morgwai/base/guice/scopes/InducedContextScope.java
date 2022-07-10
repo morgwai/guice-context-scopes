@@ -12,7 +12,7 @@ import java.util.function.Function;
  */
 public class InducedContextScope<
 		InducingCtxT extends TrackableContext<InducingCtxT>,
-		InducedCtxT extends ServerSideContext
+		InducedCtxT extends InjectionContext
 	> extends ContextScope<InducingCtxT> {
 
 
@@ -31,7 +31,7 @@ public class InducedContextScope<
 
 
 
-	protected ServerSideContext getContext() {
+	protected InjectionContext getContext() {
 		return inducer.apply(tracker.getCurrentContext());
 	}
 }

@@ -69,7 +69,7 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 
-	protected ServerSideContext getContext() {
+	protected InjectionContext getContext() {
 		return tracker.getCurrentContext();
 	}
 

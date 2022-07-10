@@ -10,7 +10,7 @@ import com.google.inject.Provider;
 
 
 /**
- * Stores objects scoped to some server-side processing/call, such as an RPC, a servlet
+ * Stores objects scoped to some processing/call, such as an RPC, a servlet
  * request processing, a session combining several calls etc. Stored objects can be obtained using
  * {@link Provider}s bound in the associated {@link ContextScope}.
  * <p>
@@ -20,7 +20,7 @@ import com.google.inject.Provider;
  * If multiple threads run within the same context, the attributes that they access must be
  * thread-safe or properly synchronized.</p>
  */
-public abstract class ServerSideContext {
+public abstract class InjectionContext {
 
 
 
