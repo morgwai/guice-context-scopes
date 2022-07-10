@@ -3,9 +3,7 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
 
-import com.google.inject.Key;
-import com.google.inject.Provider;
-import com.google.inject.Scope;
+import com.google.inject.*;
 
 
 
