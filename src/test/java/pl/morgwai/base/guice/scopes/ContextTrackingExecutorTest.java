@@ -15,6 +15,7 @@ import static org.junit.Assert.*;
 public class ContextTrackingExecutorTest {
 
 
+	public static final long TIMEOUT_MILLIS = 500l;
 
 	final ContextTracker<TestContext1> tracker1 = new ContextTracker<>();
 	final ContextTracker<TestContext2> tracker2 = new ContextTracker<>();
@@ -124,7 +125,7 @@ public class ContextTrackingExecutorTest {
 				})
 			)
 		);
-		latch.await(500l, TimeUnit.MILLISECONDS);
+		if ( ! latch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) throw new TimeoutException();
 		if (errorHolder[0] != null) throw errorHolder[0];
 	}
 
@@ -151,7 +152,8 @@ public class ContextTrackingExecutorTest {
 				})
 			)
 		);
-		assertSame("result should match", result, callFuture.get(500l, TimeUnit.MILLISECONDS));
+		assertSame("result should match",
+				result, callFuture.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
 		if (errorHolder[0] != null) throw errorHolder[0];
 	}
 
@@ -165,7 +167,7 @@ public class ContextTrackingExecutorTest {
 			for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
 				executor.execute(() -> {
 					try {
-						barrier.await(500l, TimeUnit.MILLISECONDS);
+						barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 					} catch (Exception ignored) {}
 				});
 			}
@@ -176,7 +178,7 @@ public class ContextTrackingExecutorTest {
 				fail("RejectedExecutionException should be thrown");
 			} catch (RejectedExecutionException e) {  // expected
 			} finally {
-				barrier.await(500l, TimeUnit.MILLISECONDS);
+				barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 			}
 			return null;
 		});
@@ -192,7 +194,7 @@ public class ContextTrackingExecutorTest {
 			for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
 				executor.execute(() -> {
 					try {
-						barrier.await(500l, TimeUnit.MILLISECONDS);
+						barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 					} catch (Exception ignored) {}
 				});
 			}
@@ -203,7 +205,7 @@ public class ContextTrackingExecutorTest {
 				fail("RejectedExecutionException should be thrown");
 			} catch (RejectedExecutionException e) {  // expected
 			} finally {
-				barrier.await(500l, TimeUnit.MILLISECONDS);
+				barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 			}
 			return null;
 		});
@@ -214,7 +216,7 @@ public class ContextTrackingExecutorTest {
 	@After
 	public void shutdown() throws InterruptedException {
 		executor.shutdown();
-		executor.enforceTermination(100l, TimeUnit.MILLISECONDS);
+		executor.enforceTermination(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 
