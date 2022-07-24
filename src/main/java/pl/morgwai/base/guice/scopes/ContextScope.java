@@ -52,15 +52,22 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 	 */
 	@Override
 	public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
-		return () -> {
-			try {
-				return getContext().provideIfAbsent(key, unscoped);
-			} catch (NullPointerException e) {
-				// result of a bug that will be fixed in development phase: don't check manually
-				// in production each time.
-				throw new RuntimeException("no context for thread "
-						+ Thread.currentThread().getName() + " in scope " + name
-						+ ". See javadoc for ContextScope.scope(...)");
+		return new Provider<>() {
+
+			@Override public T get() {
+				try {
+					return getContext().provideIfAbsent(key, unscoped);
+				} catch (NullPointerException e) {
+					// result of a bug that will be fixed in development phase: don't check manually
+					// in production each time.
+					throw new RuntimeException("no context for thread "
+							+ Thread.currentThread().getName() + " in scope " + name
+							+ ". See javadoc for ContextScope.scope(...)");
+				}
+			}
+
+			@Override public String toString() {
+				return unscoped.toString() + " scoped to " + name;
 			}
 		};
 	}
