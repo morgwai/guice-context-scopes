@@ -50,9 +50,12 @@ public abstract class InjectionContext {
 	 * Obtains the object given by {@code key}. If there is a stored instance in this context, it is
 	 * returned immediately. Otherwise, a new instance is obtained from {@code provider} and stored
 	 * for subsequent calls.
+	 * <p>
+	 * This method is intended for internal use by libs built on top of this one. Apps should obtain
+	 * scoped objects via Guice injections.</p>
 	 */
 	@SuppressWarnings("unchecked")
-	<T> T provideIfAbsent(Key<T> key, Provider<T> provider) {
+	public <T> T provideIfAbsent(Key<T> key, Provider<T> provider) {
 		return (T) scopedObjects.computeIfAbsent(key, (ignored) -> provider.get());
 	}
 }
