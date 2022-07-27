@@ -8,7 +8,7 @@ import com.google.inject.*;
 
 
 /**
- * Scopes objects to a context obtained from the associated {@link ContextTracker}.
+ * Scopes objects to the current context obtained from the associated {@link ContextTracker}.
  */
 public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope {
 

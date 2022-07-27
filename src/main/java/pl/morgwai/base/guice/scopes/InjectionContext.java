@@ -10,19 +10,19 @@ import com.google.inject.Provider;
 
 
 /**
- * Stores objects scoped to some processing/call/request/session, such as an RPC, a servlet
- * request processing, a session combining several calls etc. Stored objects can be obtained using
- * {@link Provider}s bound in the associated {@link ContextScope}.
+ * Stores objects scoped to the context of some processing/call/request/session, such as an RPC, a
+ * servlet request processing, a session combining several calls etc. Stored objects can be obtained
+ * via Guice injections configured with bindings scoped in the associated {@link ContextScope}.
+ * <p>
+ * Note: most context classes should rather override {@link TrackableContext} subclass instead of
+ * this one. The main exception are contexts that are induced by another contexts: see
+ * {@link InducedContextScope}.</p>
  * <p>
  * Overriding classes usually add properties and methods specific to a given type of call, like
  * given call's arguments etc.</p>
  * <p>
  * If multiple threads run within the same context, the attributes that they access must be
  * thread-safe or properly synchronized.</p>
- * <p>
- * Note: most context classes should rather override {@link TrackableContext} subclass instead of
- * this one. The main exception are contexts that are induced by another contexts: see
- * {@link InducedContextScope}.</p>
  */
 public abstract class InjectionContext {
 
@@ -47,9 +47,9 @@ public abstract class InjectionContext {
 
 
 	/**
-	 * Obtains the object given by {@code key}. If it is not yet present in this context,
-	 * asks {@code provider} for a new instance and stores the result for subsequent calls.
-	 * For internal use by {@link ContextScope#scope(Key, Provider)}.
+	 * Obtains the object given by {@code key}. If there is a stored instance in this context, it is
+	 * returned immediately. Otherwise, a new instance is obtained from {@code provider} and stored
+	 * for subsequent calls.
 	 */
 	@SuppressWarnings("unchecked")
 	<T> T provideIfAbsent(Key<T> key, Provider<T> provider) {

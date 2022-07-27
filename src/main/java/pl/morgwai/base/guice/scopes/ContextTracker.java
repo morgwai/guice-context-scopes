@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 
 
 /**
- * Allows to track which thread is in which context.
+ * Allows to track which thread is within which context.
  */
 public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 
