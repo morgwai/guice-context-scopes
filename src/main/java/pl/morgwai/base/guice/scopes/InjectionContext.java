@@ -52,7 +52,7 @@ public abstract class InjectionContext {
 	 * for subsequent calls.
 	 */
 	@SuppressWarnings("unchecked")
-	<T> T provideIfAbsent(Key<T> key, Provider<T> provider) {
+	protected <T> T provideIfAbsent(Key<T> key, Provider<T> provider) {
 		return (T) scopedObjects.computeIfAbsent(key, (ignored) -> provider.get());
 	}
 }
