@@ -137,9 +137,8 @@ public class ContextTrackingExecutor implements Executor {
 				return;
 			case 0:
 				if (log.isWarnEnabled()) {
-					log.warn(
-							Thread.currentThread().getName() + " is running outside of any context",
-							new Exception("unthrown stack tracer"));
+					log.warn(Thread.currentThread().getName()
+							+ " is running outside of any context");
 				}
 				operation.run();
 				return;
@@ -187,10 +186,10 @@ public class ContextTrackingExecutor implements Executor {
 	// in addition to a RejectedExecutionException, logs a warning if the executor is overloaded
 	final RejectedExecutionHandler rejectionHandler = (task, executor) -> {
 		if (executor.isShutdown()) {
-			throw new RejectedExecutionException(getName() + " rejected a task due to shutdown");
+			throw new RejectedExecutionException(getName() + " rejected a task due to a shutdown");
 		} else {
-			log.warn("executor " + getName() + " is overloaded");
-			throw new RejectedExecutionException(getName() + " rejected a task due to overload");
+			if (log.isWarnEnabled()) log.warn("executor " + getName() + " is overloaded");
+			throw new RejectedExecutionException(getName() + " rejected a task due to an overload");
 		}
 	};
 
@@ -304,14 +303,14 @@ public class ContextTrackingExecutor implements Executor {
 			throws InterruptedException {
 		try {
 			if (awaitTermination(timeout, unit)) {
-				log.info("executor " + name + " shutdown completed");
+				if (log.isInfoEnabled()) log.info("executor " + name + " shutdown completed");
 				return Optional.empty();
 			} else {
-				log.warn("executor " + name + " hasn't shutdown cleanly");
+				if (log.isWarnEnabled()) log.warn("executor " + name + " hasn't shutdown cleanly");
 				return Optional.of(backingExecutor.shutdownNow());
 			}
 		} catch (InterruptedException e) {
-			log.warn("executor " + name + " hasn't shutdown cleanly");
+			if (log.isWarnEnabled()) log.warn("shutdown of executor " + name + " was interrupted");
 			backingExecutor.shutdownNow();
 			throw e;
 		}
@@ -338,7 +337,7 @@ public class ContextTrackingExecutor implements Executor {
 	 * @see #awaitTermination(long, TimeUnit)
 	 */
 	public void awaitTermination() throws InterruptedException {
-		while ( ! backingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS));
+		while ( !backingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS));
 	}
 
 
