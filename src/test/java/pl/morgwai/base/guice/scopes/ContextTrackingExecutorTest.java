@@ -153,6 +153,36 @@ public class ContextTrackingExecutorTest {
 
 
 	@Test
+	public void testExecuteThrowingCallable() throws Exception {
+		final AssertionError[] errorHolder = {null};
+		final var thrown = new Exception();
+		final var callFuture = ctx1.executeWithinSelf(
+			() -> ctx3.executeWithinSelf(
+				() -> executor.execute(() -> {  // method under test
+					try {
+						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
+						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+						throw thrown;
+					} catch (AssertionError e) {
+						errorHolder[0] = e;
+						throw e;
+					}
+				})
+			)
+		);
+		try {
+			callFuture.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			fail("ExecutionException should be thrown");
+		} catch (ExecutionException e) {
+			assertSame("cause of the ExecutionException should be the same as thrown by the task",
+					thrown, e.getCause());
+		}
+		if (errorHolder[0] != null) throw errorHolder[0];
+	}
+
+
+
+	@Test
 	public void testExecutionRejection() throws Exception {
 		final var barrier = new CyclicBarrier(POOL_SIZE + 1);
 		ctx1.executeWithinSelf(() -> {
