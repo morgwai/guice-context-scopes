@@ -214,7 +214,7 @@ public class ContextTrackingExecutor implements Executor {
 		this.poolSize = poolSize;
 		this.trackers = trackers;
 		backingExecutor = new ThreadPoolExecutor(
-				poolSize, poolSize, 0l, TimeUnit.SECONDS,
+				poolSize, poolSize, 0L, TimeUnit.SECONDS,
 				workQueue, new NamedThreadFactory(name), rejectionHandler);
 	}
 
@@ -238,7 +238,7 @@ public class ContextTrackingExecutor implements Executor {
 		this.poolSize = poolSize;
 		this.trackers = trackers;
 		backingExecutor = new ThreadPoolExecutor(
-				poolSize, poolSize, 0l, TimeUnit.SECONDS,
+				poolSize, poolSize, 0L, TimeUnit.SECONDS,
 				workQueue, threadFactory, rejectionHandler);
 	}
 

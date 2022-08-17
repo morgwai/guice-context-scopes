@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 public class ContextTrackingExecutorTest {
 
 
-	public static final long TIMEOUT_MILLIS = 500l;
+	public static final long TIMEOUT_MILLIS = 500L;
 
 	final ContextTracker<TestContext1> tracker1 = new ContextTracker<>();
 	final ContextTracker<TestContext2> tracker2 = new ContextTracker<>();
