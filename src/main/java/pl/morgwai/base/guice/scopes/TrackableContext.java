@@ -6,8 +6,9 @@ import java.util.concurrent.Callable;
 
 
 /**
- * An {@link InjectionContext} applied to operations executed within it and trackable across threads
- * via the associated {@link ContextTracker}.
+ * An {@link InjectionContext} that can {@link #executeWithinSelf(Runnable) execute operations
+ * within itself}, so that it can be tracked across threads using the associated
+ * {@link ContextTracker}.
  * <p>
  * Overriding classes must use themselves as {@code CtxT} type argument.</p>
  */

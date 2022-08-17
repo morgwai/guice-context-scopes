@@ -14,12 +14,12 @@ import com.google.inject.Provider;
  * servlet request processing, a session combining several calls etc. Stored objects can be obtained
  * via Guice injections configured with bindings scoped in the associated {@link ContextScope}.
  * <p>
- * Note: most context classes should rather override {@link TrackableContext} subclass instead of
- * this one. The main exception are contexts that are induced by another contexts: see
+ * Note: most context classes should rather extend {@link TrackableContext} subclass instead of
+ * this one. The main exception are context types that are induced by other contexts: see
  * {@link InducedContextScope}.</p>
  * <p>
- * Overriding classes usually add properties and methods specific to a given type of call, like
- * given call's arguments etc.</p>
+ * Subclasses usually add properties and methods specific to their type, like
+ * their call's arguments, a reference to their session object etc.</p>
  * <p>
  * If multiple threads run within the same context, the attributes that they access must be
  * thread-safe or properly synchronized.</p>

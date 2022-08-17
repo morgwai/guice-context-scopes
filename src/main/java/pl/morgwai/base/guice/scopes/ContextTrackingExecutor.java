@@ -36,8 +36,9 @@ import org.slf4j.LoggerFactory;
  * &commat;Named("someOpTypeExecutor")
  * ContextTrackingExecutor someOpTypeExecutor</pre></p>
  * <p>
- * At app shutdown {@link #shutdown()} followed by {@link #enforceTermination(long, TimeUnit)}
- * should be called on every instance.</p>
+ * At app shutdown {@link #shutdown()} should be called followed by either
+ * {@link #enforceTermination(long, TimeUnit)} or {@link #awaitTermination()} or
+ * {@link #awaitTermination(long, TimeUnit)} and {@link #shutdownNow()} in case of a failure.</p>
  * <p>
  * If multiple threads run within the same context, then the attributes they access must be
  * thread-safe or properly synchronized.</p>
@@ -245,7 +246,7 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Constructs an instance backed by {@code backingExecutor}.
-	 * {@code poolSize} is informative only, to be returned by {@link #getPoolSize()}.
+	 * @param poolSize informative only: to be returned by {@link #getPoolSize()}.
 	 */
 	public ContextTrackingExecutor(
 			String name,

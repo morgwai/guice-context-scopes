@@ -6,7 +6,7 @@ import java.util.function.Function;
 
 
 /**
- * Scopes objects to the context induced by the current context obtained from the associated
+ * Scopes objects to the context induced by the context obtained from the associated
  * {@link ContextTracker}.
  * For example HTTP session context may be induced by HTTP servlet request context.
  */
