@@ -113,6 +113,7 @@ public class ContextTrackingExecutorTest {
 					try {
 						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
 					} catch (AssertionError e) {
 						errorHolder[0] = e;
 					} finally {
@@ -137,6 +138,7 @@ public class ContextTrackingExecutorTest {
 					try {
 						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
 						return result;
 					} catch (AssertionError e) {
 						errorHolder[0] = e;
@@ -162,6 +164,7 @@ public class ContextTrackingExecutorTest {
 					try {
 						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
 						throw thrown;
 					} catch (AssertionError e) {
 						errorHolder[0] = e;
