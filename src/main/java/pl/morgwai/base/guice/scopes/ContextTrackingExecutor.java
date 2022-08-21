@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -78,14 +79,19 @@ public class ContextTrackingExecutor implements Executor {
 	 */
 	public <T> CompletableFuture<T> execute(Callable<T> task) {
 		return CompletableFuture.supplyAsync(
-			() -> {
-				try {
-					return task.call();
-				} catch (CompletionException e) {
-					throw e;
-				} catch (Exception e) {
-					throw new CompletionException(e);
+			new Supplier<>() {
+
+				@Override public T get() {
+					try {
+						return task.call();
+					} catch (CompletionException e) {
+						throw e;
+					} catch (Exception e) {
+						throw new CompletionException(e);
+					}
 				}
+
+				@Override public String toString() { return task.toString(); }
 			},
 			this
 		);
@@ -139,7 +145,7 @@ public class ContextTrackingExecutor implements Executor {
 			case 0:
 				if (log.isWarnEnabled()) {
 					log.warn(Thread.currentThread().getName()
-							+ " is running outside of any context");
+							+ " is executing " + operation + " outside of any context");
 				}
 				operation.run();
 				return;
@@ -164,12 +170,17 @@ public class ContextTrackingExecutor implements Executor {
 			throws Exception {
 		final Object[] resultHolder = {null};
 		final Exception[] exceptionHolder = {null};
-		executeWithinAll(contexts, () -> {
-			try {
-				resultHolder[0] = operation.call();
-			} catch (Exception e) {
-				exceptionHolder[0] = e;
+		executeWithinAll(contexts, new Runnable() {
+
+			@Override public void run() {
+				try {
+					resultHolder[0] = operation.call();
+				} catch (Exception e) {
+					exceptionHolder[0] = e;
+				}
 			}
+
+			@Override public String toString() { return operation.toString(); }
 		});
 		if (exceptionHolder[0] != null) throw exceptionHolder[0];
 		return (T) resultHolder[0];
