@@ -122,7 +122,7 @@ public class ContextTrackingExecutorTest {
 				})
 			)
 		);
-		if ( ! latch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) throw new TimeoutException();
+		if ( !latch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) throw new TimeoutException();
 		if (errorHolder[0] != null) throw errorHolder[0];
 	}
 
