@@ -155,9 +155,10 @@ public class ContextTrackingExecutorTest {
 
 
 	@Test
-	public void testExecuteThrowingCallable() throws Exception {
+	public void testExecuteThrowingCallableAndCallGet() throws Exception {
 		final AssertionError[] errorHolder = {null};
 		final var thrown = new Exception();
+
 		final var callFuture = ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(
 				() -> executor.execute(() -> {  // method under test
@@ -173,6 +174,7 @@ public class ContextTrackingExecutorTest {
 				})
 			)
 		);
+
 		try {
 			callFuture.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 			fail("ExecutionException should be thrown");
@@ -180,6 +182,47 @@ public class ContextTrackingExecutorTest {
 			assertSame("cause of the ExecutionException should be the same as thrown by the task",
 					thrown, e.getCause());
 		}
+		if (errorHolder[0] != null) throw errorHolder[0];
+	}
+
+
+
+	@Test
+	public void testExecuteThrowingCallableAndCallWhenComplete() throws Exception {
+		final AssertionError[] errorHolder = {null};
+		final var thrown = new Exception();
+
+		final var callFuture = ctx1.executeWithinSelf(
+			() -> ctx3.executeWithinSelf(
+				() -> executor.execute(() -> {  // method under test
+					try {
+						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
+						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
+						throw thrown;
+					} catch (AssertionError e) {
+						errorHolder[0] = e;
+						throw e;
+					}
+				})
+			)
+		);
+		final var completionLatch = new CountDownLatch(1);
+		callFuture.whenComplete(
+			(result, caught) -> {
+				try {
+					assertSame("caught exception should be the same as thrown by the Callable task",
+							thrown, caught);
+				} catch (AssertionError e) {
+					errorHolder[0] = e;
+				} finally {
+					completionLatch.countDown();
+				}
+			}
+		);
+
+		assertTrue("the Callable task should complete",
+				completionLatch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
 		if (errorHolder[0] != null) throw errorHolder[0];
 	}
 

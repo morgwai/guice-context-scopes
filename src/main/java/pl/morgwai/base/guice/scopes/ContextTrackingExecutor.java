@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -74,27 +74,25 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Convenience method to execute a {@link Callable}.
+	 * Convenience method to execute a {@link Callable}. If {@link Callable#call() task.call()}
+	 * throws an exception, it will be pipelined to
+	 * {@link CompletableFuture#handle(BiFunction)  handle(...)} /
+	 * {@link CompletableFuture#whenComplete(BiConsumer)  whenComplete(...)} /
+	 * {@link CompletableFuture#exceptionally(Function) exceptionally(...)} chained calls.
 	 * @see #execute(Runnable)
 	 */
 	public <T> CompletableFuture<T> execute(Callable<T> task) {
-		return CompletableFuture.supplyAsync(
-			new Supplier<>() {
-
-				@Override public T get() {
-					try {
-						return task.call();
-					} catch (CompletionException e) {
-						throw e;
-					} catch (Exception e) {
-						throw new CompletionException(e);
-					}
+		final var result = new CompletableFuture<T>();
+		execute(
+			() -> {
+				try {
+					result.complete(task.call());
+				} catch (Exception e) {
+					result.completeExceptionally(e);
 				}
-
-				@Override public String toString() { return task.toString(); }
-			},
-			this
+			}
 		);
+		return result;
 	}
 
 
