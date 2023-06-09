@@ -32,6 +32,7 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 	 * For internal use by {@link TrackableContext#executeWithinSelf(Runnable)}.
 	 */
 	void trackWhileExecuting(CtxT ctx, Runnable operation) {
+		// not a call to trackWhileExecuting(ctx,Callable) for more friendly stack traces
 		currentContext.set(ctx);
 		try {
 			operation.run();
