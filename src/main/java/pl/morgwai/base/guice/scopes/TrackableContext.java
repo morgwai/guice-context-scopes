@@ -28,26 +28,41 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 
 
 	/**
-	 * Sets itself as the current context for the current thread and executes {@code operation}
+	 * Sets itself as the current context for the current thread and executes {@code task}
 	 * synchronously. Afterwards clears the current context.
 	 *
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)
 	 */
 	@SuppressWarnings("unchecked")
-	public void executeWithinSelf(Runnable operation) {
-		tracker.trackWhileExecuting((CtxT) this, operation);
+	public void executeWithinSelf(Runnable task) {
+		try {
+			tracker.trackWhileExecuting(
+				(CtxT) this,
+				new Callable<Void>() {
+
+					@Override public Void call() {
+						task.run();
+						return null;
+					}
+
+					@Override public String toString() { return task.toString(); }
+				}
+			);
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
 	}
 
 
 
 	/**
-	 * Sets itself as the current context for the current thread and executes {@code operation}
+	 * Sets itself as the current context for the current thread and executes {@code task}
 	 * synchronously. Afterwards clears the current context.
 	 *
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Callable)
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> T executeWithinSelf(Callable<T> operation) throws Exception {
-		return tracker.trackWhileExecuting((CtxT) this, operation);
+	public <T> T executeWithinSelf(Callable<T> task) throws Exception {
+		return tracker.trackWhileExecuting((CtxT) this, task);
 	}
 }

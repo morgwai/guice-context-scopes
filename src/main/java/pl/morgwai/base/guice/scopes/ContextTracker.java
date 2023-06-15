@@ -29,27 +29,12 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 
 
 	/**
-	 * For internal use by {@link TrackableContext#executeWithinSelf(Runnable)}.
-	 */
-	void trackWhileExecuting(CtxT ctx, Runnable operation) {
-		// not a call to trackWhileExecuting(ctx,Callable) for more friendly stack traces
-		currentContext.set(ctx);
-		try {
-			operation.run();
-		} finally {
-			currentContext.remove();
-		}
-	}
-
-
-
-	/**
 	 * For internal use by {@link TrackableContext#executeWithinSelf(Callable)}.
 	 */
-	<T> T trackWhileExecuting(CtxT ctx, Callable<T> operation) throws Exception {
+	<T> T trackWhileExecuting(CtxT ctx, Callable<T> task) throws Exception {
 		currentContext.set(ctx);
 		try {
-			return operation.call();
+			return task.call();
 		} finally {
 			currentContext.remove();
 		}
