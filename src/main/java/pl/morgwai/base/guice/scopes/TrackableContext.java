@@ -33,11 +33,12 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 	 *
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)
 	 */
-	@SuppressWarnings("unchecked")
 	public void executeWithinSelf(Runnable task) {
+		@SuppressWarnings("unchecked")
+		final var thisCtx = (CtxT) this;
 		try {
 			tracker.trackWhileExecuting(
-				(CtxT) this,
+				thisCtx,
 				new Callable<Void>() {
 
 					@Override public Void call() {
@@ -61,8 +62,9 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 	 *
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Callable)
 	 */
-	@SuppressWarnings("unchecked")
 	public <T> T executeWithinSelf(Callable<T> task) throws Exception {
-		return tracker.trackWhileExecuting((CtxT) this, task);
+		@SuppressWarnings("unchecked")
+		final var thisCtx = (CtxT) this;
+		return tracker.trackWhileExecuting(thisCtx, task);
 	}
 }

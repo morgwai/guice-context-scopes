@@ -51,8 +51,9 @@ public abstract class InjectionContext {
 	 * returned immediately. Otherwise, a new instance is obtained from {@code provider} and stored
 	 * for subsequent calls.
 	 */
-	@SuppressWarnings("unchecked")
 	protected <T> T provideIfAbsent(Key<T> key, Provider<T> provider) {
-		return (T) scopedObjects.computeIfAbsent(key, (ignored) -> provider.get());
+		@SuppressWarnings("unchecked")
+		final var result = (T) scopedObjects.computeIfAbsent(key, (ignored) -> provider.get());
+		return result;
 	}
 }
