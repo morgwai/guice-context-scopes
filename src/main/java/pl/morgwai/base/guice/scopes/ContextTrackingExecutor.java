@@ -48,15 +48,15 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
-	private final List<ContextTracker<?>> trackers;
-
-	private final ExecutorService backingExecutor;
+	final String name;
+	public String getName() { return name; }
 
 	final int poolSize;
 	public int getPoolSize() { return poolSize; }
 
-	final String name;
-	public String getName() { return name; }
+	final List<ContextTracker<?>> trackers;
+
+	private final ExecutorService backingExecutor;
 
 
 
@@ -68,31 +68,7 @@ public class ContextTrackingExecutor implements Executor {
 	 * (such as a load balancer or a frontend proxy) should be used.</p>
 	 */
 	public ContextTrackingExecutor(String name, int poolSize, List<ContextTracker<?>> trackers) {
-		this(name, poolSize, new LinkedBlockingQueue<>(), trackers);
-	}
-
-
-
-	/**
-	 * Convenience method to execute a {@link Callable}. If {@link Callable#call() task.call()}
-	 * throws an exception, it will be pipelined to
-	 * {@link CompletableFuture#handle(BiFunction)  handle(...)} /
-	 * {@link CompletableFuture#whenComplete(BiConsumer)  whenComplete(...)} /
-	 * {@link CompletableFuture#exceptionally(Function) exceptionally(...)} chained calls.
-	 * @see #execute(Runnable)
-	 */
-	public <T> CompletableFuture<T> execute(Callable<T> task) {
-		final var result = new CompletableFuture<T>();
-		execute(
-			() -> {
-				try {
-					result.complete(task.call());
-				} catch (Exception e) {
-					result.completeExceptionally(e);
-				}
-			}
-		);
-		return result;
+		this(name, poolSize, trackers, new LinkedBlockingQueue<>());
 	}
 
 
@@ -186,6 +162,30 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
+	/**
+	 * Convenience method to execute a {@link Callable}. If {@link Callable#call() task.call()}
+	 * throws an exception, it will be pipelined to
+	 * {@link CompletableFuture#handle(BiFunction)  handle(...)} /
+	 * {@link CompletableFuture#whenComplete(BiConsumer)  whenComplete(...)} /
+	 * {@link CompletableFuture#exceptionally(Function) exceptionally(...)} chained calls.
+	 * @see #execute(Runnable)
+	 */
+	public <T> CompletableFuture<T> execute(Callable<T> task) {
+		final var result = new CompletableFuture<T>();
+		execute(
+			() -> {
+				try {
+					result.complete(task.call());
+				} catch (Exception e) {
+					result.completeExceptionally(e);
+				}
+			}
+		);
+		return result;
+	}
+
+
+
 	@Override
 	public String toString() {
 		return "ContextTrackingExecutor { name = \"" + name + "\" }";
@@ -205,6 +205,7 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
+
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
 	 * {@link NamedThreadFactory NamedThreadFactory}.
@@ -215,16 +216,18 @@ public class ContextTrackingExecutor implements Executor {
 	 * and a servlet can send status {@code 503 Service Unavailable}).</p>
 	 */
 	public ContextTrackingExecutor(
-			String name,
-			int poolSize,
-			BlockingQueue<Runnable> workQueue,
-			List<ContextTracker<?>> trackers) {
-		this.name = name;
-		this.poolSize = poolSize;
-		this.trackers = trackers;
-		backingExecutor = new ThreadPoolExecutor(
-				poolSize, poolSize, 0L, TimeUnit.SECONDS,
-				workQueue, new NamedThreadFactory(name), rejectionHandler);
+		String name,
+		int poolSize,
+		List<ContextTracker<?>> trackers,
+		BlockingQueue<Runnable> workQueue
+	) {
+		this(
+			name,
+			poolSize,
+			trackers,
+			workQueue,
+			new NamedThreadFactory(name)
+		);
 	}
 
 
@@ -238,17 +241,20 @@ public class ContextTrackingExecutor implements Executor {
 	 * and a servlet can send status {@code 503 Service Unavailable}).</p>
 	 */
 	public ContextTrackingExecutor(
-			String name,
-			int poolSize,
-			BlockingQueue<Runnable> workQueue,
-			ThreadFactory threadFactory,
-			List<ContextTracker<?>> trackers) {
-		this.name = name;
-		this.poolSize = poolSize;
-		this.trackers = trackers;
-		backingExecutor = new ThreadPoolExecutor(
-				poolSize, poolSize, 0L, TimeUnit.SECONDS,
-				workQueue, threadFactory, rejectionHandler);
+		String name,
+		int poolSize,
+		List<ContextTracker<?>> trackers,
+		BlockingQueue<Runnable> workQueue,
+		ThreadFactory threadFactory
+	) {
+		this(
+			name,
+			poolSize,
+			trackers,
+			workQueue,
+			threadFactory,
+			null
+		);
 	}
 
 
@@ -258,14 +264,38 @@ public class ContextTrackingExecutor implements Executor {
 	 * @param poolSize informative only: to be returned by {@link #getPoolSize()}.
 	 */
 	public ContextTrackingExecutor(
-			String name,
-			ExecutorService backingExecutor,
-			int poolSize,
-			List<ContextTracker<?>> trackers) {
+		String name,
+		int poolSize,
+		List<ContextTracker<?>> trackers,
+		ExecutorService backingExecutor
+	) {
+		this(
+			name,
+			poolSize,
+			trackers,
+			null,
+			null,
+			backingExecutor
+		);
+	}
+
+
+
+	private ContextTrackingExecutor(
+		String name,
+		int poolSize,
+		List<ContextTracker<?>> trackers,
+		BlockingQueue<Runnable> workQueue,
+		ThreadFactory threadFactory,
+		ExecutorService backingExecutor
+	) {
 		this.name = name;
-		this.backingExecutor = backingExecutor;
 		this.poolSize = poolSize;
-		this.trackers = trackers;
+		this.trackers = List.copyOf(trackers);
+		this.backingExecutor = backingExecutor != null
+				? backingExecutor
+				: new ThreadPoolExecutor(poolSize, poolSize, 0L, TimeUnit.SECONDS,
+						workQueue, threadFactory, rejectionHandler);
 	}
 
 
@@ -404,7 +434,8 @@ public class ContextTrackingExecutor implements Executor {
 		 */
 		@Override
 		public Thread newThread(Runnable task) {
-			var thread = new Thread(threadGroup, task, namePrefix + threadNumber.getAndIncrement());
+			final var thread =
+					new Thread(threadGroup, task, namePrefix + threadNumber.getAndIncrement());
 			thread.setPriority(threadGroup.getMaxPriority());
 			return thread;
 		}
