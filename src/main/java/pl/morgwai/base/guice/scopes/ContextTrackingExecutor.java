@@ -110,29 +110,35 @@ public class ContextTrackingExecutor implements Executor {
 	 *
 	 * @see #getActiveContexts(List)
 	 */
-	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
+	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> task)
+			throws Exception {
 		switch (contexts.size()) {
 			case 1:
-				contexts.get(0).executeWithinSelf(task);
-				return;
+				return contexts.get(0).executeWithinSelf(task);
 			case 2:
-				contexts.get(1).executeWithinSelf(new Runnable() {
-					@Override public void run() { contexts.get(0).executeWithinSelf(task); }
+				return contexts.get(1).executeWithinSelf(new Callable<>() {
+
+					@Override public T call() throws Exception {
+						return contexts.get(0).executeWithinSelf(task);
+					}
+
 					@Override public String toString() { return task.toString(); }
 				});
-				return;
 			case 0:
 				if (log.isWarnEnabled()) {
 					log.warn(Thread.currentThread().getName()
 							+ " is executing " + task + " outside of any context");
 				}
-				task.run();
-				return;
+				return task.call();
 			default:
-				executeWithinAll(
+				return executeWithinAll(
 					contexts.subList(1, contexts.size()),
-					new Runnable() {
-						@Override public void run() { contexts.get(0).executeWithinSelf(task); }
+					new Callable<>() {
+
+						@Override public T call() throws Exception {
+							return contexts.get(0).executeWithinSelf(task);
+						}
+
 						@Override public String toString() { return task.toString(); }
 					}
 				);
@@ -147,25 +153,20 @@ public class ContextTrackingExecutor implements Executor {
 	 *
 	 * @see #getActiveContexts(List)
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> task)
-			throws Exception {
-		final Object[] resultHolder = {null};
-		final Exception[] exceptionHolder = {null};
-		executeWithinAll(contexts, new Runnable() {
+	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
+		try {
+			executeWithinAll(contexts, new Callable<Void>() {
 
-			@Override public void run() {
-				try {
-					resultHolder[0] = task.call();
-				} catch (Exception e) {
-					exceptionHolder[0] = e;
+				@Override public Void call() {
+					task.run();
+					return null;
 				}
-			}
 
-			@Override public String toString() { return task.toString(); }
-		});
-		if (exceptionHolder[0] != null) throw exceptionHolder[0];
-		return (T) resultHolder[0];
+				@Override public String toString() { return task.toString(); }
+			});
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
 	}
 
 
