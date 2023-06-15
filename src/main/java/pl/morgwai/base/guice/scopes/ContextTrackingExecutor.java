@@ -79,7 +79,10 @@ public class ContextTrackingExecutor implements Executor {
 	@Override
 	public void execute(Runnable task) {
 		final var activeCtxs = getActiveContexts(trackers);
-		backingExecutor.execute(() -> executeWithinAll(activeCtxs, task));
+		backingExecutor.execute(new Runnable() {
+			@Override public void run() { executeWithinAll(activeCtxs, task); }
+			@Override public String toString() { return task.toString(); }
+		});
 	}
 
 
@@ -102,31 +105,36 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Executes {@code operation} on the current thread within all {@code contexts}.
+	 * Executes {@code task} on the current thread within all {@code contexts}.
 	 * Used to transfer active contexts after a switch to another thread.
 	 *
 	 * @see #getActiveContexts(List)
 	 */
-	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable operation) {
+	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
 		switch (contexts.size()) {
 			case 1:
-				contexts.get(0).executeWithinSelf(operation);
+				contexts.get(0).executeWithinSelf(task);
 				return;
 			case 2:
-				contexts.get(1).executeWithinSelf(
-						() -> contexts.get(0).executeWithinSelf(operation));
+				contexts.get(1).executeWithinSelf(new Runnable() {
+					@Override public void run() { contexts.get(0).executeWithinSelf(task); }
+					@Override public String toString() { return task.toString(); }
+				});
 				return;
 			case 0:
 				if (log.isWarnEnabled()) {
 					log.warn(Thread.currentThread().getName()
-							+ " is executing " + operation + " outside of any context");
+							+ " is executing " + task + " outside of any context");
 				}
-				operation.run();
+				task.run();
 				return;
 			default:
 				executeWithinAll(
 					contexts.subList(1, contexts.size()),
-					() -> contexts.get(0).executeWithinSelf(operation)
+					new Runnable() {
+						@Override public void run() { contexts.get(0).executeWithinSelf(task); }
+						@Override public String toString() { return task.toString(); }
+					}
 				);
 		}
 	}
@@ -134,13 +142,13 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Executes {@code operation} on the current thread within all {@code contexts}.
+	 * Executes {@code task} on the current thread within all {@code contexts}.
 	 * Used to transfer active contexts after a switch to another thread.
 	 *
 	 * @see #getActiveContexts(List)
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> operation)
+	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> task)
 			throws Exception {
 		final Object[] resultHolder = {null};
 		final Exception[] exceptionHolder = {null};
@@ -148,13 +156,13 @@ public class ContextTrackingExecutor implements Executor {
 
 			@Override public void run() {
 				try {
-					resultHolder[0] = operation.call();
+					resultHolder[0] = task.call();
 				} catch (Exception e) {
 					exceptionHolder[0] = e;
 				}
 			}
 
-			@Override public String toString() { return operation.toString(); }
+			@Override public String toString() { return task.toString(); }
 		});
 		if (exceptionHolder[0] != null) throw exceptionHolder[0];
 		return (T) resultHolder[0];
@@ -172,15 +180,18 @@ public class ContextTrackingExecutor implements Executor {
 	 */
 	public <T> CompletableFuture<T> execute(Callable<T> task) {
 		final var result = new CompletableFuture<T>();
-		execute(
-			() -> {
+		execute(new Runnable() {
+
+			@Override public void run() {
 				try {
 					result.complete(task.call());
 				} catch (Exception e) {
 					result.completeExceptionally(e);
 				}
 			}
-		);
+
+			@Override public String toString() { return task.toString(); }
+		});
 		return result;
 	}
 
@@ -196,10 +207,13 @@ public class ContextTrackingExecutor implements Executor {
 	// in addition to a RejectedExecutionException, logs a warning if the executor is overloaded
 	final RejectedExecutionHandler rejectionHandler = (task, executor) -> {
 		if (executor.isShutdown()) {
-			throw new RejectedExecutionException(getName() + " rejected a task due to a shutdown");
+			throw new RejectedExecutionException(
+					getName() + " is shutting down, rejected task " + task);
 		} else {
-			if (log.isWarnEnabled()) log.warn("executor " + getName() + " is overloaded");
-			throw new RejectedExecutionException(getName() + " rejected a task due to an overload");
+			if (log.isWarnEnabled()) log.warn(
+					"executor " + getName() + " is overloaded, rejected task " + task);
+			throw new RejectedExecutionException(
+					getName() + " is overloaded, rejected task " + task);
 		}
 	};
 

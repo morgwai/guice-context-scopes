@@ -31,7 +31,8 @@ public class ContextTrackingExecutorTest {
 	static final int POOL_SIZE = 2;
 	static final int QUEUE_SIZE = 1;
 	final ContextTrackingExecutor executor = new ContextTrackingExecutor(
-			"testExecutor", POOL_SIZE, new LinkedBlockingQueue<>(QUEUE_SIZE), allTrackers);
+			"testExecutor", POOL_SIZE, allTrackers, new LinkedBlockingQueue<>(QUEUE_SIZE));
+	static final String TASK_NAME = "testTask";
 
 
 
@@ -244,9 +245,14 @@ public class ContextTrackingExecutorTest {
 			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
 
 			try {
-				executor.execute(() -> {});  // method under test
-				fail("RejectedExecutionException should be thrown");
-			} catch (RejectedExecutionException e) {  // expected
+				executor.execute(new Runnable() {  // method under test
+					@Override public void run() {}
+					@Override public String toString() { return TASK_NAME; }
+				});
+				fail("RejectedExecutionException expected");
+			} catch (RejectedExecutionException expected) {
+				assertNotEquals("rejection message should contain the task name",
+						-1, expected.getMessage().indexOf(TASK_NAME));
 			} finally {
 				barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 			}
@@ -272,9 +278,14 @@ public class ContextTrackingExecutorTest {
 			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
 
 			try {
-				executor.execute(() -> "result");  // method under test
-				fail("RejectedExecutionException should be thrown");
-			} catch (RejectedExecutionException e) {  // expected
+				executor.execute(new Callable<>() {  // method under test
+					@Override public String call() { return "result"; }
+					@Override public String toString() { return TASK_NAME; }
+				});
+				fail("RejectedExecutionException expected");
+			} catch (RejectedExecutionException expected) {
+				assertNotEquals("rejection message should contain the task name",
+						-1, expected.getMessage().indexOf(TASK_NAME));
 			} finally {
 				barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 			}
