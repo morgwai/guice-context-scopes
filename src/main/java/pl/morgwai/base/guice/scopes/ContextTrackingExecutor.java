@@ -62,11 +62,12 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a new
 	 * {@link NamedThreadFactory NamedThreadFactory} and an unbound {@link LinkedBlockingQueue}.
 	 * <p>
 	 * To avoid {@link OutOfMemoryError}s, an external mechanism that limits maximum number of tasks
 	 * (such as a load balancer or a frontend proxy) should be used.</p>
+	 * @see #ContextTrackingExecutor(String, int, List, BlockingQueue, ThreadFactory)
 	 */
 	public ContextTrackingExecutor(String name, int poolSize, List<ContextTracker<?>> trackers) {
 		this(name, poolSize, trackers, new LinkedBlockingQueue<>());
@@ -194,30 +195,11 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
-	// in addition to a RejectedExecutionException, logs a warning if the executor is overloaded
-	final RejectedExecutionHandler rejectionHandler = (task, executor) -> {
-		if (executor.isShutdown()) {
-			throw new RejectedExecutionException(
-					getName() + " is shutting down, rejected task " + task);
-		} else {
-			if (log.isWarnEnabled()) log.warn(
-					"executor " + getName() + " is overloaded, rejected task " + task);
-			throw new RejectedExecutionException(
-					getName() + " is overloaded, rejected task " + task);
-		}
-	};
-
-
-
 
 	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a
-	 * {@link NamedThreadFactory NamedThreadFactory}.
-	 * <p>
-	 * {@link #execute(Runnable)} throws a {@link RejectedExecutionException} if {@code workQueue}
-	 * is full. It should usually be handled by informing the client that the service has
-	 * temporarily exceeded its capacity (for example a gRPC can send status {@code UNAVAILABLE(14)}
-	 * and a servlet can send status {@code 503 Service Unavailable}).</p>
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a new
+	 * {@link NamedThreadFactory NamedThreadFactory} and {@code workQueue}.
+	 * @see #ContextTrackingExecutor(String, int, List, BlockingQueue, ThreadFactory)
 	 */
 	public ContextTrackingExecutor(
 		String name,
@@ -237,12 +219,14 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor}.
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
+	 * {@code workQueue} and {@code threadFactory}.
 	 * <p>
 	 * {@link #execute(Runnable)} throws a {@link RejectedExecutionException} if {@code workQueue}
-	 * is full. It should usually be handled by informing the client that the service has
-	 * temporarily exceeded its capacity (for example a gRPC can send status {@code UNAVAILABLE(14)}
-	 * and a servlet can send status {@code 503 Service Unavailable}).</p>
+	 * is full or the executor is shutting down. It should usually be handled by informing the
+	 * client that the service has temporarily exceeded its capacity (for example a gRPC can send
+	 * status {@code UNAVAILABLE(14)} and a servlet can send status
+	 * {@code 503 Service Unavailable}).</p>
 	 */
 	public ContextTrackingExecutor(
 		String name,
@@ -257,7 +241,46 @@ public class ContextTrackingExecutor implements Executor {
 			trackers,
 			workQueue,
 			threadFactory,
-			null
+			(task, executor) -> {
+				if (executor.isShutdown()) {
+					final var message =
+						"executor " + name + " is shutting down, rejected task " + task;
+					log.debug(message);
+					throw new RejectedExecutionException(message);
+				} else {
+					final var message =
+						"executor " + name + " is overloaded, rejected task " + task;
+					log.warn(message);
+					throw new RejectedExecutionException(message);
+				}
+			}
+		);
+	}
+
+
+
+	/**
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
+	 * {@code workQueue}, {@code threadFactory} and {@code rejectionHandler}.
+	 */
+	public ContextTrackingExecutor(
+		String name,
+		int poolSize,
+		List<ContextTracker<?>> trackers,
+		BlockingQueue<Runnable> workQueue,
+		ThreadFactory threadFactory,
+		RejectedExecutionHandler rejectionHandler
+	) {
+		this(
+			name,
+			poolSize,
+			trackers,
+			new ThreadPoolExecutor(
+				poolSize, poolSize, 0L, TimeUnit.SECONDS,
+				workQueue,
+				threadFactory,
+				rejectionHandler
+			)
 		);
 	}
 
@@ -273,33 +296,10 @@ public class ContextTrackingExecutor implements Executor {
 		List<ContextTracker<?>> trackers,
 		ExecutorService backingExecutor
 	) {
-		this(
-			name,
-			poolSize,
-			trackers,
-			null,
-			null,
-			backingExecutor
-		);
-	}
-
-
-
-	private ContextTrackingExecutor(
-		String name,
-		int poolSize,
-		List<ContextTracker<?>> trackers,
-		BlockingQueue<Runnable> workQueue,
-		ThreadFactory threadFactory,
-		ExecutorService backingExecutor
-	) {
 		this.name = name;
 		this.poolSize = poolSize;
 		this.trackers = List.copyOf(trackers);
-		this.backingExecutor = backingExecutor != null
-				? backingExecutor
-				: new ThreadPoolExecutor(poolSize, poolSize, 0L, TimeUnit.SECONDS,
-						workQueue, threadFactory, rejectionHandler);
+		this.backingExecutor = backingExecutor;
 	}
 
 
