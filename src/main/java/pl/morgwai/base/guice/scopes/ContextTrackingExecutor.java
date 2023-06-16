@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.morgwai.base.guice.scopes.TrackableContext.CallableWrapper;
 
 
 
@@ -78,11 +79,34 @@ public class ContextTrackingExecutor implements Executor {
 	 */
 	@Override
 	public void execute(Runnable task) {
+		execute(new CallableWrapper(task));
+	}
+
+
+
+	/**
+	 * Executes {@code task} within all contexts that were active when this method was called.
+	 * If {@link Callable#call() task.call()} throws an exception, it will be pipelined to
+	 * {@link CompletableFuture#handle(BiFunction)  handle(...)} /
+	 * {@link CompletableFuture#whenComplete(BiConsumer)  whenComplete(...)} /
+	 * {@link CompletableFuture#exceptionally(Function) exceptionally(...)} chained calls.
+	 */
+	public <T> CompletableFuture<T> execute(Callable<T> task) {
+		final var future = new CompletableFuture<T>();
 		final var activeCtxs = getActiveContexts(trackers);
 		backingExecutor.execute(new Runnable() {
-			@Override public void run() { executeWithinAll(activeCtxs, task); }
+
+			@Override public void run() {
+				try {
+					future.complete(executeWithinAll(activeCtxs, task));
+				} catch (Exception e) {
+					future.completeExceptionally(e);
+				}
+			}
+
 			@Override public String toString() { return task.toString(); }
 		});
+		return future;
 	}
 
 
@@ -155,45 +179,10 @@ public class ContextTrackingExecutor implements Executor {
 	 */
 	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
 		try {
-			executeWithinAll(contexts, new Callable<Void>() {
-
-				@Override public Void call() {
-					task.run();
-					return null;
-				}
-
-				@Override public String toString() { return task.toString(); }
-			});
+			executeWithinAll(contexts, new CallableWrapper(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
-	}
-
-
-
-	/**
-	 * Convenience method to execute a {@link Callable}. If {@link Callable#call() task.call()}
-	 * throws an exception, it will be pipelined to
-	 * {@link CompletableFuture#handle(BiFunction)  handle(...)} /
-	 * {@link CompletableFuture#whenComplete(BiConsumer)  whenComplete(...)} /
-	 * {@link CompletableFuture#exceptionally(Function) exceptionally(...)} chained calls.
-	 * @see #execute(Runnable)
-	 */
-	public <T> CompletableFuture<T> execute(Callable<T> task) {
-		final var result = new CompletableFuture<T>();
-		execute(new Runnable() {
-
-			@Override public void run() {
-				try {
-					result.complete(task.call());
-				} catch (Exception e) {
-					result.completeExceptionally(e);
-				}
-			}
-
-			@Override public String toString() { return task.toString(); }
-		});
-		return result;
 	}
 
 

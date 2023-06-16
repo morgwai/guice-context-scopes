@@ -37,18 +37,7 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 		@SuppressWarnings("unchecked")
 		final var thisCtx = (CtxT) this;
 		try {
-			tracker.trackWhileExecuting(
-				thisCtx,
-				new Callable<Void>() {
-
-					@Override public Void call() {
-						task.run();
-						return null;
-					}
-
-					@Override public String toString() { return task.toString(); }
-				}
-			);
+			tracker.trackWhileExecuting(thisCtx, new CallableWrapper(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
@@ -66,5 +55,33 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 		@SuppressWarnings("unchecked")
 		final var thisCtx = (CtxT) this;
 		return tracker.trackWhileExecuting(thisCtx, task);
+	}
+
+
+
+	static class CallableWrapper implements Callable<Void> {
+
+		final Runnable wrapped;
+
+
+
+		CallableWrapper(Runnable wrapped) {
+			this.wrapped = wrapped;
+		}
+
+
+
+		@Override
+		public Void call() {
+			wrapped.run();
+			return null;
+		}
+
+
+
+		@Override
+		public String toString() {
+			return wrapped.toString();
+		}
 	}
 }
