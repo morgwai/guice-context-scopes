@@ -14,7 +14,7 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 
-	final ContextTracker<CtxT> tracker;
+	protected final ContextTracker<CtxT> tracker;
 
 	final String name;
 	public String getName() { return name; }
@@ -74,6 +74,12 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 
+	/**
+	 * Returns a context instance from which scoped objects should be obtained by this Scope. By
+	 * default returns directly the context obtained from {@link #tracker}. May be overridden to
+	 * return some context induced by the one from the {@link #tracker}.
+	 * @see InducedContextScope
+	 */
 	protected InjectionContext getContext() {
 		return tracker.getCurrentContext();
 	}

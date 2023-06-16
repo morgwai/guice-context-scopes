@@ -7,8 +7,12 @@ import java.util.function.Function;
 
 /**
  * Scopes objects to the context induced by the context obtained from the associated
- * {@link ContextTracker}.
- * For example HTTP session context may be induced by HTTP servlet request context.
+ * {@link ContextTracker}. For example HTTP session context may be induced by HTTP servlet request
+ * context.
+ * <p>
+ * Note: induced Scopes may also be implemented by subclassing {@link ContextScope} and overriding
+ * {@link ContextScope#getContext()} method to return the induced context instead of the one
+ * directly obtained from {@link #tracker}. Both these ways are mostly equivalent.</p>
  */
 public class InducedContextScope<
 		InducingCtxT extends TrackableContext<InducingCtxT>,
@@ -22,9 +26,10 @@ public class InducedContextScope<
 
 
 	public InducedContextScope(
-			String name,
-			ContextTracker<InducingCtxT> tracker,
-			Function<InducingCtxT, InducedCtxT> inducer) {
+		String name,
+		ContextTracker<InducingCtxT> tracker,
+		Function<InducingCtxT, InducedCtxT> inducer
+	) {
 		super(name, tracker);
 		this.inducer = inducer;
 	}
