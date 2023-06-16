@@ -7,6 +7,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.junit.*;
+import pl.morgwai.base.guice.scopes.ContextTrackingExecutor.DetailedRejectedExecutionException;
 
 import static org.junit.Assert.*;
 
@@ -249,10 +250,12 @@ public class ContextTrackingExecutorTest {
 					@Override public void run() {}
 					@Override public String toString() { return TASK_NAME; }
 				});
-				fail("RejectedExecutionException expected");
-			} catch (RejectedExecutionException expected) {
-				assertNotEquals("rejection message should contain the task name",
-						-1, expected.getMessage().indexOf(TASK_NAME));
+				fail("DetailedRejectedExecutionException expected");
+			} catch (DetailedRejectedExecutionException rejection) {
+				assertSame("rejected task should be wrapping the one passed to the executor",
+						TASK_NAME, rejection.getTask().toString());
+				assertSame("executor referance should be correct",
+						executor, rejection.getExecutor());
 			} finally {
 				barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 			}
@@ -282,10 +285,12 @@ public class ContextTrackingExecutorTest {
 					@Override public String call() { return "result"; }
 					@Override public String toString() { return TASK_NAME; }
 				});
-				fail("RejectedExecutionException expected");
-			} catch (RejectedExecutionException expected) {
-				assertNotEquals("rejection message should contain the task name",
-						-1, expected.getMessage().indexOf(TASK_NAME));
+				fail("DetailedRejectedExecutionException expected");
+			} catch (DetailedRejectedExecutionException rejection) {
+				assertSame("rejected task should be wrapping the one passed to the executor",
+						TASK_NAME, rejection.getTask().toString());
+				assertSame("executor referance should be correct",
+						executor, rejection.getExecutor());
 			} finally {
 				barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 			}

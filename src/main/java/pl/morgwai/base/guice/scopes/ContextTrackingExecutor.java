@@ -62,12 +62,11 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a new
-	 * {@link NamedThreadFactory NamedThreadFactory} and an unbound {@link LinkedBlockingQueue}.
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses an
+	 * unbound {@link LinkedBlockingQueue} and a new {@link NamedThreadFactory}.
 	 * <p>
 	 * To avoid {@link OutOfMemoryError}s, an external mechanism that limits maximum number of tasks
 	 * (such as a load balancer or a frontend proxy) should be used.</p>
-	 * @see #ContextTrackingExecutor(String, int, List, BlockingQueue, ThreadFactory)
 	 */
 	public ContextTrackingExecutor(String name, int poolSize, List<ContextTracker<?>> trackers) {
 		this(name, poolSize, trackers, new LinkedBlockingQueue<>());
@@ -197,9 +196,15 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses a new
-	 * {@link NamedThreadFactory NamedThreadFactory} and {@code workQueue}.
-	 * @see #ContextTrackingExecutor(String, int, List, BlockingQueue, ThreadFactory)
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
+	 * {@code workQueue}, the default {@link RejectedExecutionHandler} and a new
+	 * {@link NamedThreadFactory}.
+	 * <p>
+	 * The default {@link RejectedExecutionHandler} throws a
+	 * {@link DetailedRejectedExecutionException} if {@code workQueue} is full or the executor is
+	 * shutting down. It should usually be handled by informing the client that the service has
+	 * temporarily exceeded its capacity (for example a gRPC can sendstatus {@code UNAVAILABLE(14)}
+	 * and a servlet can send status {@code 503 Service Unavailable}).</p>
 	 */
 	public ContextTrackingExecutor(
 		String name,
@@ -212,6 +217,29 @@ public class ContextTrackingExecutor implements Executor {
 			poolSize,
 			trackers,
 			workQueue,
+			(task, executor) -> { throw new DetailedRejectedExecutionException(task, executor); }
+		);
+	}
+
+
+
+	/**
+	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
+	 * {@code workQueue}, {@code rejectionHandler} and a new {@link NamedThreadFactory}.
+	 */
+	public ContextTrackingExecutor(
+		String name,
+		int poolSize,
+		List<ContextTracker<?>> trackers,
+		BlockingQueue<Runnable> workQueue,
+		BiConsumer<Runnable, ContextTrackingExecutor> rejectionHandler
+	) {
+		this(
+			name,
+			poolSize,
+			trackers,
+			workQueue,
+			rejectionHandler,
 			new NamedThreadFactory(name)
 		);
 	}
@@ -220,19 +248,14 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
-	 * {@code workQueue} and {@code threadFactory}.
-	 * <p>
-	 * {@link #execute(Runnable)} throws a {@link RejectedExecutionException} if {@code workQueue}
-	 * is full or the executor is shutting down. It should usually be handled by informing the
-	 * client that the service has temporarily exceeded its capacity (for example a gRPC can send
-	 * status {@code UNAVAILABLE(14)} and a servlet can send status
-	 * {@code 503 Service Unavailable}).</p>
+	 * {@code workQueue}, {@code rejectionHandler} and {@code threadFactory}.
 	 */
 	public ContextTrackingExecutor(
 		String name,
 		int poolSize,
 		List<ContextTracker<?>> trackers,
 		BlockingQueue<Runnable> workQueue,
+		BiConsumer<Runnable, ContextTrackingExecutor> rejectionHandler,
 		ThreadFactory threadFactory
 	) {
 		this(
@@ -240,36 +263,33 @@ public class ContextTrackingExecutor implements Executor {
 			poolSize,
 			trackers,
 			workQueue,
-			threadFactory,
-			(task, executor) -> {
-				if (executor.isShutdown()) {
-					final var message =
-						"executor " + name + " is shutting down, rejected task " + task;
-					log.debug(message);
-					throw new RejectedExecutionException(message);
-				} else {
-					final var message =
-						"executor " + name + " is overloaded, rejected task " + task;
-					log.warn(message);
-					throw new RejectedExecutionException(message);
-				}
-			}
+			new RejectionHandler(rejectionHandler),
+			threadFactory
 		);
 	}
 
+	private static class RejectionHandler implements RejectedExecutionHandler {
 
+		ContextTrackingExecutor executor;
+		final BiConsumer<Runnable, ContextTrackingExecutor> handler;
 
-	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
-	 * {@code workQueue}, {@code threadFactory} and {@code rejectionHandler}.
-	 */
-	public ContextTrackingExecutor(
+		RejectionHandler(BiConsumer<Runnable, ContextTrackingExecutor> handler) {
+			this.handler = handler;
+		}
+
+		@Override
+		public void rejectedExecution(Runnable task, ThreadPoolExecutor e) {
+			handler.accept(task, executor);
+		}
+	}
+
+	private ContextTrackingExecutor(
 		String name,
 		int poolSize,
 		List<ContextTracker<?>> trackers,
 		BlockingQueue<Runnable> workQueue,
-		ThreadFactory threadFactory,
-		RejectedExecutionHandler rejectionHandler
+		RejectionHandler rejectionHandler,
+		ThreadFactory threadFactory
 	) {
 		this(
 			name,
@@ -282,6 +302,7 @@ public class ContextTrackingExecutor implements Executor {
 				rejectionHandler
 			)
 		);
+		rejectionHandler.executor = this;
 	}
 
 
@@ -461,6 +482,40 @@ public class ContextTrackingExecutor implements Executor {
 					new ThreadGroup(parentThreadGroup, PARENT_THREAD_GROUP_NAME);
 			contextTrackingExecutors.setDaemon(false);
 			contextTrackingExecutors.setMaxPriority(Thread.MAX_PRIORITY);
+		}
+	}
+
+
+
+	/**
+	 * Thrown by the default {@link RejectedExecutionHandler}.
+	 */
+	public static class DetailedRejectedExecutionException extends RejectedExecutionException {
+
+		/**
+		 * The task that was rejected. Note that there will be several wrapping layers around the
+		 * original task that was passed to the {@link #getExecutor() executor}. Nevertheless,
+		 * {@link Object#toString()} will be delegated to the original task.
+		 */
+		public Runnable getTask() { return task; }
+		final Runnable task;
+
+		/**
+		 * The executor that rejected the task. To verify whether the reason for the rejection was
+		 * overload or shutdown {@link #isShutdown()} can be called.
+		 */
+		public ContextTrackingExecutor getExecutor() { return executor; }
+		final ContextTrackingExecutor executor;
+
+
+
+		public DetailedRejectedExecutionException(
+			Runnable task,
+			ContextTrackingExecutor executor
+		) {
+			super("executor '" + executor.getName() + "' rejected task '" + task + "'");
+			this.task = task;
+			this.executor = executor;
 		}
 	}
 
