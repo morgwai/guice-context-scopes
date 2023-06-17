@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.morgwai.base.guice.scopes.TrackableContext.CallableWrapper;
 
 
 
@@ -79,7 +78,7 @@ public class ContextTrackingExecutor implements Executor {
 	 */
 	@Override
 	public void execute(Runnable task) {
-		execute(new CallableWrapper(task));
+		execute(new CallableRunnable(task));
 	}
 
 
@@ -94,8 +93,7 @@ public class ContextTrackingExecutor implements Executor {
 	public <T> CompletableFuture<T> execute(Callable<T> task) {
 		final var future = new CompletableFuture<T>();
 		final var activeCtxs = getActiveContexts(trackers);
-		backingExecutor.execute(new Runnable() {
-
+		backingExecutor.execute(new RunnableWrapper(task) {
 			@Override public void run() {
 				try {
 					future.complete(executeWithinAll(activeCtxs, task));
@@ -103,8 +101,6 @@ public class ContextTrackingExecutor implements Executor {
 					future.completeExceptionally(e);
 				}
 			}
-
-			@Override public String toString() { return task.toString(); }
 		});
 		return future;
 	}
@@ -140,14 +136,13 @@ public class ContextTrackingExecutor implements Executor {
 			case 1:
 				return contexts.get(0).executeWithinSelf(task);
 			case 2:
-				return contexts.get(1).executeWithinSelf(new Callable<>() {
-
-					@Override public T call() throws Exception {
-						return contexts.get(0).executeWithinSelf(task);
+				return contexts.get(1).executeWithinSelf(
+					new CallableWrapper<>(task) {
+						@Override public T call() throws Exception {
+							return contexts.get(0).executeWithinSelf(task);
+						}
 					}
-
-					@Override public String toString() { return task.toString(); }
-				});
+				);
 			case 0:
 				if (log.isWarnEnabled()) {
 					log.warn(Thread.currentThread().getName()
@@ -157,13 +152,10 @@ public class ContextTrackingExecutor implements Executor {
 			default:
 				return executeWithinAll(
 					contexts.subList(1, contexts.size()),
-					new Callable<>() {
-
+					new CallableWrapper<>(task) {
 						@Override public T call() throws Exception {
 							return contexts.get(0).executeWithinSelf(task);
 						}
-
-						@Override public String toString() { return task.toString(); }
 					}
 				);
 		}
@@ -179,7 +171,7 @@ public class ContextTrackingExecutor implements Executor {
 	 */
 	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
 		try {
-			executeWithinAll(contexts, new CallableWrapper(task));
+			executeWithinAll(contexts, new CallableRunnable(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
@@ -203,7 +195,7 @@ public class ContextTrackingExecutor implements Executor {
 	 * The default {@link RejectedExecutionHandler} throws a
 	 * {@link DetailedRejectedExecutionException} if {@code workQueue} is full or the executor is
 	 * shutting down. It should usually be handled by informing the client that the service has
-	 * temporarily exceeded its capacity (for example a gRPC can sendstatus {@code UNAVAILABLE(14)}
+	 * temporarily exceeded its capacity (for example a gRPC can send status {@code UNAVAILABLE(14)}
 	 * and a servlet can send status {@code 503 Service Unavailable}).</p>
 	 */
 	public ContextTrackingExecutor(
@@ -226,13 +218,16 @@ public class ContextTrackingExecutor implements Executor {
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
 	 * {@code workQueue}, {@code rejectionHandler} and a new {@link NamedThreadFactory}.
+	 * The first argument of {@code rejectionHandler} is a rejected task: either {@link Runnable} or
+	 * {@link Callable} depending whether {@link #execute(Runnable)} or {@link #execute(Callable)}
+	 * was used.
 	 */
 	public ContextTrackingExecutor(
 		String name,
 		int poolSize,
 		List<ContextTracker<?>> trackers,
 		BlockingQueue<Runnable> workQueue,
-		BiConsumer<Runnable, ContextTrackingExecutor> rejectionHandler
+		BiConsumer<Object, ContextTrackingExecutor> rejectionHandler
 	) {
 		this(
 			name,
@@ -249,13 +244,14 @@ public class ContextTrackingExecutor implements Executor {
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
 	 * {@code workQueue}, {@code rejectionHandler} and {@code threadFactory}.
+	 * @see #ContextTrackingExecutor(String, int, List, BlockingQueue, BiConsumer)
 	 */
 	public ContextTrackingExecutor(
 		String name,
 		int poolSize,
 		List<ContextTracker<?>> trackers,
 		BlockingQueue<Runnable> workQueue,
-		BiConsumer<Runnable, ContextTrackingExecutor> rejectionHandler,
+		BiConsumer<Object, ContextTrackingExecutor> rejectionHandler,
 		ThreadFactory threadFactory
 	) {
 		this(
@@ -271,15 +267,15 @@ public class ContextTrackingExecutor implements Executor {
 	private static class RejectionHandler implements RejectedExecutionHandler {
 
 		ContextTrackingExecutor executor;
-		final BiConsumer<Runnable, ContextTrackingExecutor> handler;
+		final BiConsumer<Object, ContextTrackingExecutor> handler;
 
-		RejectionHandler(BiConsumer<Runnable, ContextTrackingExecutor> handler) {
+		RejectionHandler(BiConsumer<Object, ContextTrackingExecutor> handler) {
 			this.handler = handler;
 		}
 
 		@Override
 		public void rejectedExecution(Runnable task, ThreadPoolExecutor e) {
-			handler.accept(task, executor);
+			handler.accept(((Wrapper) task).unwrap(), executor);
 		}
 	}
 
@@ -308,7 +304,10 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * Constructs an instance backed by {@code backingExecutor}.
+	 * Constructs an instance backed by {@code backingExecutor}. A {@link RejectedExecutionHandler}
+	 * of the {@code backingExecutor} will receive a {@link Runnable} that consists of several
+	 * layers of wrappers around the original task, each layer is a subclass of {@link Wrapper},
+	 * which allows to unwrap the original task.
 	 * @param poolSize informative only: to be returned by {@link #getPoolSize()}.
 	 */
 	public ContextTrackingExecutor(
@@ -493,12 +492,11 @@ public class ContextTrackingExecutor implements Executor {
 	public static class DetailedRejectedExecutionException extends RejectedExecutionException {
 
 		/**
-		 * The task that was rejected. Note that there will be several wrapping layers around the
-		 * original task that was passed to the {@link #getExecutor() executor}. Nevertheless,
-		 * {@link Object#toString()} will be delegated to the original task.
+		 * The task that was rejected. This will be either {@link Runnable} or {@link Callable}
+		 * depending whether {@link #execute(Runnable)} or {@link #execute(Callable)} was used.
 		 */
-		public Runnable getTask() { return task; }
-		final Runnable task;
+		public Object getTask() { return task; }
+		final Object task;
 
 		/**
 		 * The executor that rejected the task. To verify whether the reason for the rejection was
@@ -510,7 +508,7 @@ public class ContextTrackingExecutor implements Executor {
 
 
 		public DetailedRejectedExecutionException(
-			Runnable task,
+			Object task,
 			ContextTrackingExecutor executor
 		) {
 			super("executor '" + executor.getName() + "' rejected task '" + task + "'");

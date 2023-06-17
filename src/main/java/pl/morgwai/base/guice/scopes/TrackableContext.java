@@ -37,7 +37,7 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 		@SuppressWarnings("unchecked")
 		final var thisCtx = (CtxT) this;
 		try {
-			tracker.trackWhileExecuting(thisCtx, new CallableWrapper(task));
+			tracker.trackWhileExecuting(thisCtx, new CallableRunnable(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
@@ -56,32 +56,46 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 		final var thisCtx = (CtxT) this;
 		return tracker.trackWhileExecuting(thisCtx, task);
 	}
+}
 
 
 
-	static class CallableWrapper implements Callable<Void> {
+abstract class Wrapper {
 
-		final Runnable wrapped;
+	final Object wrapped;
 
+	protected Wrapper(Object toWrap) { this.wrapped = toWrap; }
 
+	public Object unwrap() {
+		Object unwrapped = wrapped;
+		while (unwrapped instanceof Wrapper) unwrapped = ((Wrapper) unwrapped).wrapped;
+		return unwrapped;
+	}
 
-		CallableWrapper(Runnable wrapped) {
-			this.wrapped = wrapped;
-		}
-
-
-
-		@Override
-		public Void call() {
-			wrapped.run();
-			return null;
-		}
+	@Override public String toString() { return wrapped.toString(); }
+}
 
 
 
-		@Override
-		public String toString() {
-			return wrapped.toString();
-		}
+abstract class RunnableWrapper extends Wrapper implements Runnable {
+	protected RunnableWrapper(Object toWrap) { super(toWrap); }
+}
+
+
+
+abstract class CallableWrapper<T> extends Wrapper implements Callable<T> {
+	protected CallableWrapper(Object toWrap) { super(toWrap); }
+}
+
+
+
+class CallableRunnable extends CallableWrapper<Void> {
+
+	CallableRunnable(Runnable toWrap) { super(toWrap); }
+
+	@Override
+	public Void call() {
+		((Runnable) wrapped).run();
+		return null;
 	}
 }

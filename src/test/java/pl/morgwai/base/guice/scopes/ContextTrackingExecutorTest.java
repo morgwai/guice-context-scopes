@@ -233,34 +233,32 @@ public class ContextTrackingExecutorTest {
 	@Test
 	public void testExecutionRejection() throws Exception {
 		final var barrier = new CyclicBarrier(POOL_SIZE + 1);
-		ctx1.executeWithinSelf(() -> {
-			for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
-				executor.execute(
-					() -> {
-						try {
-							barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-						} catch (Exception ignored) {}
-					}
-				);
-			}
-			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
+		for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
+			executor.execute(
+				() -> {
+					try {
+						barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+					} catch (Exception ignored) {}
+				}
+			);
+		}
+		for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
 
-			try {
-				executor.execute(new Runnable() {  // method under test
-					@Override public void run() {}
-					@Override public String toString() { return TASK_NAME; }
-				});
-				fail("DetailedRejectedExecutionException expected");
-			} catch (DetailedRejectedExecutionException rejection) {
-				assertSame("rejected task should be wrapping the one passed to the executor",
-						TASK_NAME, rejection.getTask().toString());
-				assertSame("executor referance should be correct",
-						executor, rejection.getExecutor());
-			} finally {
-				barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-			}
-			return null;
-		});
+		final var task = new Runnable() {
+			@Override public void run() {}
+			@Override public String toString() { return TASK_NAME; }
+		};
+		try {
+			executor.execute(task);  // method under test
+			fail("DetailedRejectedExecutionException expected");
+		} catch (DetailedRejectedExecutionException rejection) {
+			assertSame("executor reference should be correct",
+					executor, rejection.getExecutor());
+			assertSame("unwrapped rejected task should be the one passed to the executor",
+					task, rejection.getTask());
+		} finally {
+			barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		}
 	}
 
 
@@ -268,34 +266,32 @@ public class ContextTrackingExecutorTest {
 	@Test
 	public void testCallableExecutionRejection() throws Exception {
 		final var barrier = new CyclicBarrier(POOL_SIZE + 1);
-		ctx1.executeWithinSelf(() -> {
-			for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
-				executor.execute(
-					() -> {
-						try {
-							barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-						} catch (Exception ignored) {}
-					}
-				);
-			}
-			for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
+		for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
+			executor.execute(
+				() -> {
+					try {
+						barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+					} catch (Exception ignored) {}
+				}
+			);
+		}
+		for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
 
-			try {
-				executor.execute(new Callable<>() {  // method under test
-					@Override public String call() { return "result"; }
-					@Override public String toString() { return TASK_NAME; }
-				});
-				fail("DetailedRejectedExecutionException expected");
-			} catch (DetailedRejectedExecutionException rejection) {
-				assertSame("rejected task should be wrapping the one passed to the executor",
-						TASK_NAME, rejection.getTask().toString());
-				assertSame("executor referance should be correct",
-						executor, rejection.getExecutor());
-			} finally {
-				barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-			}
-			return null;
-		});
+		final var task = new Callable<>() {
+			@Override public String call() { return "result"; }
+			@Override public String toString() { return TASK_NAME; }
+		};
+		try {
+			executor.execute(task);  // method under test
+			fail("DetailedRejectedExecutionException expected");
+		} catch (DetailedRejectedExecutionException rejection) {
+			assertSame("executor reference should be correct",
+					executor, rejection.getExecutor());
+			assertSame("unwrapped rejected task should be the one passed to the executor",
+					task, rejection.getTask());
+		} finally {
+			barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		}
 	}
 
 
