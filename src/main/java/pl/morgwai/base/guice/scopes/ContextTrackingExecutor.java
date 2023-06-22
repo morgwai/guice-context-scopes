@@ -9,9 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 
 /**
@@ -144,10 +141,8 @@ public class ContextTrackingExecutor implements Executor {
 					}
 				);
 			case 0:
-				if (log.isWarnEnabled()) {
-					log.warn(Thread.currentThread().getName()
-							+ " is executing " + task + " outside of any context");
-				}
+				System.err.println(Thread.currentThread().getName() + " is executing task '" + task
+						+ "' outside of any context");
 				return task.call();
 			default:
 				return executeWithinAll(
@@ -354,10 +349,7 @@ public class ContextTrackingExecutor implements Executor {
 	/**
 	 * {@link #awaitTermination(long, TimeUnit) Awaits} up to {@code timeoutMillis} for termination
 	 * and if executor fails to do so either due to timeout or interrupt {@link #shutdownNow()} is
-	 * called.<br/>
-	 * Logs outcome to {@link Logger} named after this class.
-	 * <p>
-	 * Should be called at app shutdown.</p>
+	 * called. Should be called at app shutdown.
 	 * @return {@link Optional#empty() empty} if the executor was shutdown cleanly, list of tasks
 	 *     returned by {@code backingExecutor.shutdownNow()} otherwise.
 	 * @see ExecutorService#awaitTermination(long, TimeUnit)
@@ -367,14 +359,11 @@ public class ContextTrackingExecutor implements Executor {
 			throws InterruptedException {
 		try {
 			if (awaitTermination(timeout, unit)) {
-				if (log.isInfoEnabled()) log.info("executor " + name + " shutdown completed");
 				return Optional.empty();
 			} else {
-				if (log.isWarnEnabled()) log.warn("executor " + name + " hasn't shutdown cleanly");
 				return Optional.of(backingExecutor.shutdownNow());
 			}
 		} catch (InterruptedException e) {
-			if (log.isWarnEnabled()) log.warn("shutdown of executor " + name + " was interrupted");
 			backingExecutor.shutdownNow();
 			throw e;
 		}
@@ -516,9 +505,4 @@ public class ContextTrackingExecutor implements Executor {
 			this.executor = executor;
 		}
 	}
-
-
-
-	protected static final Logger log =
-			LoggerFactory.getLogger(ContextTrackingExecutor.class.getName());
 }
