@@ -233,16 +233,20 @@ public class ContextTrackingExecutorTest {
 	@Test
 	public void testExecutionRejection() throws Exception {
 		final var barrier = new CyclicBarrier(POOL_SIZE + 1);
-		for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
-			executor.execute(
-				() -> {
-					try {
-						barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-					} catch (Exception ignored) {}
+		ctx1.executeWithinSelf(
+			() -> {
+				for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
+					executor.execute(
+						() -> {
+							try {
+								barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+							} catch (Exception ignored) {}
+						}
+					);
 				}
-			);
-		}
-		for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
+				for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
+			}
+		);
 
 		final var task = new Runnable() {
 			@Override public void run() {}
@@ -266,16 +270,20 @@ public class ContextTrackingExecutorTest {
 	@Test
 	public void testCallableExecutionRejection() throws Exception {
 		final var barrier = new CyclicBarrier(POOL_SIZE + 1);
-		for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
-			executor.execute(
-				() -> {
-					try {
-						barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-					} catch (Exception ignored) {}
+		ctx1.executeWithinSelf(
+			() -> {
+				for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
+					executor.execute(
+						() -> {
+							try {
+								barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+							} catch (Exception ignored) {}
+						}
+					);
 				}
-			);
-		}
-		for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
+				for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
+			}
+		);
 
 		final var task = new Callable<>() {
 			@Override public String call() { return "result"; }
