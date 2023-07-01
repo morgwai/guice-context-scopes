@@ -132,14 +132,6 @@ public class ContextTrackingExecutor implements Executor {
 		switch (contexts.size()) {
 			case 1:
 				return contexts.get(0).executeWithinSelf(task);
-			case 2:
-				return contexts.get(1).executeWithinSelf(
-					new CallableWrapper<>(task) {
-						@Override public T call() throws Exception {
-							return contexts.get(0).executeWithinSelf(task);
-						}
-					}
-				);
 			case 0:
 				System.err.println(Thread.currentThread().getName() + " is executing task '" + task
 						+ "' outside of any context");
