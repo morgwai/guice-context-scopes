@@ -269,9 +269,16 @@ public class ContextTrackingExecutor implements Executor {
 		}
 
 		@Override
-		public void rejectedExecution(Runnable task, ThreadPoolExecutor e) {
-			handler.accept(((Wrapper) task).unwrap(), executor);
+		public void rejectedExecution(Runnable rejectedTask, ThreadPoolExecutor backingExecutor) {
+			handler.accept(unwrapRejectedTask(rejectedTask), executor);
 		}
+	}
+
+	/**
+	 * See {@link #ContextTrackingExecutor(String, int, List, ExecutorService)}.
+	 */
+	public static Object unwrapRejectedTask(Runnable rejectedTask) {
+		return rejectedTask instanceof Wrapper ? ((Wrapper) rejectedTask).unwrap() : rejectedTask;
 	}
 
 	private ContextTrackingExecutor(
@@ -301,8 +308,8 @@ public class ContextTrackingExecutor implements Executor {
 	/**
 	 * Constructs an instance backed by {@code backingExecutor}. A {@link RejectedExecutionHandler}
 	 * of the {@code backingExecutor} will receive a {@link Runnable} that consists of several
-	 * layers of wrappers around the original task, each layer is a subclass of {@link Wrapper},
-	 * which allows to unwrap the original task.
+	 * layers of wrappers around the original task, use {@link #unwrapRejectedTask(Runnable)} to
+	 * obtain the original task.
 	 * @param poolSize informative only: to be returned by {@link #getPoolSize()}.
 	 */
 	public ContextTrackingExecutor(
