@@ -133,8 +133,8 @@ public class ContextTrackingExecutor implements Executor {
 			case 1:
 				return contexts.get(0).executeWithinSelf(task);
 			case 0:
-				System.err.println(Thread.currentThread().getName() + " is executing task '" + task
-						+ "' outside of any context");
+				System.err.println("thread \"" + Thread.currentThread().getName()
+						+ "\" is executing task " + task + " outside of any context");
 				return task.call();
 			default:
 				return executeWithinAll(
@@ -503,7 +503,7 @@ public class ContextTrackingExecutor implements Executor {
 			Object task,
 			ContextTrackingExecutor executor
 		) {
-			super("executor '" + executor.getName() + "' rejected task '" + task + "'");
+			super("executor \"" + executor.getName() + "\" rejected task " + task);
 			this.task = task;
 			this.executor = executor;
 		}
