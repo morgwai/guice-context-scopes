@@ -185,12 +185,12 @@ public class ContextTrackingExecutor implements Executor {
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
 	 * {@code workQueue}, the default {@link RejectedExecutionHandler} and a new
-	 * {@link NamedThreadFactory}.
+	 * {@link NamedThreadFactory} named after this executor.
 	 * <p>
 	 * The default {@link RejectedExecutionHandler} throws a
 	 * {@link DetailedRejectedExecutionException} if {@code workQueue} is full or the executor is
-	 * shutting down. It should usually be handled by informing the client that the service has
-	 * temporarily exceeded its capacity (for example a gRPC can send status {@code UNAVAILABLE(14)}
+	 * shutting down. It should usually be handled by informing the client that the service is
+	 * temporarily unavailable (for example a gRPC can send status {@code UNAVAILABLE(14)}
 	 * and a servlet can send status {@code 503 Service Unavailable}).</p>
 	 */
 	public ContextTrackingExecutor(
@@ -212,10 +212,12 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
-	 * {@code workQueue}, {@code rejectionHandler} and a new {@link NamedThreadFactory}.
-	 * The first argument of {@code rejectionHandler} is a rejected task: either {@link Runnable} or
+	 * {@code workQueue}, {@code rejectionHandler} and a new {@link NamedThreadFactory} named after
+	 * this executor.
+	 * <p>
+	 * The first param of {@code rejectionHandler} is a rejected task: either {@link Runnable} or
 	 * {@link Callable} depending whether {@link #execute(Runnable)} or {@link #execute(Callable)}
-	 * was used.
+	 * was used.</p>
 	 */
 	public ContextTrackingExecutor(
 		String name,
