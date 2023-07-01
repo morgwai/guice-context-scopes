@@ -499,10 +499,7 @@ public class ContextTrackingExecutor implements Executor {
 
 
 
-		public DetailedRejectedExecutionException(
-			Object task,
-			ContextTrackingExecutor executor
-		) {
+		public DetailedRejectedExecutionException(Object task, ContextTrackingExecutor executor) {
 			super("executor \"" + executor.getName() + "\" rejected task " + task);
 			this.task = task;
 			this.executor = executor;
