@@ -25,14 +25,15 @@ public class ContextScopeTest {
 
 	@Test
 	public void testScoping() {
-		final var ctx = new TestContext(tracker);
-		ctx.executeWithinSelf(() -> {
-			final var scoped = scope.scope(key, provider);
-			final Integer scopedInt = scoped.get();
-			assertSame("scoped value should remain the same", scopedInt, scoped.get());
-			assertNotEquals("unscoped provider should provide a new value",
-					scopedInt, provider.get());
-		});
+		new TestContext(tracker).executeWithinSelf(
+			() -> {
+				final var scopedProvider = scope.scope(key, provider);
+				final var scopedInt = scopedProvider.get();
+				assertSame("scoped value should remain the same", scopedInt, scopedProvider.get());
+				assertNotEquals("unscoped provider should provide a new value",
+						scopedInt, provider.get());
+			}
+		);
 	}
 
 
@@ -49,16 +50,18 @@ public class ContextScopeTest {
 
 	@Test
 	public void testRemoveFromScope() {
-		final var ctx = new TestContext(tracker);
-		ctx.executeWithinSelf(() -> {
-			final var scoped = scope.scope(key, provider);
-			final Integer scopedInt = scoped.get();
-			ctx.removeScopedObject(key);
-			final Integer newScopedInt = scoped.get();
-			assertNotEquals("after removing, scoped provider should provide a new value",
-					scopedInt, newScopedInt);
-			assertSame("the new scoped value should remain the same", newScopedInt, scoped.get());
-		});
+		new TestContext(tracker).executeWithinSelf(
+			() -> {
+				final var scopedProvider = scope.scope(key, provider);
+				final var oldScopedInt = scopedProvider.get();
+				tracker.getCurrentContext().removeScopedObject(key);
+				final var newScopedInt = scopedProvider.get();
+				assertNotEquals("after removing, scoped provider should provide a new value",
+						oldScopedInt, newScopedInt);
+				assertSame("the new scoped value should remain the same",
+						newScopedInt, scopedProvider.get());
+			}
+		);
 	}
 
 
