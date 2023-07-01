@@ -60,42 +60,49 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 
 
 
-abstract class Wrapper {
+abstract class TaskWrapper {
 
-	final Object wrapped;
+	final Object wrappedTask;
 
-	protected Wrapper(Object toWrap) { this.wrapped = toWrap; }
+	protected TaskWrapper(Object taskToWrap) {
+		this.wrappedTask = taskToWrap;
+	}
 
-	public Object unwrap() {
-		Object unwrapped = wrapped;
-		while (unwrapped instanceof Wrapper) unwrapped = ((Wrapper) unwrapped).wrapped;
+	Object unwrap() {
+		var unwrapped = wrappedTask;
+		while (unwrapped instanceof TaskWrapper) unwrapped = ((TaskWrapper) unwrapped).wrappedTask;
 		return unwrapped;
 	}
 
-	@Override public String toString() { return wrapped.toString(); }
+	@Override
+	public String toString() {
+		return wrappedTask.toString();
+	}
 }
 
 
 
-abstract class RunnableWrapper extends Wrapper implements Runnable {
-	protected RunnableWrapper(Object toWrap) { super(toWrap); }
+abstract class RunnableWrapper extends TaskWrapper implements Runnable {
+	protected RunnableWrapper(Object taskToWrap) { super(taskToWrap); }
 }
 
 
 
-abstract class CallableWrapper<T> extends Wrapper implements Callable<T> {
-	protected CallableWrapper(Object toWrap) { super(toWrap); }
+abstract class CallableWrapper<T> extends TaskWrapper implements Callable<T> {
+	protected CallableWrapper(Object taskToWrap) { super(taskToWrap); }
 }
 
 
 
 class CallableRunnable extends CallableWrapper<Void> {
 
-	CallableRunnable(Runnable toWrap) { super(toWrap); }
+	CallableRunnable(Runnable taskToWrap) {
+		super(taskToWrap);
+	}
 
 	@Override
 	public Void call() {
-		((Runnable) wrapped).run();
+		((Runnable) wrappedTask).run();
 		return null;
 	}
 }
