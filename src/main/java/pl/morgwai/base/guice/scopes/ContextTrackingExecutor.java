@@ -222,7 +222,7 @@ public class ContextTrackingExecutor implements Executor {
 		int poolSize,
 		List<ContextTracker<?>> trackers,
 		BlockingQueue<Runnable> workQueue,
-		BiConsumer<Object, ContextTrackingExecutor> rejectionHandler
+		BiConsumer<Object, ? super ContextTrackingExecutor> rejectionHandler
 	) {
 		this(
 			name,
@@ -246,7 +246,7 @@ public class ContextTrackingExecutor implements Executor {
 		int poolSize,
 		List<ContextTracker<?>> trackers,
 		BlockingQueue<Runnable> workQueue,
-		BiConsumer<Object, ContextTrackingExecutor> rejectionHandler,
+		BiConsumer<Object, ? super ContextTrackingExecutor> rejectionHandler,
 		ThreadFactory threadFactory
 	) {
 		this(
@@ -262,9 +262,9 @@ public class ContextTrackingExecutor implements Executor {
 	private static class RejectionHandler implements RejectedExecutionHandler {
 
 		ContextTrackingExecutor executor;
-		final BiConsumer<Object, ContextTrackingExecutor> handler;
+		final BiConsumer<Object, ? super ContextTrackingExecutor> handler;
 
-		RejectionHandler(BiConsumer<Object, ContextTrackingExecutor> handler) {
+		RejectionHandler(BiConsumer<Object, ? super ContextTrackingExecutor> handler) {
 			this.handler = handler;
 		}
 
