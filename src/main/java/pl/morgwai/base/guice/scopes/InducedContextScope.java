@@ -15,20 +15,20 @@ import java.util.function.Function;
  * directly obtained from {@link #tracker}. Both these ways are mostly equivalent.</p>
  */
 public class InducedContextScope<
-		InducingCtxT extends TrackableContext<InducingCtxT>,
+		TrackableCtxT extends TrackableContext<TrackableCtxT>,
 		InducedCtxT extends InjectionContext
-	> extends ContextScope<InducingCtxT> {
+	> extends ContextScope<TrackableCtxT> {
 
 
 
-	final Function<InducingCtxT, InducedCtxT> inducer;
+	final Function<TrackableCtxT, InducedCtxT> inducer;
 
 
 
 	public InducedContextScope(
 		String name,
-		ContextTracker<InducingCtxT> tracker,
-		Function<InducingCtxT, InducedCtxT> inducer
+		ContextTracker<TrackableCtxT> tracker,
+		Function<TrackableCtxT, InducedCtxT> inducer
 	) {
 		super(name, tracker);
 		this.inducer = inducer;
