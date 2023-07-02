@@ -85,21 +85,14 @@ public class ContextTrackingExecutorTest {
 
 
 	@Test
-	public void testExecuteWithinAllThrows() {
-		final var thrown = new Exception();
+	public void testExecutingRunnablePropagatesRuntimeException() {
+		final var thrown = new RuntimeException();
+		final Runnable task = () -> { throw  thrown; };
 		try {
-			ContextTrackingExecutor.executeWithinAll(
-				allCtxs,
-				() -> {
-					assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
-					assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
-					assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
-					throw thrown;  // event under test
-				}
-			);
-			fail("exception should be thrown");
-		} catch (Exception caught) {
-			assertSame("caught exception should be the same as thrown", thrown,  caught);
+			ContextTrackingExecutor.executeWithinAll(allCtxs, task);
+			fail("RuntimeException expected");
+		} catch (RuntimeException caught) {
+			assertSame("caught exception should be the same as thrown", thrown, caught);
 		}
 	}
 

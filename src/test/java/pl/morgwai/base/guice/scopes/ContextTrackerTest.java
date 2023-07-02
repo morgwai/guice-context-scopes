@@ -16,12 +16,43 @@ public class ContextTrackerTest {
 
 
 	@Test
-	public void testTracking() {
+	public void testTrackingRunnable() {
 		final var ctx = new TestContext(tracker);
 		assertNull("context should be unset initially", tracker.getCurrentContext());
 		ctx.executeWithinSelf(
 				() -> assertSame("context should be set", ctx, tracker.getCurrentContext()));
 		assertNull("context should be cleared", tracker.getCurrentContext());
+	}
+
+
+
+	@Test
+	public void testTrackingCallable() throws Exception {
+		final var result = new Object();
+		final var ctx = new TestContext(tracker);
+		assertNull("context should be unset initially", tracker.getCurrentContext());
+		final var obtained = ctx.executeWithinSelf(
+			() -> {
+				assertSame("context should be set", ctx, tracker.getCurrentContext());
+				return result;
+			}
+		);
+		assertNull("context should be cleared", tracker.getCurrentContext());
+		assertSame("obtained object should be the same as returned", result, obtained);
+	}
+
+
+
+	@Test
+	public void testExecutingRunnablePropagatesRuntimeException() {
+		final var thrown = new RuntimeException();
+		final Runnable task = () -> { throw  thrown; };
+		try {
+			new TestContext(tracker).executeWithinSelf(task);
+			fail("RuntimeException expected");
+		} catch (RuntimeException caught) {
+			assertSame("caught exception should be the same as thrown", thrown, caught);
+		}
 	}
 
 
@@ -46,7 +77,7 @@ public class ContextTrackerTest {
 			});
 			thread.start();
 			thread.join();
-			return null;
+			return "";
 		});
 		if (errorHolder[0] != null) throw errorHolder[0];
 	}
