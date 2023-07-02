@@ -29,14 +29,16 @@ public class InducedContextScopeTest {
 	public void testScoping() {
 		final var parentCtx = new InducedParentContext();
 		final var scopedIntHolder = new Integer[1];
+		final var unscopedIntHolder = new Integer[1];
 		new ChildContext(tracker, parentCtx).executeWithinSelf(
 			() -> {
 				final var scopedProvider = scope.scope(key, provider);
 				scopedIntHolder[0] = scopedProvider.get();
 				assertSame("scoped value should remain the same",
 						scopedIntHolder[0], scopedProvider.get());
-				assertNotEquals("unscoped provider should provide a new value",
-						scopedIntHolder[0], provider.get());
+				unscopedIntHolder[0] = provider.get();
+				assertNotEquals("unscoped provider should provide a value different than scoped",
+						scopedIntHolder[0], unscopedIntHolder[0]);
 			}
 		);
 		new ChildContext(tracker, parentCtx).executeWithinSelf(
@@ -44,8 +46,11 @@ public class InducedContextScopeTest {
 				final var scopedProvider = scope.scope(key, provider);
 				assertSame("scoped value should remain the same",
 						scopedIntHolder[0], scopedProvider.get());
-				assertNotEquals("unscoped provider should provide a new value",
-						scopedIntHolder[0], provider.get());
+				final var secondUnscopedInt = provider.get();
+				assertNotEquals("unscoped provider should provide a value different than scoped",
+						scopedIntHolder[0], secondUnscopedInt);
+				assertNotEquals("unscoped provider should provide a new value each time",
+						unscopedIntHolder[0], secondUnscopedInt);
 			}
 		);
 	}
