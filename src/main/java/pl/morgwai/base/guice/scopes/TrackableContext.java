@@ -17,7 +17,7 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 
 
 
-	private final ContextTracker<CtxT> tracker;
+	final ContextTracker<CtxT> tracker;
 
 
 
