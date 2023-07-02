@@ -168,7 +168,7 @@ public class ContextTrackingExecutor implements Executor {
 
 	@Override
 	public String toString() {
-		return "ContextTrackingExecutor { name = \"" + name + "\" }";
+		return "ContextTrackingExecutor { name = \"" + name + "\", poolSize=" + poolSize + " }";
 	}
 
 
