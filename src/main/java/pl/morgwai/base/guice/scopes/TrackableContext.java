@@ -34,10 +34,8 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 	 * @see ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)
 	 */
 	public void executeWithinSelf(Runnable task) {
-		@SuppressWarnings("unchecked")
-		final var thisCtx = (CtxT) this;
 		try {
-			tracker.trackWhileExecuting(thisCtx, new CallableRunnable(task));
+			executeWithinSelf(new CallableRunnable(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
