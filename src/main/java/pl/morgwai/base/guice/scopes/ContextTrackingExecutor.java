@@ -272,9 +272,8 @@ public class ContextTrackingExecutor implements Executor {
 	 * See {@link #ContextTrackingExecutor(String, int, List, ExecutorService)}.
 	 */
 	public static Object unwrapRejectedTask(Runnable rejectedTask) {
-		return rejectedTask instanceof TaskWrapper
-				? ((TaskWrapper) rejectedTask).unwrap()
-				: rejectedTask;
+		if (rejectedTask instanceof TaskWrapper) return ((TaskWrapper) rejectedTask).unwrap();
+		return rejectedTask;
 	}
 
 	private ContextTrackingExecutor(
