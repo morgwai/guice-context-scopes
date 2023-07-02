@@ -1,8 +1,6 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import java.util.List;
-
 import com.google.inject.*;
 
 
@@ -31,7 +29,7 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 	/**
 	 * @throws RuntimeException if there's no context for the current thread. This most commonly
 	 * happens when providing a callback to some async method without transferring the context. Use
-	 * static helper methods {@link ContextTrackingExecutor#getActiveContexts(List)}
+	 * static helper methods {@link ContextTrackingExecutor#getActiveContexts(java.util.List)}
 	 * and {@link ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)} to fix it:
 	 * <pre>
 	 * class MyClass {

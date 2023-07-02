@@ -1,7 +1,6 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import java.util.List;
 import java.util.concurrent.Callable;
 
 
@@ -20,7 +19,7 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 	/**
 	 * Returns context of the current thread.
 	 *
-	 * @see ContextTrackingExecutor#getActiveContexts(List)
+	 * @see ContextTrackingExecutor#getActiveContexts(java.util.List)
 	 */
 	public CtxT getCurrentContext() {
 		return currentContext.get();
