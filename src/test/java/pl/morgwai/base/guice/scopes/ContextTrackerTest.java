@@ -12,15 +12,15 @@ public class ContextTrackerTest {
 
 
 	final ContextTracker<TestContext> tracker = new ContextTracker<>();
+	final TestContext ctx = new TestContext(tracker);
 
 
 
 	@Test
 	public void testTrackingRunnable() {
-		final var ctx = new TestContext(tracker);
 		assertNull("context should be unset initially", tracker.getCurrentContext());
 		ctx.executeWithinSelf(
-				() -> assertSame("context should be set", ctx, tracker.getCurrentContext()));
+			() -> assertSame("context should be set", ctx, tracker.getCurrentContext()));
 		assertNull("context should be cleared", tracker.getCurrentContext());
 	}
 
@@ -29,7 +29,6 @@ public class ContextTrackerTest {
 	@Test
 	public void testTrackingCallable() throws Exception {
 		final var result = new Object();
-		final var ctx = new TestContext(tracker);
 		assertNull("context should be unset initially", tracker.getCurrentContext());
 		final var obtained = ctx.executeWithinSelf(
 			() -> {
@@ -48,7 +47,7 @@ public class ContextTrackerTest {
 		final var thrown = new RuntimeException();
 		final Runnable task = () -> { throw  thrown; };
 		try {
-			new TestContext(tracker).executeWithinSelf(task);
+			ctx.executeWithinSelf(task);
 			fail("RuntimeException expected");
 		} catch (RuntimeException caught) {
 			assertSame("caught exception should be the same as thrown", thrown, caught);
@@ -59,16 +58,15 @@ public class ContextTrackerTest {
 
 	@Test
 	public void testTrackingAcrossThreads() throws Exception {
-		final var originalCtx = new TestContext(tracker);
 		final AssertionError[] errorHolder = {null};
-		originalCtx.executeWithinSelf(() -> {
-			final var ctx = tracker.getCurrentContext();
+		ctx.executeWithinSelf(() -> {
+			final var currentContext = tracker.getCurrentContext();
 			final var thread = new Thread(() -> {
 				try {
 					assertNull("context should be unset initially", tracker.getCurrentContext());
-					ctx.executeWithinSelf(
+					currentContext.executeWithinSelf(
 						() -> assertSame("context should be set",
-								originalCtx, tracker.getCurrentContext())
+							ctx, tracker.getCurrentContext())
 					);
 					assertNull("context should be cleared", tracker.getCurrentContext());
 				} catch (AssertionError e) {
