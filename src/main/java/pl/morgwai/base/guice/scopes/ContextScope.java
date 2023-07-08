@@ -58,10 +58,14 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 		final Key<T> key;
 		final Provider<T> unscoped;
 
-		ScopedProvider(Key<T> key, Provider<T> unscoped) {
+
+
+		private ScopedProvider(Key<T> key, Provider<T> unscoped) {
 			this.key = key;
 			this.unscoped = unscoped;
 		}
+
+
 
 		@Override public T get() {
 			try {
@@ -74,6 +78,8 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 						+ ". See javadoc for ContextScope.scope(...)");
 			}
 		}
+
+
 
 		@Override public String toString() {
 			return "ScopedProvider { scope=\"" + name + "\", key=" + key + ", unscoped=" + unscoped
