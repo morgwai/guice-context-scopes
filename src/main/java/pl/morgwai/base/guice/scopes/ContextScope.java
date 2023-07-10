@@ -27,32 +27,18 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 	/**
-	 * @throws RuntimeException if there's no context for the current thread. This most commonly
-	 * happens when providing a callback to some async method without transferring the context. Use
-	 * static helper methods {@link ContextTrackingExecutor#getActiveContexts(java.util.List)}
-	 * and {@link ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)} to fix it:
-	 * <pre>
-	 * class MyClass {
-	 *
-	 *     &commat;Inject ContextTracker&lt;ContextT1&gt; tracker1;
-	 *     &commat;Inject ContextTracker&lt;ContextT2&gt; tracker2;
-	 *
-	 *     void myMethod(Object param) {
-	 *         // myMethod code
-	 *         var activeCtxList = ContextTrackingExecutor.getActiveContexts(tracker1, tracker2);
-	 *         someAsyncMethod(param, (callbackParam) -&gt;
-	 *             ContextTrackingExecutor.executeWithinAll(activeCtxList, () -&gt; {
-	 *                 // callback code
-	 *             }
-	 *         ));
-	 *     }
-	 * }</pre>
+	 * See {@link Scope#scope(Key, Provider)}.
+	 * @return a {@link ScopedProvider}.
 	 */
 	@Override
 	public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
 		return new ScopedProvider<>(key, unscoped);
 	}
 
+	/**
+	 * Returned by {@link #scope(Key, Provider)}, provides objects obtained from the current
+	 * context.
+	 */
 	public class ScopedProvider<T> implements Provider<T> {
 
 		final Key<T> key;
@@ -67,15 +53,51 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 
+		/**
+		 * Returns an object obtained from the current context obtained with {@link #getContext()}.
+		 * @throws OutOfScopeException if there's no context for the current thread. This most
+		 *     commonly happens if an {@link java.util.concurrent.Executor} other than
+		 *     {@link ContextTrackingExecutor} was used or when providing a callback to some async
+		 *     method without transferring the context. Use static helper methods
+		 *     {@link ContextTrackingExecutor#getActiveContexts(java.util.List)} and
+		 *     {@link ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)} to
+		 *     transfer contexts manually in such cases:
+		 *     <pre>
+		 * class MyClass {
+		 *
+		 *     // deriving libraries usually bind List&lt;ContextTracker&lt;?&gt;&gt; appropriately
+		 *     &commat;Inject List&lt;ContextTracker&lt;?&gt;&gt; allTrackers;
+		 *
+		 *     void methodThatCallsSomeAsyncMethod(...) {
+		 *         // other code here...
+		 *         final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
+		 *         someAsyncMethod(arg1, ... argN, (callbackParam) -&gt;
+		 *             ContextTrackingExecutor.executeWithinAll(activeCtxs, () -&gt; {
+		 *                 // callback code here...
+		 *             })
+		 *         );
+		 *     }
+		 *
+		 *     void methodThatUsesSomeGenericExecutor(...) {
+		 *         Runnable myTask;
+		 *         // other code here...
+		 *         final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
+		 *         someGenericExecutor.execute(
+		 *                 ContextTrackingExecutor.executeWithinAll(activeCtxs, myTask));
+		 *     }
+		 *
+		 *     // other stuff of MyClass here...
+		 * }</pre>
+		 */
 		@Override public T get() {
 			try {
 				return getContext().provideIfAbsent(key, unscoped);
 			} catch (NullPointerException e) {
 				// result of a bug that will be fixed in development phase: don't check manually
 				// in production each time.
-				throw new RuntimeException("no context for thread "
+				throw new OutOfScopeException("no context for thread "
 						+ Thread.currentThread().getName() + " in scope " + name
-						+ ". See javadoc for ContextScope.scope(...)");
+						+ ". See the javadoc for ContextScope.ScopedProvider.get()");
 			}
 		}
 

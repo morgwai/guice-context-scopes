@@ -1,8 +1,7 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import com.google.inject.Key;
-import com.google.inject.Provider;
+import com.google.inject.*;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -42,8 +41,8 @@ public class ContextScopeTest {
 	public void testOutOfCtxScopingThrows() {
 		try {
 			scope.scope(key, provider).get();
-			fail("scoping outside of any context should throw a RuntimeException");
-		} catch (RuntimeException ignored) {}
+			fail("scoping outside of any context should throw a OutOfScopeException");
+		} catch (OutOfScopeException expected) {}
 	}
 
 

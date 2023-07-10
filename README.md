@@ -19,19 +19,28 @@ Hint: in cases when it's not possible to avoid thread switching without the use 
 ```java
 class MyClass {
 
-    @Inject ContextTracker<ContextT1> tracker1;
-    @Inject ContextTracker<ContextT2> tracker2;
+    // deriving libraries usually bind List<ContextTracker<?>> appropriately
+    @Inject List<ContextTracker<?>> allTrackers;
 
-    void myMethod(Object param) {
-        // myMethod code
-        var activeCtxList = ContextTrackingExecutor.getActiveContexts(List.of(tracker1, tracker2));
-        someAsyncMethod(
-            param,
-            (callbackParam) -> ContextTrackingExecutor.executeWithinAll(activeCtxList, () -> {
-                // callback code
-            }
-        ));
+    void methodThatCallsSomeAsyncMethod(/* ... */) {
+        // other code here...
+        final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
+        someAsyncMethod(arg1, /* ... */ argN, (callbackParam) ->
+            ContextTrackingExecutor.executeWithinAll(activeCtxs, () -> {
+                // callback code here...
+            })
+        );
     }
+
+    void methodThatUsesSomeGenericExecutor(/* ... */) {
+        Runnable myTask;
+        // other code here...
+        final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
+        someGenericExecutor.execute(
+                ContextTrackingExecutor.executeWithinAll(activeCtxs, myTask));
+    }
+
+    // other stuff of MyClass here...
 }
 ```
 Deriving libs are strongly encouraged to automatically bind `List<ContextTracker<?>>` to an instance containing all possible trackers, so that users don't need to enlist them manually.
