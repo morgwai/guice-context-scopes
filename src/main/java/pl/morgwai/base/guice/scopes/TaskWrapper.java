@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 
 /**
  * A multi-layer wrapper around a {@link Callable} or a {@link Runnable} that allows to obtain the
- * original task.
+ * original wrapped task.
  */
 abstract class TaskWrapper {
 
@@ -45,6 +45,10 @@ abstract class TaskWrapper {
 
 
 
+/**
+ * For inlining anonymous {@link Runnable}s wrapping other tasks.
+ * See {@link ContextTrackingExecutor#execute(Callable)}.
+ */
 abstract class RunnableWrapper extends TaskWrapper implements Runnable {
 	// unused: protected RunnableWrapper(Runnable taskToWrap) { super(taskToWrap); }
 	protected RunnableWrapper(Callable<?> taskToWrap) { super(taskToWrap); }
@@ -52,6 +56,10 @@ abstract class RunnableWrapper extends TaskWrapper implements Runnable {
 
 
 
+/**
+ * For inlining anonymous {@link Callable}s wrapping other tasks.
+ * See {@link ContextTrackingExecutor#executeWithinAll(java.util.List, Callable)}.
+ */
 abstract class CallableWrapper<T> extends TaskWrapper implements Callable<T> {
 	protected CallableWrapper(Runnable taskToWrap) { super(taskToWrap); }
 	protected CallableWrapper(Callable<T> taskToWrap) { super(taskToWrap); }
@@ -59,6 +67,10 @@ abstract class CallableWrapper<T> extends TaskWrapper implements Callable<T> {
 
 
 
+/**
+ * For converting a {@link Runnable} into a {@link Callable}.
+ * See {@link TrackableContext#executeWithinSelf(Runnable)}.
+ */
 class CallableRunnable extends CallableWrapper<Void> {
 
 

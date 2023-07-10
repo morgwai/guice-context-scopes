@@ -12,17 +12,21 @@ import java.util.stream.Collectors;
 
 
 /**
- * An executor that automatically updates which thread runs within which {@link TrackableContext}
- * when executing a task. By default backed by a fixed size {@link ThreadPoolExecutor}.
+ * An executor that automatically updates which thread runs within which
+ * {@link TrackableContext context} when executing a task. By default backed by a fixed size
+ * {@link ThreadPoolExecutor}.
  * <p>
- * Instances usually correspond 1-1 with some type of blocking or time consuming operations, such
- * as CPU intensive calculations or blocking network communication with some resource.<br/>
+ * Instances usually correspond 1-1 with some <b>type</b> of blocking or time consuming operations,
+ * such as intensive calculations or blocking network communication with some resource.<br/>
  * In case of network operations, a given threadPool size should usually correspond to the pool size
- * of the connections to the given resource.<br/>
- * In case of CPU intensive operations, it should usually correspond to the number of cores
- * available to the process ({@link Runtime#availableProcessors()}).</p>
+ * of the connections to the given resource.Note however, that in this case <i>"correspond"</i> does
+ * not necessarily mean 1-1 mapping: in case of some smart caching or pooling, it may be possible to
+ * effectively "fit" more threads than there are available connections.<br/>
+ * In case of intensive calculations, it should usually correspond to the number of processing units
+ * available to the process, such as the number of {@link Runtime#availableProcessors() CPU cores}
+ * or the number of GPUs installed on the system.</p>
  * <p>
- * Instances are usually created at app startup, stored on static vars and/or bound for
+ * Instances are usually created at app startup, stored on static vars or better bound for
  * injection with a specific {@link com.google.inject.name.Names#named(String) name}:</p>
  * <pre>
  * bind(ContextTrackingExecutor.class)
@@ -31,7 +35,7 @@ import java.util.stream.Collectors;
  * <p>
  * and then injected using @{@link com.google.inject.name.Named Named} annotation:</p>
  * <pre>
- * &commat;Named("someOpTypeExecutor")
+ * &commat;Inject&nbsp;&commat;Named("someOpTypeExecutor")
  * ContextTrackingExecutor someOpTypeExecutor</pre></p>
  * <p>
  * At app shutdown {@link #shutdown()} should be called followed by either
@@ -350,8 +354,8 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * {@link #awaitTermination(long, TimeUnit) Awaits} up to {@code timeoutMillis} for termination
-	 * and if executor fails to do so either due to timeout or interrupt {@link #shutdownNow()} is
-	 * called. Should be called at app shutdown.
+	 * and if executor fails to do so (either due to timeout or interrupt) {@link #shutdownNow()} is
+	 * called.
 	 * @return {@link Optional#empty() empty} if the executor was shutdown cleanly, list of tasks
 	 *     returned by {@code backingExecutor.shutdownNow()} otherwise.
 	 * @see ExecutorService#awaitTermination(long, TimeUnit)
@@ -375,7 +379,7 @@ public class ContextTrackingExecutor implements Executor {
 
 	/**
 	 * Calls {@link ExecutorService#awaitTermination(long, TimeUnit)
-	 * backingExecutor.awaitTermination(...)}.
+	 * backingExecutor.awaitTermination(timeout, unit)}.
 	 * @see #enforceTermination(long, TimeUnit)
 	 */
 	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
@@ -387,7 +391,7 @@ public class ContextTrackingExecutor implements Executor {
 	/**
 	 * Keeps calling {@link ExecutorService#awaitTermination(long, TimeUnit)
 	 * backingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)} until it returns
-	 * {@code true}.
+	 * {@code true} or an {@link InterruptedException} is thrown.
 	 * @see #enforceTermination(long, TimeUnit)
 	 * @see #awaitTermination(long, TimeUnit)
 	 */
@@ -445,7 +449,8 @@ public class ContextTrackingExecutor implements Executor {
 
 
 		/**
-		 * Creates a new thread named {@code <thisFactoryName>-thread-<sequenceNumber>}.
+		 * Creates a new thread named using a scheme
+		 * {@code <thisFactoryName>-thread-<sequenceNumber>}.
 		 */
 		@Override
 		public Thread newThread(Runnable task) {

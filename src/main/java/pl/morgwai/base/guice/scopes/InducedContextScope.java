@@ -9,10 +9,6 @@ import java.util.function.Function;
  * Scopes objects to the context induced by the context obtained from the associated
  * {@link ContextTracker}. For example HTTP session context may be induced by HTTP servlet request
  * context.
- * <p>
- * Note: induced Scopes may also be implemented by subclassing {@link ContextScope} and overriding
- * {@link ContextScope#getContext()} method to return the induced context instead of the one
- * directly obtained from {@link #tracker}. Both these ways are mostly equivalent.</p>
  */
 public class InducedContextScope<
 		TrackableCtxT extends TrackableContext<TrackableCtxT>,
