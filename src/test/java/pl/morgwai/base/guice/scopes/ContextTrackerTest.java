@@ -18,25 +18,28 @@ public class ContextTrackerTest {
 
 	@Test
 	public void testTrackingRunnable() {
-		assertNull("context should be unset initially", tracker.getCurrentContext());
+		assertNull("current context should be unset initially", tracker.getCurrentContext());
 		ctx.executeWithinSelf(
-			() -> assertSame("context should be set", ctx, tracker.getCurrentContext()));
-		assertNull("context should be cleared", tracker.getCurrentContext());
+			() -> assertSame("executing context should be set as the current",
+					ctx, tracker.getCurrentContext())
+		);
+		assertNull("current context should be cleared at the end", tracker.getCurrentContext());
 	}
 
 
 
 	@Test
 	public void testTrackingCallable() throws Exception {
-		final var result = new Object();
-		assertNull("context should be unset initially", tracker.getCurrentContext());
+		final var result = "result";
+		assertNull("current context should be unset initially", tracker.getCurrentContext());
 		final var obtained = ctx.executeWithinSelf(
 			() -> {
-				assertSame("context should be set", ctx, tracker.getCurrentContext());
+				assertSame("executing context should be set as the current",
+						ctx, tracker.getCurrentContext());
 				return result;
 			}
 		);
-		assertNull("context should be cleared", tracker.getCurrentContext());
+		assertNull("current context should be cleared at the end", tracker.getCurrentContext());
 		assertSame("obtained object should be the same as returned", result, obtained);
 	}
 
@@ -44,11 +47,11 @@ public class ContextTrackerTest {
 
 	@Test
 	public void testExecutingRunnablePropagatesRuntimeException() {
-		final var thrown = new RuntimeException();
-		final Runnable task = () -> { throw  thrown; };
+		final var thrown = new RuntimeException("thrown");
+		final Runnable throwingTask = () -> { throw  thrown; };
 		try {
-			ctx.executeWithinSelf(task);
-			fail("RuntimeException expected");
+			ctx.executeWithinSelf(throwingTask);
+			fail("RuntimeException thrown by the task should be propagated");
 		} catch (RuntimeException caught) {
 			assertSame("caught exception should be the same as thrown", thrown, caught);
 		}
@@ -59,25 +62,26 @@ public class ContextTrackerTest {
 	@Test
 	public void testTrackingAcrossThreads() throws Exception {
 		final AssertionError[] errorHolder = {null};
+		final Runnable ctxVerifyingTask = () -> assertSame(
+				"executing context should be set as the current", ctx, tracker.getCurrentContext());
 		ctx.executeWithinSelf(() -> {
 			final var currentContext = tracker.getCurrentContext();
 			final var thread = new Thread(() -> {
 				try {
-					assertNull("context should be unset initially", tracker.getCurrentContext());
-					currentContext.executeWithinSelf(
-						() -> assertSame("context should be set",
-							ctx, tracker.getCurrentContext())
-					);
-					assertNull("context should be cleared", tracker.getCurrentContext());
+					assertNull("current context should be unset initially in a new thread",
+							tracker.getCurrentContext());
+					currentContext.executeWithinSelf(ctxVerifyingTask);
+					assertNull("current context should be cleared at the end",
+							tracker.getCurrentContext());
 				} catch (AssertionError e) {
 					errorHolder[0] = e;
 				}
 			});
 			thread.start();
 			thread.join();
+			if (errorHolder[0] != null) throw errorHolder[0];
 			return "";
 		});
-		if (errorHolder[0] != null) throw errorHolder[0];
 	}
 
 
