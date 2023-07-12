@@ -35,7 +35,7 @@ public class ContextTrackingExecutorTest {
 			"testExecutor", POOL_SIZE, allTrackers, new LinkedBlockingQueue<>(QUEUE_SIZE));
 	static final String TASK_NAME = "testTask";
 
-	final AssertionError[] errorHolder = {null};
+	AssertionError asyncAssertionError;
 
 
 
@@ -111,7 +111,7 @@ public class ContextTrackingExecutorTest {
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
 						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
 					} catch (AssertionError e) {
-						errorHolder[0] = e;
+						asyncAssertionError = e;
 					} finally {
 						latch.countDown();
 					}
@@ -119,7 +119,7 @@ public class ContextTrackingExecutorTest {
 			)
 		);
 		if ( !latch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) throw new TimeoutException();
-		if (errorHolder[0] != null) throw errorHolder[0];
+		if (asyncAssertionError != null) throw asyncAssertionError;
 	}
 
 
@@ -136,14 +136,14 @@ public class ContextTrackingExecutorTest {
 						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
 						return result;
 					} catch (AssertionError e) {
-						errorHolder[0] = e;
+						asyncAssertionError = e;
 						throw e;
 					}
 				})
 			)
 		);
 		final var obtained = callFuture.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		if (errorHolder[0] != null) throw errorHolder[0];
+		if (asyncAssertionError != null) throw asyncAssertionError;
 		assertSame("obtained object should be the same as returned", result, obtained);
 	}
 
@@ -162,7 +162,7 @@ public class ContextTrackingExecutorTest {
 						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
 						throw thrown;
 					} catch (AssertionError e) {
-						errorHolder[0] = e;
+						asyncAssertionError = e;
 						throw e;
 					}
 				})
@@ -173,7 +173,7 @@ public class ContextTrackingExecutorTest {
 			callFuture.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 			fail("ExecutionException should be thrown if the task throws any Exception");
 		} catch (ExecutionException e) {
-			if (errorHolder[0] != null) throw errorHolder[0];
+			if (asyncAssertionError != null) throw asyncAssertionError;
 			assertSame("cause of the ExecutionException should be the same as thrown by the task",
 					thrown, e.getCause());
 		}
@@ -194,7 +194,7 @@ public class ContextTrackingExecutorTest {
 						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
 						throw thrown;
 					} catch (AssertionError e) {
-						errorHolder[0] = e;
+						asyncAssertionError = e;
 						throw e;
 					}
 				})
@@ -208,7 +208,7 @@ public class ContextTrackingExecutorTest {
 							thrown, caught);
 					assertNull("result should be null if the task throws an Exception", result);
 				} catch (AssertionError e) {
-					errorHolder[0] = e;
+					asyncAssertionError = e;
 				} finally {
 					completionLatch.countDown();
 				}
@@ -217,7 +217,7 @@ public class ContextTrackingExecutorTest {
 
 		assertTrue("the Callable task should complete",
 				completionLatch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
-		if (errorHolder[0] != null) throw errorHolder[0];
+		if (asyncAssertionError != null) throw asyncAssertionError;
 	}
 
 
