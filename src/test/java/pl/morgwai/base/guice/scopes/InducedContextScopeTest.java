@@ -16,8 +16,10 @@ public class InducedContextScopeTest {
 
 	final ContextTracker<ChildContext> tracker = new ContextTracker<>();
 
+	final ContextScope<ChildContext> childScope = new ContextScope<>("childScope", tracker);
+
 	final InducedContextScope<ChildContext, InducedParentContext> parentScope =
-			new InducedContextScope<>("inducedScope", tracker, ChildContext::getParentCtx);
+			new InducedContextScope<>("inducedParentScope", tracker, ChildContext::getParentCtx);
 
 	int sequence = 0;
 	final Provider<Integer> provider = () -> ++sequence;
@@ -28,20 +30,29 @@ public class InducedContextScopeTest {
 	@Test
 	public void testScoping() {
 		final var parentCtx = new InducedParentContext();
-		final var scopedIntHolder = new Integer[1];
-		final var unscopedIntHolder = new Integer[1];
+		final var parentScopedIntHolder = new Integer[1];
+		final var childScopedIntHolder = new Integer[1];
+		final var childScopedProvider = childScope.scope(key, provider);
 		new ChildContext(tracker, parentCtx).executeWithinSelf(
 			() -> {
 				final var parentScopedProvider = parentScope.scope(key, provider);
-				scopedIntHolder[0] = parentScopedProvider.get();
+				parentScopedIntHolder[0] = parentScopedProvider.get();
+				childScopedIntHolder[0] = childScopedProvider.get();
 				assertSame(
 					"parent scoped provider should keep providing the same object in a child ctx",
-					scopedIntHolder[0],
+					parentScopedIntHolder[0],
 					parentScopedProvider.get()
 				);
-				unscopedIntHolder[0] = provider.get();
-				assertNotEquals("unscoped provider should provide an object different than scoped",
-						scopedIntHolder[0], unscopedIntHolder[0]);
+				assertSame(
+					"child scoped provider should keep providing the same object in a child ctx",
+					childScopedIntHolder[0],
+					childScopedProvider.get()
+				);
+				assertNotEquals(
+					"parent and child scoped providers should provide different objects",
+					childScopedIntHolder[0],
+					parentScopedIntHolder[0]
+				);
 			}
 		);
 		new ChildContext(tracker, parentCtx).executeWithinSelf(
@@ -50,14 +61,14 @@ public class InducedContextScopeTest {
 				assertSame(
 					"parent scoped provider should keep providing the same object in a given"
 								+ " parent ctx across all its child ctxs",
-					scopedIntHolder[0],
+					parentScopedIntHolder[0],
 					parentScopedProvider.get()
 				);
-				final var secondUnscopedInt = provider.get();
-				assertNotEquals("unscoped provider should provide an object different than scoped",
-						scopedIntHolder[0], secondUnscopedInt);
-				assertNotEquals("unscoped provider should provide a new object each time",
-						unscopedIntHolder[0], secondUnscopedInt);
+				assertNotEquals(
+					"child scoped provider should provide a new object in a new child ctx",
+					childScopedIntHolder[0],
+					childScopedProvider.get()
+				);
 			}
 		);
 	}
