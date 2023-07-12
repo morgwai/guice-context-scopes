@@ -16,31 +16,10 @@ import java.util.stream.Collectors;
  * {@link TrackableContext context} when executing a task. By default backed by a fixed size
  * {@link ThreadPoolExecutor}.
  * <p>
- * Instances usually correspond 1-1 with some <b>type</b> of blocking or time consuming operations,
- * such as intensive calculations or blocking network communication with some resource.<br/>
- * In case of network operations, a given threadPool size should usually correspond to the pool size
- * of the connections to the given resource.Note however, that in this case <i>"correspond"</i> does
- * not necessarily mean 1-1 mapping: in case of some smart caching or pooling, it may be possible to
- * effectively "fit" more threads than there are available connections.<br/>
- * In case of intensive calculations, it should usually correspond to the number of processing units
- * available to the process, such as the number of {@link Runtime#availableProcessors() CPU cores}
- * or the number of GPUs installed on the system.</p>
- * <p>
- * Instances are usually created at app startup, stored on static vars or better bound for
- * injection with a specific {@link com.google.inject.name.Names#named(String) name}:</p>
- * <pre>
- * bind(ContextTrackingExecutor.class)
- *     .annotatedWith(Names.named("someOpTypeExecutor"))
- *     .toInstance(...)</pre>
- * <p>
- * and then injected using @{@link com.google.inject.name.Named Named} annotation:</p>
- * <pre>
- * &commat;Inject&nbsp;&commat;Named("someOpTypeExecutor")
- * ContextTrackingExecutor someOpTypeExecutor</pre></p>
- * <p>
- * At app shutdown {@link #shutdown()} should be called followed by either
- * {@link #enforceTermination(long, TimeUnit)} or {@link #awaitTermination()} or
- * {@link #awaitTermination(long, TimeUnit)} and {@link #shutdownNow()} in case of a failure.</p>
+ * When an instance is about to be discarded, {@link #shutdown()} should be called followed by
+ * either {@link #enforceTermination(long, TimeUnit)} or one of {@link #awaitTermination()} /
+ * {@link #awaitTermination(long, TimeUnit)} followed in case of a failure by
+ * {@link #shutdownNow()}.</p>
  * <p>
  * If multiple threads run within the same context, then the attributes they access must be
  * thread-safe or properly synchronized.</p>
