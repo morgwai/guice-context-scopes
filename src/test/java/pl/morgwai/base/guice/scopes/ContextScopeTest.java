@@ -30,8 +30,11 @@ public class ContextScopeTest {
 				final var scopedInt = scopedProvider.get();
 				assertSame("scoped provider should keep providing the same object in a given ctx",
 						scopedInt, scopedProvider.get());
-				assertNotEquals("unscoped provider should provide a new object",
-						scopedInt, provider.get());
+				final var unscopedInt = provider.get();
+				assertNotEquals("unscoped provider should provide an object different than scoped",
+						scopedInt, unscopedInt);
+				assertNotEquals("unscoped provider should provide a new object each time",
+						unscopedInt, provider.get());
 			}
 		);
 	}
@@ -42,7 +45,7 @@ public class ContextScopeTest {
 	public void testOutOfCtxScopingThrows() {
 		try {
 			scope.scope(key, provider).get();
-			fail("scoping outside of any context should throw a OutOfScopeException");
+			fail("scoping outside of any context should throw an OutOfScopeException");
 		} catch (OutOfScopeException expected) {}
 	}
 
@@ -56,7 +59,7 @@ public class ContextScopeTest {
 				final var oldScopedInt = scopedProvider.get();
 				tracker.getCurrentContext().removeScopedObject(key);
 				final var newScopedInt = scopedProvider.get();
-				assertNotEquals("after removing, scoped provider should provide a new object",
+				assertNotEquals("after removing, a scoped provider should provide a new object",
 						oldScopedInt, newScopedInt);
 				assertSame("the new scoped object should remain the same on subsequent calls",
 						newScopedInt, scopedProvider.get());

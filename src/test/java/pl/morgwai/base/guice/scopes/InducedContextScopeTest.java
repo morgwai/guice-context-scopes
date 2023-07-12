@@ -16,7 +16,7 @@ public class InducedContextScopeTest {
 
 	final ContextTracker<ChildContext> tracker = new ContextTracker<>();
 
-	final InducedContextScope<ChildContext, InducedParentContext> scope =
+	final InducedContextScope<ChildContext, InducedParentContext> parentScope =
 			new InducedContextScope<>("inducedScope", tracker, ChildContext::getParentCtx);
 
 	int sequence = 0;
@@ -32,24 +32,31 @@ public class InducedContextScopeTest {
 		final var unscopedIntHolder = new Integer[1];
 		new ChildContext(tracker, parentCtx).executeWithinSelf(
 			() -> {
-				final var scopedProvider = scope.scope(key, provider);
-				scopedIntHolder[0] = scopedProvider.get();
-				assertSame("scoped value should remain the same",
-						scopedIntHolder[0], scopedProvider.get());
+				final var parentScopedProvider = parentScope.scope(key, provider);
+				scopedIntHolder[0] = parentScopedProvider.get();
+				assertSame(
+					"parent scoped provider should keep providing the same object in a child ctx",
+					scopedIntHolder[0],
+					parentScopedProvider.get()
+				);
 				unscopedIntHolder[0] = provider.get();
-				assertNotEquals("unscoped provider should provide a value different than scoped",
+				assertNotEquals("unscoped provider should provide an object different than scoped",
 						scopedIntHolder[0], unscopedIntHolder[0]);
 			}
 		);
 		new ChildContext(tracker, parentCtx).executeWithinSelf(
 			() -> {
-				final var scopedProvider = scope.scope(key, provider);
-				assertSame("scoped value should remain the same",
-						scopedIntHolder[0], scopedProvider.get());
+				final var parentScopedProvider = parentScope.scope(key, provider);
+				assertSame(
+					"parent scoped provider should keep providing the same object in a given"
+								+ " parent ctx across all its child ctxs",
+					scopedIntHolder[0],
+					parentScopedProvider.get()
+				);
 				final var secondUnscopedInt = provider.get();
-				assertNotEquals("unscoped provider should provide a value different than scoped",
+				assertNotEquals("unscoped provider should provide an object different than scoped",
 						scopedIntHolder[0], secondUnscopedInt);
-				assertNotEquals("unscoped provider should provide a new value each time",
+				assertNotEquals("unscoped provider should provide a new object each time",
 						unscopedIntHolder[0], secondUnscopedInt);
 			}
 		);

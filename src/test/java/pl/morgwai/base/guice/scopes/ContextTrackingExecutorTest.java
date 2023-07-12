@@ -144,7 +144,7 @@ public class ContextTrackingExecutorTest {
 		);
 		final var obtained = callFuture.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		if (errorHolder[0] != null) throw errorHolder[0];
-		assertSame("result should match", result, obtained);
+		assertSame("obtained object should be the same as returned", result, obtained);
 	}
 
 
@@ -258,9 +258,9 @@ public class ContextTrackingExecutorTest {
 			executor.execute(overloadingTask);  // method under test
 			fail("overloaded executor should throw a DetailedRejectedExecutionException");
 		} catch (DetailedRejectedExecutionException rejection) {
-			assertSame("executor reference should be correct",
+			assertSame("the rejection should contain the executor which threw this rejection",
 					executor, rejection.getExecutor());
-			assertSame("unwrapped rejected task should be the one passed to the executor",
+			assertSame("unwrapped rejected task should be the one that overloaded the executor",
 					overloadingTask, rejection.getTask());
 		} finally {
 			barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -282,9 +282,9 @@ public class ContextTrackingExecutorTest {
 			executor.execute(overloadingTask);  // method under test
 			fail("overloaded executor should throw a DetailedRejectedExecutionException");
 		} catch (DetailedRejectedExecutionException rejection) {
-			assertSame("executor reference should be correct",
+			assertSame("the rejection should contain the executor which threw this rejection",
 					executor, rejection.getExecutor());
-			assertSame("unwrapped rejected task should be the one passed to the executor",
+			assertSame("unwrapped rejected task should be the one that overloaded the executor",
 					overloadingTask, rejection.getTask());
 		} finally {
 			barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
