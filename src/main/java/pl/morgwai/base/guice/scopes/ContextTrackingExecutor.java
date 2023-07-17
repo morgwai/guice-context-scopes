@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
@@ -118,6 +119,10 @@ public class ContextTrackingExecutor implements Executor {
 			case 0:
 				System.err.println("thread \"" + Thread.currentThread().getName()
 						+ "\" is executing task " + task + " outside of any context");
+				Logger.getLogger(ContextTrackingExecutor.class.getName()).warning("thread \""
+						+ Thread.currentThread().getName() + "\" is executing task " + task
+						+ " outside of any context"
+				);
 				return task.call();
 			default:
 				return executeWithinAll(
