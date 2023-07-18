@@ -293,6 +293,35 @@ public class ContextTrackingExecutorTest {
 
 
 
+	@Test
+	public void testEnforceTerminationCallsShutdownNowOnUncheckedException()
+			throws InterruptedException {
+		final var backingExecutor = new ThreadPoolExecutor(
+				1, 1, 0L, TimeUnit.DAYS, new LinkedBlockingQueue<>()) {
+
+			boolean shutdownNowCalled;
+
+			@Override public boolean awaitTermination(long timeout, TimeUnit unit) {
+				throw new InternalError("unchecked");
+			}
+
+			@Override public List<Runnable> shutdownNow() {
+				shutdownNowCalled = true;
+				return super.shutdownNow();
+			}
+		};
+		final var testSubject = new ContextTrackingExecutor(
+				"testSubject", 1, allTrackers, backingExecutor);
+
+		try {
+			testSubject.enforceTermination(10L, TimeUnit.MILLISECONDS);
+			fail("InternalError expected");
+		} catch (InternalError expected) {}
+		assertTrue("shutdownNow() should be called", backingExecutor.shutdownNowCalled);
+	}
+
+
+
 	@After
 	public void shutdown() throws InterruptedException {
 		executor.shutdown();

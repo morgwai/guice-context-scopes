@@ -337,9 +337,12 @@ public class ContextTrackingExecutor implements Executor {
 
 
 	/**
-	 * {@link #awaitTermination(long, TimeUnit) Awaits} up to {@code timeoutMillis} for termination
-	 * and if executor fails to do so (either due to timeout or interrupt) {@link #shutdownNow()} is
-	 * called.
+	 * {@link #awaitTermination(long, TimeUnit) Awaits} for termination and if this executor fails
+	 * to do so, calls {@link #shutdownNow()}.
+	 * In case of any exception (including an interruption), {@link #shutdownNow()} is called
+	 * in the {@code finally} block, but its result is lost: if that's not acceptable, use
+	 * {@link #awaitTermination(long, TimeUnit)} and {@link #shutdownNow()} manually instead of this
+	 * method.
 	 * @return {@link Optional#empty() empty} if the executor was shutdown cleanly, list of tasks
 	 *     returned by {@code backingExecutor.shutdownNow()} otherwise.
 	 * @see ExecutorService#awaitTermination(long, TimeUnit)
@@ -353,9 +356,8 @@ public class ContextTrackingExecutor implements Executor {
 			} else {
 				return Optional.of(backingExecutor.shutdownNow());
 			}
-		} catch (InterruptedException e) {
-			backingExecutor.shutdownNow();
-			throw e;
+		} finally {
+			if ( !backingExecutor.isTerminated()) backingExecutor.shutdownNow();
 		}
 	}
 
