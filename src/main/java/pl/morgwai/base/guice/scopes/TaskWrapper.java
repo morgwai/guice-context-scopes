@@ -50,7 +50,7 @@ abstract class TaskWrapper {
  * See {@link ContextTrackingExecutor#execute(Callable)}.
  */
 abstract class RunnableWrapper extends TaskWrapper implements Runnable {
-	// unused: protected RunnableWrapper(Runnable taskToWrap) { super(taskToWrap); }
+	protected RunnableWrapper(Runnable taskToWrap) { super(taskToWrap); }
 	protected RunnableWrapper(Callable<?> taskToWrap) { super(taskToWrap); }
 }
 

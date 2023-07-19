@@ -59,7 +59,12 @@ public class ContextTrackingExecutor implements Executor {
 	 */
 	@Override
 	public void execute(Runnable task) {
-		execute(new CallableRunnable(task));
+		final var activeCtxs = getActiveContexts(trackers);
+		backingExecutor.execute(new RunnableWrapper(task) {
+			@Override public void run() {
+				executeWithinAll(activeCtxs, task);
+			}
+		});
 	}
 
 
@@ -70,14 +75,16 @@ public class ContextTrackingExecutor implements Executor {
 	 * {@link CompletableFuture#handle(BiFunction)  handle(...)} /
 	 * {@link CompletableFuture#whenComplete(BiConsumer)  whenComplete(...)} /
 	 * {@link CompletableFuture#exceptionally(Function) exceptionally(...)} chained calls.
+	 * <p>
+	 * This method uses {@link #execute(Runnable)} internally, so overriding
+	 * {@link #execute(Runnable)} will also affect this one.</p>
 	 */
 	public <T> CompletableFuture<T> execute(Callable<T> task) {
 		final var future = new CompletableFuture<T>();
-		final var activeCtxs = getActiveContexts(trackers);
-		backingExecutor.execute(new RunnableWrapper(task) {
+		execute(new RunnableWrapper(task) {
 			@Override public void run() {
 				try {
-					future.complete(executeWithinAll(activeCtxs, task));
+					future.complete(task.call());
 				} catch (Exception e) {
 					future.completeExceptionally(e);
 				}
