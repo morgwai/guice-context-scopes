@@ -21,8 +21,6 @@ abstract class TaskWrapper {
 		this.wrappedTask = taskToWrap;
 	}
 
-
-
 	protected TaskWrapper(Callable<?> taskToWrap) {
 		this.wrappedTask = taskToWrap;
 	}
@@ -47,11 +45,10 @@ abstract class TaskWrapper {
 
 /**
  * For inlining anonymous {@link Runnable}s wrapping other tasks.
- * See {@link ContextTrackingExecutor#execute(Callable)}.
+ * See {@link ContextTrackingExecutor#execute(Runnable)}.
  */
 abstract class RunnableWrapper extends TaskWrapper implements Runnable {
 	protected RunnableWrapper(Runnable taskToWrap) { super(taskToWrap); }
-	protected RunnableWrapper(Callable<?> taskToWrap) { super(taskToWrap); }
 }
 
 
@@ -75,7 +72,7 @@ class CallableRunnable extends CallableWrapper<Void> {
 
 
 
-	CallableRunnable(Runnable taskToWrap) {
+	protected CallableRunnable(Runnable taskToWrap) {
 		super(taskToWrap);
 	}
 

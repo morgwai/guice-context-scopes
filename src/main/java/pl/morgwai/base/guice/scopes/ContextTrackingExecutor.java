@@ -3,60 +3,68 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
 
 /**
- * An executor that automatically updates which thread runs within which
- * {@link TrackableContext context} when executing a task. By default backed by a fixed size
- * {@link ThreadPoolExecutor}.
+ * A decorator for an {@link ExecutorService} that automatically updates which thread runs within
+ * which {@link TrackableContext context} when executing a task.
  * <p>
- * When an instance is about to be discarded, {@link #shutdown()} should be called followed by
- * either {@link #enforceTermination(long, TimeUnit)} or one of {@link #awaitTermination()} /
- * {@link #awaitTermination(long, TimeUnit)} followed in case of a failure by
- * {@link #shutdownNow()}.</p>
- * <p>
- * If multiple threads run within the same context, then the attributes they access must be
+ * Note: multiple threads may run within the same context, but the attributes they access must be
  * thread-safe or properly synchronized.</p>
  */
-public class ContextTrackingExecutor implements Executor {
+public class ContextTrackingExecutor extends AbstractExecutorService implements ExecutorService {
 
 
-
-	final String name;
-	public String getName() { return name; }
-
-	final int poolSize;
-	public int getPoolSize() { return poolSize; }
 
 	final List<ContextTracker<?>> trackers;
+	final ExecutorService backingExecutor;
 
-	private final ExecutorService backingExecutor;
 
 
+	/** Decorates {@code executorToDecorate}. */
+	public ContextTrackingExecutor(
+			List<ContextTracker<?>> trackers, ExecutorService executorToDecorate) {
+		this.trackers = List.copyOf(trackers);
+		this.backingExecutor = executorToDecorate;
+	}
 
 	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses an
-	 * unbound {@link LinkedBlockingQueue} and a new {@link NamedThreadFactory}.
-	 * <p>
-	 * To avoid {@link OutOfMemoryError}s, an external mechanism that limits maximum number of tasks
-	 * (such as a load balancer or a frontend proxy) should be used.</p>
+	 * Decorates {@code executorToDecorate} and calls
+	 * {@link #decorateRejectedExecutionHandler(ThreadPoolExecutor)
+	 * decorateRejectedExecutionHandler(executorToDecorate)}.
 	 */
-	public ContextTrackingExecutor(String name, int poolSize, List<ContextTracker<?>> trackers) {
-		this(name, poolSize, trackers, new LinkedBlockingQueue<>());
+	public ContextTrackingExecutor(
+			List<ContextTracker<?>> trackers, ThreadPoolExecutor executorToDecorate) {
+		this(trackers, (ExecutorService) executorToDecorate);
+		decorateRejectedExecutionHandler(executorToDecorate);
+	}
+
+	/**
+	 * Decorates {@code executor}'s {@link RejectedExecutionHandler} to unwrap tasks from internal
+	 * wrappers before passing them to the original handler.
+	 */
+	public static void decorateRejectedExecutionHandler(ThreadPoolExecutor executor) {
+		final var originalHandler = executor.getRejectedExecutionHandler();
+		executor.setRejectedExecutionHandler(
+			(rejectedTask, rejectingExecutor) -> originalHandler.rejectedExecution(
+				unwrapTask(rejectedTask),
+				rejectingExecutor
+			)
+		);
+	}
+
+	/** Removes internal wrappers from {@code task} if needed. */
+	public static Runnable unwrapTask(Runnable task) {
+		return task instanceof TaskWrapper ? (Runnable) ((TaskWrapper) task).unwrap() : task;
 	}
 
 
 
-	/**
-	 * Executes {@code task} within all contexts that were active when this method was called.
-	 */
+	/** Executes {@code task} within all contexts that were active when this method was called. */
 	@Override
 	public void execute(Runnable task) {
 		final var activeCtxs = getActiveContexts(trackers);
@@ -65,32 +73,6 @@ public class ContextTrackingExecutor implements Executor {
 				executeWithinAll(activeCtxs, task);
 			}
 		});
-	}
-
-
-
-	/**
-	 * Executes {@code task} within all contexts that were active when this method was called.
-	 * If {@link Callable#call() task.call()} throws an exception, it will be pipelined to
-	 * {@link CompletableFuture#handle(BiFunction)  handle(...)} /
-	 * {@link CompletableFuture#whenComplete(BiConsumer)  whenComplete(...)} /
-	 * {@link CompletableFuture#exceptionally(Function) exceptionally(...)} chained calls.
-	 * <p>
-	 * This method uses {@link #execute(Runnable)} internally, so overriding
-	 * {@link #execute(Runnable)} will also affect this one.</p>
-	 */
-	public <T> CompletableFuture<T> execute(Callable<T> task) {
-		final var future = new CompletableFuture<T>();
-		execute(new RunnableWrapper(task) {
-			@Override public void run() {
-				try {
-					future.complete(task.call());
-				} catch (Exception e) {
-					future.completeExceptionally(e);
-				}
-			}
-		});
-		return future;
 	}
 
 
@@ -118,6 +100,20 @@ public class ContextTrackingExecutor implements Executor {
 	 *
 	 * @see #getActiveContexts(List)
 	 */
+	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
+		try {
+			executeWithinAll(contexts, new CallableRunnable(task));
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
+	}
+
+	/**
+	 * Executes {@code task} on the current thread within all {@code contexts}.
+	 * Used to transfer active contexts after a switch to another thread.
+	 *
+	 * @see #getActiveContexts(List)
+	 */
 	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> task)
 			throws Exception {
 		switch (contexts.size()) {
@@ -126,7 +122,7 @@ public class ContextTrackingExecutor implements Executor {
 			case 0:
 				System.err.println("thread \"" + Thread.currentThread().getName()
 						+ "\" is executing task " + task + " outside of any context");
-				Logger.getLogger(ContextTrackingExecutor.class.getName()).warning("thread \""
+				log.warning("thread \""
 						+ Thread.currentThread().getName() + "\" is executing task " + task
 						+ " outside of any context"
 				);
@@ -143,363 +139,38 @@ public class ContextTrackingExecutor implements Executor {
 		}
 	}
 
-
-
-	/**
-	 * Executes {@code task} on the current thread within all {@code contexts}.
-	 * Used to transfer active contexts after a switch to another thread.
-	 *
-	 * @see #getActiveContexts(List)
-	 */
-	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
-		try {
-			executeWithinAll(contexts, new CallableRunnable(task));
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
-	}
+	static final Logger log = Logger.getLogger(ContextTrackingExecutor.class.getName());
 
 
 
 	@Override
-	public String toString() {
-		return "ContextTrackingExecutor { name = \"" + name + "\", poolSize=" + poolSize + " }";
+	public List<Runnable> shutdownNow() {
+		return backingExecutor.shutdownNow().stream()
+			.map((task) -> (Runnable) ((TaskWrapper) task).unwrap())
+			.collect(Collectors.toList());
 	}
 
 
 
+	// only dumb delegations to backingExecutor below:
 
-	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
-	 * {@code workQueue}, the default {@link RejectedExecutionHandler} and a new
-	 * {@link NamedThreadFactory} named after this executor.
-	 * <p>
-	 * The default {@link RejectedExecutionHandler} throws a
-	 * {@link DetailedRejectedExecutionException} if {@code workQueue} is full or the executor is
-	 * shutting down. It should usually be handled by informing the client that the service is
-	 * temporarily unavailable (for example a gRPC can send status {@code UNAVAILABLE(14)}
-	 * and a servlet can send status {@code 503 Service Unavailable}).</p>
-	 */
-	public ContextTrackingExecutor(
-		String name,
-		int poolSize,
-		List<ContextTracker<?>> trackers,
-		BlockingQueue<Runnable> workQueue
-	) {
-		this(
-			name,
-			poolSize,
-			trackers,
-			workQueue,
-			(task, executor) -> { throw new DetailedRejectedExecutionException(task, executor); }
-		);
-	}
-
-
-
-	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
-	 * {@code workQueue}, {@code rejectionHandler} and a new {@link NamedThreadFactory} named after
-	 * this executor.
-	 * <p>
-	 * The first param of {@code rejectionHandler} is a rejected task: either {@link Runnable} or
-	 * {@link Callable} depending whether {@link #execute(Runnable)} or {@link #execute(Callable)}
-	 * was used.</p>
-	 */
-	public ContextTrackingExecutor(
-		String name,
-		int poolSize,
-		List<ContextTracker<?>> trackers,
-		BlockingQueue<Runnable> workQueue,
-		BiConsumer<Object, ? super ContextTrackingExecutor> rejectionHandler
-	) {
-		this(
-			name,
-			poolSize,
-			trackers,
-			workQueue,
-			rejectionHandler,
-			new NamedThreadFactory(name)
-		);
-	}
-
-
-
-	/**
-	 * Constructs an instance backed by a new fixed size {@link ThreadPoolExecutor} that uses
-	 * {@code workQueue}, {@code rejectionHandler} and {@code threadFactory}.
-	 * @see #ContextTrackingExecutor(String, int, List, BlockingQueue, BiConsumer)
-	 */
-	public ContextTrackingExecutor(
-		String name,
-		int poolSize,
-		List<ContextTracker<?>> trackers,
-		BlockingQueue<Runnable> workQueue,
-		BiConsumer<Object, ? super ContextTrackingExecutor> rejectionHandler,
-		ThreadFactory threadFactory
-	) {
-		this(
-			name,
-			poolSize,
-			trackers,
-			workQueue,
-			new RejectionHandler(rejectionHandler),
-			threadFactory
-		);
-	}
-
-	private static class RejectionHandler implements RejectedExecutionHandler {
-
-		ContextTrackingExecutor executor;
-		final BiConsumer<Object, ? super ContextTrackingExecutor> handler;
-
-		RejectionHandler(BiConsumer<Object, ? super ContextTrackingExecutor> handler) {
-			this.handler = handler;
-		}
-
-		@Override
-		public void rejectedExecution(Runnable rejectedTask, ThreadPoolExecutor backingExecutor) {
-			handler.accept(unwrapRejectedTask(rejectedTask), executor);
-		}
-	}
-
-	/**
-	 * See {@link #ContextTrackingExecutor(String, int, List, ExecutorService)}.
-	 */
-	public static Object unwrapRejectedTask(Runnable rejectedTask) {
-		if (rejectedTask instanceof TaskWrapper) return ((TaskWrapper) rejectedTask).unwrap();
-		return rejectedTask;
-	}
-
-	private ContextTrackingExecutor(
-		String name,
-		int poolSize,
-		List<ContextTracker<?>> trackers,
-		BlockingQueue<Runnable> workQueue,
-		RejectionHandler rejectionHandler,
-		ThreadFactory threadFactory
-	) {
-		this(
-			name,
-			poolSize,
-			trackers,
-			new ThreadPoolExecutor(
-				poolSize, poolSize, 0L, TimeUnit.SECONDS,
-				workQueue,
-				threadFactory,
-				rejectionHandler
-			)
-		);
-		rejectionHandler.executor = this;
-	}
-
-
-
-	/**
-	 * Constructs an instance backed by {@code backingExecutor}. A {@link RejectedExecutionHandler}
-	 * of the {@code backingExecutor} will receive a {@link Runnable} that consists of several
-	 * layers of wrappers around the original task, use {@link #unwrapRejectedTask(Runnable)} to
-	 * obtain the original task.
-	 * @param poolSize informative only: to be returned by {@link #getPoolSize()}.
-	 */
-	public ContextTrackingExecutor(
-		String name,
-		int poolSize,
-		List<ContextTracker<?>> trackers,
-		ExecutorService backingExecutor
-	) {
-		this.name = name;
-		this.poolSize = poolSize;
-		this.trackers = List.copyOf(trackers);
-		this.backingExecutor = backingExecutor;
-	}
-
-
-
-	/**
-	 * Calls {@link ExecutorService#shutdown() backingExecutor.shutdown()}.
-	 */
+	@Override
 	public void shutdown() {
 		backingExecutor.shutdown();
 	}
 
-
-
-	/**
-	 * Calls {@link ExecutorService#isShutdown() backingExecutor.isShutdown()}.
-	 */
+	@Override
 	public boolean isShutdown() {
 		return backingExecutor.isShutdown();
 	}
 
-
-
-	/**
-	 * Calls {@link ExecutorService#isTerminated() backingExecutor.isTerminated()}.
-	 */
+	@Override
 	public boolean isTerminated() {
 		return backingExecutor.isTerminated();
 	}
 
-
-
-	/**
-	 * {@link #awaitTermination(long, TimeUnit) Awaits} for termination and if this executor fails
-	 * to do so, calls {@link #shutdownNow()}.
-	 * In case of any exception (including an interruption), {@link #shutdownNow()} is called
-	 * in the {@code finally} block, but its result is lost: if that's not acceptable, use
-	 * {@link #awaitTermination(long, TimeUnit)} and {@link #shutdownNow()} manually instead of this
-	 * method.
-	 * @return {@link Optional#empty() empty} if the executor was shutdown cleanly, list of tasks
-	 *     returned by {@code backingExecutor.shutdownNow()} otherwise.
-	 * @see ExecutorService#awaitTermination(long, TimeUnit)
-	 * @see ExecutorService#shutdownNow()
-	 */
-	public Optional<List<Runnable>> enforceTermination(long timeout, TimeUnit unit)
-			throws InterruptedException {
-		try {
-			if (awaitTermination(timeout, unit)) {
-				return Optional.empty();
-			} else {
-				return Optional.of(backingExecutor.shutdownNow());
-			}
-		} finally {
-			if ( !backingExecutor.isTerminated()) backingExecutor.shutdownNow();
-		}
-	}
-
-
-
-	/**
-	 * Calls {@link ExecutorService#awaitTermination(long, TimeUnit)
-	 * backingExecutor.awaitTermination(timeout, unit)}.
-	 * @see #enforceTermination(long, TimeUnit)
-	 */
+	@Override
 	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
 		return backingExecutor.awaitTermination(timeout, unit);
-	}
-
-
-
-	/**
-	 * Keeps calling {@link ExecutorService#awaitTermination(long, TimeUnit)
-	 * backingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)} until it returns
-	 * {@code true} or an {@link InterruptedException} is thrown.
-	 * @see #enforceTermination(long, TimeUnit)
-	 * @see #awaitTermination(long, TimeUnit)
-	 */
-	public void awaitTermination() throws InterruptedException {
-		while ( !backingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS));
-	}
-
-
-
-	/**
-	 * Calls {@link ExecutorService#shutdown() backingExecutor.shutdownNow()}.
-	 * @see #enforceTermination(long, TimeUnit)
-	 */
-	public List<Runnable> shutdownNow() {
-		return backingExecutor.shutdownNow();
-	}
-
-
-
-	/**
-	 * A thread factory that names new threads based on its own name. Each instance has an
-	 * associated thread group (named after itself), which newly created threads will belong to.
-	 * All such instance associated thread groups have a common parent (named
-	 * {@value #PARENT_THREAD_GROUP_NAME}), which in turn is a child of the system default thread
-	 * group (obtained from system security manager under normal circumstances).
-	 */
-	public static class NamedThreadFactory implements ThreadFactory {
-
-		static final ThreadGroup contextTrackingExecutors;
-
-		final AtomicInteger threadNumber = new AtomicInteger(1);
-		final ThreadGroup threadGroup;
-		final String namePrefix;
-
-
-
-		/**
-		 * Constructs a factory that will assign {@link Thread#NORM_PRIORITY} to created threads.
-		 */
-		public NamedThreadFactory(String name) {
-			this(name, Thread.NORM_PRIORITY);
-		}
-
-
-
-		/**
-		 * Constructs a factory that will assign {@code priority} to created threads.
-		 */
-		public NamedThreadFactory(String name, int priority) {
-			threadGroup = new ThreadGroup(contextTrackingExecutors, name);
-			threadGroup.setMaxPriority(priority);
-			namePrefix = name + "-thread-";
-		}
-
-
-
-		/**
-		 * Creates a new thread named using a scheme
-		 * {@code <thisFactoryName>-thread-<sequenceNumber>}.
-		 */
-		@Override
-		public Thread newThread(Runnable task) {
-			final var thread =
-					new Thread(threadGroup, task, namePrefix + threadNumber.getAndIncrement());
-			thread.setPriority(threadGroup.getMaxPriority());
-			return thread;
-		}
-
-
-
-		/**
-		 * Name of the parent of all thread groups associated with {@link ContextTrackingExecutor}
-		 * instances.
-		 */
-		public static final String PARENT_THREAD_GROUP_NAME = "ContextTrackingExecutors";
-
-		static {
-			final var securityManager = System.getSecurityManager();
-			final var parentThreadGroup = securityManager != null
-					? securityManager.getThreadGroup()
-					: Thread.currentThread().getThreadGroup();
-			contextTrackingExecutors =
-					new ThreadGroup(parentThreadGroup, PARENT_THREAD_GROUP_NAME);
-			contextTrackingExecutors.setDaemon(false);
-			contextTrackingExecutors.setMaxPriority(Thread.MAX_PRIORITY);
-		}
-	}
-
-
-
-	/**
-	 * Thrown by the default {@link RejectedExecutionHandler}.
-	 */
-	public static class DetailedRejectedExecutionException extends RejectedExecutionException {
-
-		/**
-		 * The task that was rejected. This will be either {@link Runnable} or {@link Callable}
-		 * depending whether {@link #execute(Runnable)} or {@link #execute(Callable)} was used.
-		 */
-		public Object getTask() { return task; }
-		final Object task;
-
-		/**
-		 * The executor that rejected the task. To verify whether the reason for the rejection was
-		 * overload or shutdown {@link #isShutdown()} can be called.
-		 */
-		public ContextTrackingExecutor getExecutor() { return executor; }
-		final ContextTrackingExecutor executor;
-
-
-
-		public DetailedRejectedExecutionException(Object task, ContextTrackingExecutor executor) {
-			super("executor \"" + executor.getName() + "\" rejected task " + task);
-			this.task = task;
-			this.executor = executor;
-		}
 	}
 }

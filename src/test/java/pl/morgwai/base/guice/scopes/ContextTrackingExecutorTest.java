@@ -3,11 +3,8 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.junit.*;
-import pl.morgwai.base.guice.scopes.ContextTrackingExecutor.DetailedRejectedExecutionException;
 
 import static org.junit.Assert.*;
 
@@ -17,7 +14,7 @@ public class ContextTrackingExecutorTest {
 
 
 
-	public static final long TIMEOUT_MILLIS = 500L;
+	public static final long TIMEOUT_MILLIS = 50L;
 
 	final ContextTracker<TestContext1> tracker1 = new ContextTracker<>();
 	final ContextTracker<TestContext2> tracker2 = new ContextTracker<>();
@@ -29,13 +26,36 @@ public class ContextTrackingExecutorTest {
 	final TestContext3 ctx3 = new TestContext3(tracker3);
 	final List<TrackableContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 
+	Runnable rejectedTask;
+	Executor rejectingExecutor;
+	protected final RejectedExecutionHandler rejectionHandler = (task, executor) -> {
+		rejectedTask = task;
+		rejectingExecutor = executor;
+		throw new RejectedExecutionException("rejected " + task);
+	};
+
 	static final int POOL_SIZE = 2;
 	static final int QUEUE_SIZE = 1;
-	final ContextTrackingExecutor executor = new ContextTrackingExecutor(
-			"testExecutor", POOL_SIZE, allTrackers, new LinkedBlockingQueue<>(QUEUE_SIZE));
-	static final String TASK_NAME = "testTask";
+
+	final ThreadPoolExecutor backingExecutor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE, 0L,
+			TimeUnit.DAYS, new LinkedBlockingQueue<>(QUEUE_SIZE), rejectionHandler);
+	final ContextTrackingExecutor testSubject =
+			new ContextTrackingExecutor(allTrackers, backingExecutor);
 
 	AssertionError asyncAssertionError;
+
+
+
+	@After
+	public void tryTerminate() {
+		testSubject.shutdown();
+		try {
+			testSubject.awaitTermination(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException ignored) {
+		} finally {
+			if ( !testSubject.isTerminated()) testSubject.shutdownNow();
+		}
+	}
 
 
 
@@ -87,7 +107,7 @@ public class ContextTrackingExecutorTest {
 
 
 	@Test
-	public void testExecutingRunnablePropagatesRuntimeException() {
+	public void testExecutingRunnableWithinAllPropagatesRuntimeException() {
 		final var thrown = new RuntimeException("thrown");
 		final Runnable throwingTask = () -> { throw  thrown; };
 		try {
@@ -101,11 +121,11 @@ public class ContextTrackingExecutorTest {
 
 
 	@Test
-	public void testExecute() throws Exception {
-		final var latch = new CountDownLatch(1);
+	public void testExecute() throws InterruptedException {
+		final var taskFinished = new CountDownLatch(1);
 		ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(
-				() -> executor.execute(() -> {  // method under test
+				() -> testSubject.execute(() -> {  // method under test
 					try {
 						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
@@ -113,226 +133,75 @@ public class ContextTrackingExecutorTest {
 					} catch (AssertionError e) {
 						asyncAssertionError = e;
 					} finally {
-						latch.countDown();
+						taskFinished.countDown();
 					}
 				})
 			)
 		);
-		if ( !latch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) throw new TimeoutException();
+		assertTrue("the submitted task should finish",
+				taskFinished.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
 		if (asyncAssertionError != null) throw asyncAssertionError;
 	}
 
 
 
-	@Test
-	public void testExecuteCallable() throws Exception {
-		final var result = "result";
-		final var callFuture = ctx1.executeWithinSelf(
-			() -> ctx3.executeWithinSelf(
-				() -> executor.execute(() -> {  // method under test
+	/** Blocks all threads of executor on {@code taskBlockingLatch}. */
+	void blockAllExecutorThreads(CountDownLatch taskBlockingLatch, CountDownLatch signalStart) {
+		ctx1.executeWithinSelf(() -> {
+			for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
+				testSubject.execute(() -> {
+					if (signalStart != null) signalStart.countDown();
 					try {
-						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
-						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
-						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
-						return result;
-					} catch (AssertionError e) {
-						asyncAssertionError = e;
-						throw e;
-					}
-				})
-			)
-		);
-		final var obtained = callFuture.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		if (asyncAssertionError != null) throw asyncAssertionError;
-		assertSame("obtained object should be the same as returned", result, obtained);
-	}
-
-
-
-	@Test
-	public void testExecuteThrowingCallableAndCallGet() throws Exception {
-		final var thrown = new Exception("thrown");
-
-		final var callFuture = ctx1.executeWithinSelf(
-			() -> ctx3.executeWithinSelf(
-				() -> executor.execute(() -> {  // method under test
-					try {
-						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
-						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
-						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
-						throw thrown;
-					} catch (AssertionError e) {
-						asyncAssertionError = e;
-						throw e;
-					}
-				})
-			)
-		);
-
-		try {
-			callFuture.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-			fail("ExecutionException should be thrown if the task throws any Exception");
-		} catch (ExecutionException e) {
-			if (asyncAssertionError != null) throw asyncAssertionError;
-			assertSame("cause of the ExecutionException should be the same as thrown by the task",
-					thrown, e.getCause());
-		}
-	}
-
-
-
-	@Test
-	public void testExecuteThrowingCallableAndCallWhenComplete() throws Exception {
-		final var thrown = new Exception("thrown");
-
-		final var callFuture = ctx1.executeWithinSelf(
-			() -> ctx3.executeWithinSelf(
-				() -> executor.execute(() -> {  // method under test
-					try {
-						assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
-						assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
-						assertNull("ctx2 should not be active", tracker2.getCurrentContext());
-						throw thrown;
-					} catch (AssertionError e) {
-						asyncAssertionError = e;
-						throw e;
-					}
-				})
-			)
-		);
-		final var completionLatch = new CountDownLatch(1);
-		callFuture.whenComplete(
-			(result, caught) -> {
-				try {
-					assertSame("caught exception should be the same as thrown by the Callable task",
-							thrown, caught);
-					assertNull("result should be null if the task throws an Exception", result);
-				} catch (AssertionError e) {
-					asyncAssertionError = e;
-				} finally {
-					completionLatch.countDown();
-				}
+						taskBlockingLatch.await();
+					} catch (InterruptedException ignored) {}
+				});
 			}
-		);
-
-		assertTrue("the Callable task should complete",
-				completionLatch.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
-		if (asyncAssertionError != null) throw asyncAssertionError;
-	}
-
-
-
-	/**
-	 * Makes all executor's thread busy and fills its queue.
-	 * @param barrier the barrier on which executor threads will await.
-	 */
-	void fullyLoadExecutor(CyclicBarrier barrier) {
-		ctx1.executeWithinSelf(
-			() -> {
-				for (int i = 0; i < POOL_SIZE; i++) {  // make all threads busy
-					executor.execute(
-						() -> {
-							try {
-								barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-							} catch (Exception ignored) {}
-						}
-					);
-				}
-				for (int i = 0; i < QUEUE_SIZE; i++) executor.execute(() -> {});  // fill the queue
-			}
-		);
+		});
 	}
 
 
 
 	@Test
-	public void testExecutionRejection() throws Exception {
-		final var barrier = new CyclicBarrier(POOL_SIZE + 1);
-		final var overloadingTask = new Runnable() {
-			@Override public void run() {}
-			@Override public String toString() { return TASK_NAME; }
-		};
-		fullyLoadExecutor(barrier);
-
+	public void testExecutionRejection() {
+		final Runnable overloadingTask = () -> {};
+		final var taskBlockingLatch = new CountDownLatch(1);
 		try {
-			executor.execute(overloadingTask);  // method under test
-			fail("overloaded executor should throw a DetailedRejectedExecutionException");
-		} catch (DetailedRejectedExecutionException rejection) {
-			assertSame("the rejection should contain the executor which threw this rejection",
-					executor, rejection.getExecutor());
-			assertSame("unwrapped rejected task should be the one that overloaded the executor",
-					overloadingTask, rejection.getTask());
+			blockAllExecutorThreads(taskBlockingLatch, null);
+			ctx1.executeWithinSelf(() -> {  // fill the queue
+				for (int i = 0; i < QUEUE_SIZE; i++) testSubject.execute(() -> {});
+			});
+
+			testSubject.execute(overloadingTask);  // method under test
+			fail("overloaded executor should throw a RejectedExecutionException");
+		} catch (RejectedExecutionException expected) {
 		} finally {
-			barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			taskBlockingLatch.countDown();
 		}
+		assertSame("rejectingExecutor should be backingExecutor",
+				backingExecutor, rejectingExecutor);
+		assertSame("rejectedTask should be overloadingTask", overloadingTask, rejectedTask);
 	}
 
 
 
 	@Test
-	public void testCallableExecutionRejection() throws Exception {
-		final var barrier = new CyclicBarrier(POOL_SIZE + 1);
-		final var overloadingTask = new Callable<>() {
-			@Override public String call() { return ""; }
-			@Override public String toString() { return TASK_NAME; }
-		};
-		fullyLoadExecutor(barrier);
-
+	public void testShutdownNowUnwrapsTasks() throws InterruptedException {
+		final Runnable queuedTask = () -> {};
+		final var allBlockingTasksStarted = new CountDownLatch(POOL_SIZE);
+		final var taskBlockingLatch = new CountDownLatch(1);
 		try {
-			executor.execute(overloadingTask);  // method under test
-			fail("overloaded executor should throw a DetailedRejectedExecutionException");
-		} catch (DetailedRejectedExecutionException rejection) {
-			assertSame("the rejection should contain the executor which threw this rejection",
-					executor, rejection.getExecutor());
-			assertSame("unwrapped rejected task should be the one that overloaded the executor",
-					overloadingTask, rejection.getTask());
+			blockAllExecutorThreads(taskBlockingLatch, allBlockingTasksStarted);
+			testSubject.execute(queuedTask);
+			assertTrue("all blocking tasks should start",
+					allBlockingTasksStarted.await(50L, TimeUnit.MILLISECONDS));
+
+			final var unexecutedTasks = testSubject.shutdownNow();
+			assertEquals("there should be 1 unexecuted task after shutdownNow()",
+					1, unexecutedTasks.size());
+			assertSame("unexecuted task should be queuedTask", queuedTask, unexecutedTasks.get(0));
 		} finally {
-			barrier.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			taskBlockingLatch.countDown();
 		}
-	}
-
-
-
-	@Test
-	public void testEnforceTerminationCallsShutdownNowOnUncheckedException()
-			throws InterruptedException {
-		final var backingExecutor = new ThreadPoolExecutor(
-				1, 1, 0L, TimeUnit.DAYS, new LinkedBlockingQueue<>()) {
-
-			boolean shutdownNowCalled;
-
-			@Override public boolean awaitTermination(long timeout, TimeUnit unit) {
-				throw new InternalError("unchecked");
-			}
-
-			@Override public List<Runnable> shutdownNow() {
-				shutdownNowCalled = true;
-				return super.shutdownNow();
-			}
-		};
-		final var testSubject = new ContextTrackingExecutor(
-				"testSubject", 1, allTrackers, backingExecutor);
-
-		try {
-			testSubject.enforceTermination(10L, TimeUnit.MILLISECONDS);
-			fail("InternalError expected");
-		} catch (InternalError expected) {}
-		assertTrue("shutdownNow() should be called", backingExecutor.shutdownNowCalled);
-	}
-
-
-
-	@After
-	public void shutdown() throws InterruptedException {
-		executor.shutdown();
-		executor.enforceTermination(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-	}
-
-
-
-	@BeforeClass
-	public static void setupLogging() {
-		for (final var handler: Logger.getLogger("").getHandlers()) handler.setLevel(Level.SEVERE);
 	}
 
 
