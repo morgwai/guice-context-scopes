@@ -10,40 +10,40 @@ Classes for building Guice scopes, that get automatically transferred when dispa
 
 Asynchronous servers (such as gRPC or asynchronous servlets) often need to switch between various threads (for example switch to a thread-pool associated with some slow external resource). This requires extra care to not lose a given current Guice scope: it needs to be preserved as long as we are in the  _context_  of a given request/call/session, regardless of thread switching.<br/>
 <br/>
-To ease this up, this lib formally introduces a notion of an [InjectionContext](src/main/java/pl/morgwai/base/guice/scopes/InjectionContext.java) that can be tracked using [ContextTrackers](src/main/java/pl/morgwai/base/guice/scopes/ContextTracker.java) when switching between threads. Trackers are in turn used by [ContextScopes](src/main/java/pl/morgwai/base/guice/scopes/ContextScope.java) to obtain the current Context from which scoped objects will be obtained.<br/>
+To ease this up, this lib formally introduces a notion of an [InjectionContext](src/main/java/pl/morgwai/base/guice/scopes/InjectionContext.java) that can be tracked using [ContextTrackers](src/main/java/pl/morgwai/base/guice/scopes/ContextTracker.java) when switching between threads. Trackers are in turn used by [ContextScopes](src/main/java/pl/morgwai/base/guice/scopes/ContextScope.java) to obtain the current `Context` from which scoped objects will be obtained.<br/>
 <br/>
-To automate the whole process, [ContextTrackingExecutor](src/main/java/pl/morgwai/base/guice/scopes/ContextTrackingExecutor.java) decorator for executors was introduced to automatically transfer contexts when executing tasks.<br/>
-<br/>
-Hint: in cases when it's not possible to avoid thread switching without the use of `ContextTrackingExecutor` (for example when passing callbacks to some async calls), static helper methods `getActiveContexts(List<ContextTracker<?>>)` and `executeWithinAll(List<TrackableContext>, Runnable)` defined in `ContextTrackingExecutor` can be used to transfer context manually:
-
+To ease up `Context`s transfer when switching threads, static helper methods `ContextTracker.getActiveContexts(List<ContextTracker<?>>)` and `TrackableContext.executeWithinAll(List<TrackableContext>, Runnable)` were provided:
 ```java
-class MyClass {
+class MyComponent {
 
-    // deriving libraries usually bind List<ContextTracker<?>> appropriately
-    @Inject List<ContextTracker<?>> allTrackers;
+	// deriving libraries should bind List<ContextTracker<?>> appropriately
+	@Inject List<ContextTracker<?>> allTrackers;
 
-    void methodThatCallsSomeAsyncMethod(/* ... */) {
-        // other code here...
-        final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
-        someAsyncMethod(arg1, /* ... */ argN, (callbackParam) ->
-            ContextTrackingExecutor.executeWithinAll(activeCtxs, () -> {
-                // callback code here...
-            })
-        );
-    }
-
-    void methodThatUsesSomeGenericExecutor(/* ... */) {
-        Runnable myTask;
-        // other code here...
-        final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
-        someGenericExecutor.execute(
-                ContextTrackingExecutor.executeWithinAll(activeCtxs, myTask));
-    }
-
-    // other stuff of MyClass here...
+	void methodThatCallsSomeAsyncMethod(/* ... */) {
+		// other code here...
+		final var activeCtxs = ContextTracker.getActiveContexts(allTrackers);
+		someAsyncMethod(arg1, /* ... */ argN, (callbackParam) ->
+			TrackableContext.executeWithinAll(activeCtxs, () -> {
+				// callback code here...
+			})
+		);
+	}
 }
 ```
-Deriving libs are strongly encouraged to automatically bind `List<ContextTracker<?>>` to an instance containing all possible trackers, so that users don't need to enlist them manually.
+Additionally [ContextBoundTask](src/main/java/pl/morgwai/base/guice/scopes/ContextBoundTask.java) `Runnable` decorator that runs its wrapped task within supplied contexts, was introduced to ease up `Context` transfer when using `Executor`s:
+```java
+class MyOtherComponent {
+
+	@Inject List<ContextTracker<?>> allTrackers;
+
+	void methodThatUsesSomeExecutor(/* ... */) {
+		Runnable myTask;
+		// build myTask here...
+		myExecutor.execute(new ContextBoundTask(
+				myTask, ContextTracker.getActiveContexts(allTrackers)));
+	}
+}
+```
 
 
 ## DERIVED LIBS

@@ -56,34 +56,34 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 		/**
 		 * Returns an object obtained from the current context obtained with {@link #getContext()}.
 		 * @throws OutOfScopeException if there's no context for the current thread. This most
-		 *     commonly happens if an {@link java.util.concurrent.Executor} other than
-		 *     {@link ContextTrackingExecutor} was used or when providing a callback to some async
-		 *     method without transferring the context. Use static helper methods
-		 *     {@link ContextTrackingExecutor#getActiveContexts(java.util.List)} and
-		 *     {@link ContextTrackingExecutor#executeWithinAll(java.util.List, Runnable)} to
-		 *     transfer contexts manually in such cases:
+		 *     commonly happens if some async task was not wrapped with {@link ContextBoundTask}
+		 *     before passing to an executor or when providing a callback to some async method
+		 *     without transferring current contexts. Use static helper methods
+		 *     {@link ContextTracker#getActiveContexts(java.util.List)} and
+		 *     {@link TrackableContext#executeWithinAll(java.util.List, Runnable)} to transfer
+		 *     contexts manually in callbacks and {@link ContextBoundTask} decorator when passing a
+		 *     task to {@link java.util.concurrent.Executor#execute(Runnable)}:
 		 *     <pre>
 		 * class MyClass {
 		 *
 		 *     // deriving libraries usually bind List&lt;ContextTracker&lt;?&gt;&gt; appropriately
-		 *     &commat;Inject List&lt;ContextTracker&lt;?&gt;&gt; allTrackers;
+		 *     &#64;Inject List&lt;ContextTracker&lt;?&gt;&gt; allTrackers;
 		 *
 		 *     void methodThatCallsSomeAsyncMethod(...) {
 		 *         // other code here...
-		 *         final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
+		 *         final var activeCtxs = ContextTracker.getActiveContexts(allTrackers);
 		 *         someAsyncMethod(arg1, ... argN, (callbackParam) -&gt;
-		 *             ContextTrackingExecutor.executeWithinAll(activeCtxs, () -&gt; {
+		 *             TrackableContext.executeWithinAll(activeCtxs, () -&gt; {
 		 *                 // callback code here...
 		 *             })
 		 *         );
 		 *     }
 		 *
-		 *     void methodThatUsesSomeGenericExecutor(...) {
+		 *     void methodThatUsesSomeExecutor(...) {
 		 *         Runnable myTask;
-		 *         // other code here...
-		 *         final var activeCtxs = ContextTrackingExecutor.getActiveContexts(allTrackers);
-		 *         someGenericExecutor.execute(
-		 *                 ContextTrackingExecutor.executeWithinAll(activeCtxs, myTask));
+		 *         // build myTask here...
+		 *         myExecutor.execute(new ContextBoundTask(
+		 *                 myTask, ContextTracker.getActiveContexts(allTrackers)));
 		 *     }
 		 *
 		 *     // other stuff of MyClass here...
