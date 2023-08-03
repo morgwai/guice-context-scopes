@@ -44,7 +44,7 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 
-		private ScopedProvider(Key<T> key, Provider<T> unscoped) {
+		ScopedProvider(Key<T> key, Provider<T> unscoped) {
 			this.key = key;
 			this.unscoped = unscoped;
 		}
