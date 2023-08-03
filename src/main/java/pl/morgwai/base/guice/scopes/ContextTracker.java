@@ -1,10 +1,8 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 
 
@@ -53,9 +51,11 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 	 * trackers for use as an argument for this method.</p>
 	 */
 	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
-		return trackers.stream()
-			.map(ContextTracker::getCurrentContext)
-			.filter(Objects::nonNull)
-			.collect(Collectors.toList());
+		final var activeContexts = new ArrayList<TrackableContext<?>>(trackers.size());
+		for (var tracker: trackers) {
+			final var ctx = tracker.getCurrentContext();
+			if (ctx != null) activeContexts.add(ctx);
+		}
+		return activeContexts;
 	}
 }
