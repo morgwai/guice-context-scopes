@@ -1,6 +1,6 @@
 # Guice Context Scopes
 
-Classes for building Guice scopes, that get automatically transferred when dispatching work to other threads.<br/>
+Classes for building Guice `Scope`s, that get automatically transferred when dispatching work to other threads.<br/>
 <br/>
 **latest release: [7.0](https://search.maven.org/artifact/pl.morgwai.base/guice-context-scopes/7.0/jar)**
 ([javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/7.0))
@@ -8,11 +8,11 @@ Classes for building Guice scopes, that get automatically transferred when dispa
 
 ## OVERVIEW
 
-Asynchronous servers (such as gRPC or asynchronous servlets) often need to switch between various threads (for example switch to a thread-pool associated with some slow external resource). This requires extra care to not lose a given current Guice scope: it needs to be preserved as long as we are in the  _context_  of a given request/call/session, regardless of thread switching.<br/>
+Asynchronous servers (such as gRPC or asynchronous `Servlet`s) often need to switch between various threads. This requires extra care to not lose a given current Guice `Scope`: it needs to be preserved as long as we are in the  _context_  of a given request/call/session, regardless of thread switching.<br/>
 <br/>
 To ease this up, this lib formally introduces a notion of an [InjectionContext](src/main/java/pl/morgwai/base/guice/scopes/InjectionContext.java) that can be tracked using [ContextTrackers](src/main/java/pl/morgwai/base/guice/scopes/ContextTracker.java) when switching between threads. Trackers are in turn used by [ContextScopes](src/main/java/pl/morgwai/base/guice/scopes/ContextScope.java) to obtain the current `Context` from which scoped objects will be obtained.<br/>
 <br/>
-To ease up `Context`s transfer when switching threads, static helper methods `ContextTracker.getActiveContexts(List<ContextTracker<?>>)` and `TrackableContext.executeWithinAll(List<TrackableContext>, Runnable)` were provided:
+When switching threads, static helper methods `ContextTracker.getActiveContexts(List<ContextTracker<?>>)` and `TrackableContext.executeWithinAll(List<TrackableContext>, Runnable)` can be used to manually transfer all active `Context`s:
 ```java
 class MyComponent {
 
@@ -30,7 +30,7 @@ class MyComponent {
 	}
 }
 ```
-Additionally [ContextBoundTask](src/main/java/pl/morgwai/base/guice/scopes/ContextBoundTask.java) `Runnable` decorator that runs its wrapped task within supplied contexts, was introduced to ease up `Context` transfer when using `Executor`s:
+Additionally [ContextBoundTask](src/main/java/pl/morgwai/base/guice/scopes/ContextBoundTask.java) `Runnable` decorator that runs its wrapped task within supplied contexts, was introduced to automate `Context`s transfer when using `Executor`s:
 ```java
 class MyOtherComponent {
 
@@ -42,6 +42,18 @@ class MyOtherComponent {
 		myExecutor.execute(new ContextBoundTask(
 				myTask, ContextTracker.getActiveContexts(allTrackers)));
 	}
+}
+```
+Deriving libs usually provide implementations of `ExecutorService` that fully automate `Context`s transfer:
+```java
+class MyContextTrackingExecutor extends ThreadPoolExecutor {
+
+	@Inject List<ContextTracker<?>> allTrackers;
+
+	@Override public void execute(Runnable task) {
+		super.execute(new ContextBoundTask(
+				myTask, ContextTracker.getActiveContexts(allTrackers)));
+    }
 }
 ```
 

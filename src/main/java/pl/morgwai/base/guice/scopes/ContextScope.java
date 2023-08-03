@@ -5,9 +5,7 @@ import com.google.inject.*;
 
 
 
-/**
- * Scopes objects to the current context obtained from the associated {@link ContextTracker}.
- */
+/** Scopes objects to the current context obtained from the associated {@link ContextTracker}. */
 public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope {
 
 
@@ -54,15 +52,15 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 		/**
-		 * Returns an object obtained from the current context obtained with {@link #getContext()}.
-		 * @throws OutOfScopeException if there's no context for the current thread. This most
-		 *     commonly happens if some async task was not wrapped with {@link ContextBoundTask}
-		 *     before passing to an executor or when providing a callback to some async method
-		 *     without transferring current contexts. Use static helper methods
+		 * Provides an object scoped to {@link #getContext() the current context}.
+		 * @throws OutOfScopeException if the current thread is running outside of any context. This
+		 *     most commonly happens if an async task was not wrapped with {@link ContextBoundTask}
+		 *     before passing to an executor or when providing a callback to an async method
+		 *     without transferring contexts. Use static helper methods
 		 *     {@link ContextTracker#getActiveContexts(java.util.List)} and
 		 *     {@link TrackableContext#executeWithinAll(java.util.List, Runnable)} to transfer
-		 *     contexts manually in callbacks and {@link ContextBoundTask} decorator when passing a
-		 *     task to {@link java.util.concurrent.Executor#execute(Runnable)}:
+		 *     contexts manually in callbacks and {@link ContextBoundTask} decorator when passing
+		 *     tasks to {@link java.util.concurrent.Executor#execute(Runnable)}:
 		 *     <pre>
 		 * class MyClass {
 		 *

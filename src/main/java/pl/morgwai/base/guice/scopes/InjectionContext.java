@@ -21,7 +21,7 @@ import com.google.inject.Provider;
  * Subclasses usually add properties and methods specific to their type, like
  * their call's arguments, a reference to their session object etc.</p>
  * <p>
- * If multiple threads run within the same context, the attributes that they access must be
+ * Multiple threads may run within the same context, but the scoped objects that they access must be
  * thread-safe or properly synchronized.</p>
  */
 public abstract class InjectionContext {
@@ -38,7 +38,7 @@ public abstract class InjectionContext {
 	 * provider if the current one is not usable anymore (for example a timed-out connection, etc).
 	 * <p>
 	 * <b>Note:</b> If multiple threads run within the same context, care must be taken to prevent
-	 * some of them from retaining the old stale instance.</p>
+	 * some of them from retaining the old stale instances.</p>
 	 */
 	public void removeScopedObject(Key<?> key) {
 		scopedObjects.remove(key);

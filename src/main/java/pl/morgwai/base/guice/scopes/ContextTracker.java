@@ -6,9 +6,7 @@ import java.util.concurrent.Callable;
 
 
 
-/**
- * Allows to track which thread is within which context.
- */
+/** Allows to track which thread is running within which context. */
 public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 
 
@@ -19,8 +17,7 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 
 	/**
 	 * Returns context of the current thread.
-	 *
-	 * @see ContextTracker#getActiveContexts(List)
+	 * @see #getActiveContexts(List)
 	 */
 	public CtxT getCurrentContext() {
 		return currentContext.get();
@@ -28,9 +25,7 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 
 
 
-	/**
-	 * For internal use by {@link TrackableContext#executeWithinSelf(Callable)}.
-	 */
+	/** For internal use by {@link TrackableContext#executeWithinSelf(Callable)}. */
 	<T> T trackWhileExecuting(CtxT ctx, Callable<T> task) throws Exception {
 		currentContext.set(ctx);
 		try {
@@ -45,7 +40,7 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 	/**
 	 * Retrieves all active contexts from {@code trackers}. The returned list can be then used
 	 * as an argument to {@link TrackableContext#executeWithinAll(List, Runnable)} to transfer the
-	 * contexts after a switch to another thread.
+	 * contexts when switching to another thread.
 	 * <p>
 	 * Libraries usually bind {@code List<ContextTracker<?>>} to an instance containing all possible
 	 * trackers for use as an argument for this method.</p>
