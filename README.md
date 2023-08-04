@@ -30,7 +30,7 @@ class MyComponent {
     }
 }
 ```
-Additionally [ContextBoundTask](src/main/java/pl/morgwai/base/guice/scopes/ContextBoundTask.java) `Runnable` decorator that runs its wrapped task within supplied contexts, was introduced to automate `Context`s transfer when using `Executor`s:
+Additionally [ContextBoundRunnable](src/main/java/pl/morgwai/base/guice/scopes/ContextBoundRunnable.java) `Runnable` decorator that runs its wrapped task within supplied contexts, was introduced to automate `Context`s transfer when using `Executor`s:
 ```java
 class MyOtherComponent {
 
@@ -40,7 +40,7 @@ class MyOtherComponent {
         Runnable myTask;
         // build myTask here...
         myExecutor.execute(
-            new ContextBoundTask(
+            new ContextBoundRunnable(
                 ContextTracker.getActiveContexts(allTrackers),
                 myTask
             )
@@ -55,7 +55,7 @@ class MyContextTrackingExecutor extends ThreadPoolExecutor {
     List<ContextTracker<?>> allTrackers;
 
     @Override public void execute(Runnable task) {
-        super.execute(new ContextBoundTask(
+        super.execute(new ContextBoundRunnable(
                 ContextTracker.getActiveContexts(allTrackers), myTask));
     }
 }

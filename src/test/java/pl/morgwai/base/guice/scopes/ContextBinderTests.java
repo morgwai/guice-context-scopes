@@ -27,7 +27,7 @@ public class ContextBinderTests {
 		final Runnable[] callbackHolder = {null};
 		ctx.executeWithinSelf(() -> {
 			callbackHolder[0] = testSubject.bindToContext(
-				() -> assertSame("task should be bound to ctx",
+				() -> assertSame("runnable should be bound to ctx",
 						ctx, tracker.getCurrentContext())
 			);
 		});

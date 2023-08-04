@@ -6,11 +6,11 @@ import java.util.List;
 
 
 /** A decorator that will execute wrapped {@link Runnable} within supplied contexts. */
-public class ContextBoundTask extends ContextBoundClosure<Runnable> implements Runnable {
+public class ContextBoundRunnable extends ContextBoundClosure<Runnable> implements Runnable {
 
 
 
-	public ContextBoundTask(List<TrackableContext<?>> contexts, Runnable taskToBind) {
+	public ContextBoundRunnable(List<TrackableContext<?>> contexts, Runnable taskToBind) {
 		super(contexts, taskToBind);
 	}
 

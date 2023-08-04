@@ -38,8 +38,8 @@ public class ContextBinder {
 
 
 
-	public ContextBoundTask bindToContext(Runnable toBind) {
-		return new ContextBoundTask(ContextTracker.getActiveContexts(trackers), toBind);
+	public ContextBoundRunnable bindToContext(Runnable toBind) {
+		return new ContextBoundRunnable(ContextTracker.getActiveContexts(trackers), toBind);
 	}
 
 
