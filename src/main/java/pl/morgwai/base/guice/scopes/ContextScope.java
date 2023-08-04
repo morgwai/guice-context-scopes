@@ -54,38 +54,10 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 		/**
 		 * Provides an object scoped to {@link #getContext() the current context}.
 		 * @throws OutOfScopeException if the current thread is running outside of any context. This
-		 *     most commonly happens if an async task was not wrapped with {@link ContextBoundTask}
-		 *     before passing to an executor or when providing a callback to an async method
-		 *     without transferring contexts. Use static helper methods
-		 *     {@link ContextTracker#getActiveContexts(java.util.List)} and
-		 *     {@link TrackableContext#executeWithinAll(java.util.List, Runnable)} to transfer
-		 *     contexts manually in callbacks and {@link ContextBoundTask} decorator when passing
-		 *     tasks to {@link java.util.concurrent.Executor#execute(Runnable)}:
-		 *     <pre>
-		 * class MyClass {
-		 *
-		 *     // deriving libraries usually bind List&lt;ContextTracker&lt;?&gt;&gt; appropriately
-		 *     &#64;Inject List&lt;ContextTracker&lt;?&gt;&gt; allTrackers;
-		 *
-		 *     void methodThatCallsSomeAsyncMethod(...) {
-		 *         // other code here...
-		 *         final var activeCtxs = ContextTracker.getActiveContexts(allTrackers);
-		 *         someAsyncMethod(arg1, ... argN, (callbackParam) -&gt;
-		 *             TrackableContext.executeWithinAll(activeCtxs, () -&gt; {
-		 *                 // callback code here...
-		 *             })
-		 *         );
-		 *     }
-		 *
-		 *     void methodThatUsesSomeExecutor(...) {
-		 *         Runnable myTask;
-		 *         // build myTask here...
-		 *         myExecutor.execute(new ContextBoundTask(
-		 *                 myTask, ContextTracker.getActiveContexts(allTrackers)));
-		 *     }
-		 *
-		 *     // other stuff of MyClass here...
-		 * }</pre>
+		 *     most commonly happens if an async task was not
+		 *     {@link ContextBinder#bindToContext(Runnable) bound to its current context} before
+		 *     being dispatched to this thread. Use {@code ContextTrackingExecutor}s that bind
+		 *     tasks automatically or bind manually using {@link ContextBinder}.
 		 */
 		@Override public T get() {
 			try {

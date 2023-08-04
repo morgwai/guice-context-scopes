@@ -5,35 +5,19 @@ import java.util.List;
 
 
 
-/** A {@link Runnable task} that will be executed within supplied contexts. */
-public class ContextBoundTask implements Runnable {
-
-
-
-	public List<TrackableContext<?>> getContexts() { return contexts; }
-	final List<TrackableContext<?>> contexts;
-
-	public Runnable getWrappedTask() { return wrappedTask; }
-	final Runnable wrappedTask;
+/** A decorator that will execute wrapped {@link Runnable} within supplied contexts. */
+public class ContextBoundTask extends ContextBoundClosure<Runnable> implements Runnable {
 
 
 
 	public ContextBoundTask(List<TrackableContext<?>> contexts, Runnable taskToBind) {
-		this.contexts = contexts;
-		this.wrappedTask = taskToBind;
+		super(contexts, taskToBind);
 	}
 
 
 
 	@Override
 	public void run() {
-		TrackableContext.executeWithinAll(contexts, wrappedTask);
-	}
-
-
-
-	@Override
-	public String toString() {
-		return "ContextBoundTask { task = " + wrappedTask + " }";
+		TrackableContext.executeWithinAll(contexts, boundClosure);
 	}
 }
