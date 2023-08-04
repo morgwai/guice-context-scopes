@@ -16,47 +16,47 @@ When switching threads, static helper methods `ContextTracker.getActiveContexts(
 ```java
 class MyComponent {
 
-	// deriving libraries should bind List<ContextTracker<?>> appropriately
-	@Inject List<ContextTracker<?>> allTrackers;
+    // deriving libraries should bind List<ContextTracker<?>> appropriately
+    @Inject List<ContextTracker<?>> allTrackers;
 
-	void methodThatCallsSomeAsyncMethod(/* ... */) {
-		// other code here...
-		final var activeCtxs = ContextTracker.getActiveContexts(allTrackers);
-		someAsyncMethod(arg1, /* ... */ argN, (callbackParam) ->
-			TrackableContext.executeWithinAll(activeCtxs, () -> {
-				// callback code here...
-			})
-		);
-	}
+    void methodThatCallsSomeAsyncMethod(/* ... */) {
+        // other code here...
+        final var activeCtxs = ContextTracker.getActiveContexts(allTrackers);
+        someAsyncMethod(arg1, /* ... */ argN, (callbackParam) ->
+            TrackableContext.executeWithinAll(activeCtxs, () -> {
+                // callback code here...
+            })
+        );
+    }
 }
 ```
 Additionally [ContextBoundTask](src/main/java/pl/morgwai/base/guice/scopes/ContextBoundTask.java) `Runnable` decorator that runs its wrapped task within supplied contexts, was introduced to automate `Context`s transfer when using `Executor`s:
 ```java
 class MyOtherComponent {
 
-	@Inject List<ContextTracker<?>> allTrackers;
+    @Inject List<ContextTracker<?>> allTrackers;
 
-	void methodThatUsesSomeExecutor(/* ... */) {
-		Runnable myTask;
-		// build myTask here...
-		myExecutor.execute(
-			new ContextBoundTask(
-				ContextTracker.getActiveContexts(allTrackers),
-				myTask
-			)
-		);
-	}
+    void methodThatUsesSomeExecutor(/* ... */) {
+        Runnable myTask;
+        // build myTask here...
+        myExecutor.execute(
+            new ContextBoundTask(
+                ContextTracker.getActiveContexts(allTrackers),
+                myTask
+            )
+        );
+    }
 }
 ```
 Deriving libs usually provide implementations of `ExecutorService` that fully automate `Context`s transfer:
 ```java
 class MyContextTrackingExecutor extends ThreadPoolExecutor {
 
-	List<ContextTracker<?>> allTrackers;
+    List<ContextTracker<?>> allTrackers;
 
-	@Override public void execute(Runnable task) {
-		super.execute(new ContextBoundTask(
-				ContextTracker.getActiveContexts(allTrackers), myTask));
+    @Override public void execute(Runnable task) {
+        super.execute(new ContextBoundTask(
+                ContextTracker.getActiveContexts(allTrackers), myTask));
     }
 }
 ```
