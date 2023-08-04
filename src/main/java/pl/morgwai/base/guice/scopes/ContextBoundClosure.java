@@ -29,4 +29,14 @@ public abstract class ContextBoundClosure<ClosureT> {
 	public String toString() {
 		return "ContextBoundClosure { closure = " + boundClosure + " }";
 	}
+
+
+
+	/** For passing to {@link TrackableContext#executeWithinAll(List, Runnable)} in subclasses. */
+	protected abstract class RunnableWrapper implements Runnable {
+
+		@Override public String toString() {
+			return boundClosure.toString();
+		}
+	}
 }

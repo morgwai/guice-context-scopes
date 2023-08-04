@@ -23,6 +23,13 @@ public class ContextBoundBiConsumer<T, U> extends ContextBoundClosure<BiConsumer
 
 	@Override
 	public void accept(T param1, U param2) {
-		TrackableContext.executeWithinAll(contexts, () -> boundClosure.accept(param1, param2));
+		TrackableContext.executeWithinAll(
+			contexts,
+			new RunnableWrapper() {
+				@Override public void run() {
+					boundClosure.accept(param1, param2);
+				}
+			}
+		);
 	}
 }
