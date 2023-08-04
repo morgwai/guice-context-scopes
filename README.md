@@ -39,8 +39,12 @@ class MyOtherComponent {
 	void methodThatUsesSomeExecutor(/* ... */) {
 		Runnable myTask;
 		// build myTask here...
-		myExecutor.execute(new ContextBoundTask(
-				myTask, ContextTracker.getActiveContexts(allTrackers)));
+		myExecutor.execute(
+			new ContextBoundTask(
+				ContextTracker.getActiveContexts(allTrackers),
+				myTask
+			)
+		);
 	}
 }
 ```
@@ -48,11 +52,11 @@ Deriving libs usually provide implementations of `ExecutorService` that fully au
 ```java
 class MyContextTrackingExecutor extends ThreadPoolExecutor {
 
-	@Inject List<ContextTracker<?>> allTrackers;
+	List<ContextTracker<?>> allTrackers;
 
 	@Override public void execute(Runnable task) {
 		super.execute(new ContextBoundTask(
-				myTask, ContextTracker.getActiveContexts(allTrackers)));
+				ContextTracker.getActiveContexts(allTrackers), myTask));
     }
 }
 ```

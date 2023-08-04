@@ -10,17 +10,17 @@ public class ContextBoundTask implements Runnable {
 
 
 
-	public Runnable getWrappedTask() { return wrappedTask; }
-	final Runnable wrappedTask;
-
 	public List<TrackableContext<?>> getContexts() { return contexts; }
 	final List<TrackableContext<?>> contexts;
 
+	public Runnable getWrappedTask() { return wrappedTask; }
+	final Runnable wrappedTask;
 
 
-	public ContextBoundTask(Runnable taskToWrap, List<TrackableContext<?>> contexts) {
-		this.wrappedTask = taskToWrap;
+
+	public ContextBoundTask(List<TrackableContext<?>> contexts, Runnable taskToBind) {
 		this.contexts = contexts;
+		this.wrappedTask = taskToBind;
 	}
 
 
