@@ -10,7 +10,7 @@ import static pl.morgwai.base.guice.scopes.TrackableContext.executeWithinAll;
 
 
 
-public class TrackableContextTest {
+public class TrackableContextTests {
 
 
 

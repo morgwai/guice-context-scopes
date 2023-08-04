@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 
 
 
-public class ContextScopeTest {
+public class ContextScopeTests {
 
 
 
