@@ -42,8 +42,8 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 	 * as an argument to {@link TrackableContext#executeWithinAll(List, Runnable)} to transfer the
 	 * contexts when switching to another thread.
 	 * <p>
-	 * Libraries usually bind {@code List<ContextTracker<?>>} to an instance containing all possible
-	 * trackers for use as an argument for this method.</p>
+	 * Deriving libs should bind {@code List<ContextTracker<?>>} to an instance containing all
+	 * possible trackers for use as an argument for this method.</p>
 	 */
 	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
 		final var activeContexts = new ArrayList<TrackableContext<?>>(trackers.size());
