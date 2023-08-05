@@ -6,7 +6,7 @@ import java.util.function.BiConsumer;
 
 
 
-/** A decorator that will execute wrapped {@link BiConsumer} within supplied contexts. */
+/** A decorator that will execute its wrapped {@link BiConsumer} within supplied contexts. */
 public class ContextBoundBiConsumer<T, U> extends ContextBoundClosure<BiConsumer<T, U>>
 		implements BiConsumer<T, U> {
 

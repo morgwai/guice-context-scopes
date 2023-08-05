@@ -5,7 +5,7 @@ import java.util.List;
 
 
 
-/** A decorator that will execute wrapped {@link Runnable} within supplied contexts. */
+/** A decorator that will execute its wrapped {@link Runnable} within supplied contexts. */
 public class ContextBoundRunnable extends ContextBoundClosure<Runnable> implements Runnable {
 
 

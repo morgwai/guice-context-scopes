@@ -8,8 +8,7 @@ import java.util.function.Consumer;
 
 
 /**
- * Binds closures to contexts that were active at the time of binding. Deriving libs should bind
- * this class in their main {@link com.google.inject.Module}. This can later be used to transfer
+ * Binds closures to contexts that were active at the time of binding. This can be used to transfer
  * contexts when passing callbacks to async functions:
  * <pre>
  * class MyComponent {
@@ -23,6 +22,9 @@ import java.util.function.Consumer;
  *         }));
  *     }
  * }</pre>
+ * <p>
+ * Deriving libs should bind this class in their main {@link com.google.inject.Module}.
+ * </p>
  */
 public class ContextBinder {
 

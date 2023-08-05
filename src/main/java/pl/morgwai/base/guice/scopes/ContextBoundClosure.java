@@ -5,7 +5,7 @@ import java.util.List;
 
 
 
-/** Base class for decorators that will execute wrapped closure within supplied contexts. */
+/** Base class for decorators that will execute their wrapped closures within supplied contexts. */
 public abstract class ContextBoundClosure<ClosureT> {
 
 
