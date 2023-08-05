@@ -65,9 +65,9 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 			} catch (NullPointerException e) {
 				// result of a bug that will be fixed in development phase: don't check manually
 				// in production each time.
-				throw new OutOfScopeException("no context for thread "
-						+ Thread.currentThread().getName() + " in scope " + name
-						+ ". See the javadoc for ContextScope.ScopedProvider.get()");
+				throw new OutOfScopeException("no context for thread \""
+						+ Thread.currentThread().getName() + "\" in scope \"" + name
+						+ "\". See the javadoc for ContextScope.ScopedProvider.get()");
 			}
 		}
 
