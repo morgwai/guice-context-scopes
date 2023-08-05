@@ -10,7 +10,7 @@ Classes for building Guice `Scope`s, that get automatically transferred when dis
 
 Asynchronous servers (such as gRPC or asynchronous `Servlet`s) often need to switch between various threads. This requires extra care to not lose a given current Guice `Scope`: it needs to be preserved as long as we are in the  _context_  of a given request/call/session, regardless of thread switching.<br/>
 <br/>
-To ease this up, this lib formally introduces a notion of an [InjectionContext](src/main/java/pl/morgwai/base/guice/scopes/InjectionContext.java) that can be tracked using [ContextTrackers](src/main/java/pl/morgwai/base/guice/scopes/ContextTracker.java) when switching between threads. Trackers are in turn used by [ContextScopes](src/main/java/pl/morgwai/base/guice/scopes/ContextScope.java) to obtain the current `Context` from which scoped objects will be obtained.<br/>
+To ease this up, this lib formally introduces a notion of an [InjectionContext](src/main/java/pl/morgwai/base/guice/scopes/TrackableContext.java) that can be tracked using [ContextTrackers](src/main/java/pl/morgwai/base/guice/scopes/ContextTracker.java) when switching between threads. Trackers are in turn used by [ContextScopes](src/main/java/pl/morgwai/base/guice/scopes/ContextScope.java) to obtain the current `Context` from which scoped objects will be obtained.<br/>
 <br/>
 When switching threads, static helper methods `ContextTracker.getActiveContexts(List<ContextTracker<?>>)` and `TrackableContext.executeWithinAll(List<TrackableContext>, Runnable)` can be used to manually transfer all active `Context`s:
 ```java
