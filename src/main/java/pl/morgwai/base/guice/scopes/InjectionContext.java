@@ -1,6 +1,7 @@
 // Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -24,7 +25,7 @@ import com.google.inject.Provider;
  * Multiple threads may run within the same context, but the scoped objects that they access must be
  * thread-safe or properly synchronized.</p>
  */
-public abstract class InjectionContext {
+public abstract class InjectionContext implements Serializable {
 
 
 
@@ -56,4 +57,8 @@ public abstract class InjectionContext {
 		final var result = (T) scopedObjects.computeIfAbsent(key, (ignored) -> provider.get());
 		return result;
 	}
+
+
+
+	private static final long serialVersionUID = 5939049347722528201L;
 }
