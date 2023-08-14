@@ -39,7 +39,9 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 			executeWithinSelf(new CallableRunnable(task));
 		} catch (RuntimeException e) {
 			throw e;
-		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
+		} catch (Exception neverHappens) {
+			// result of wrapping with a Callable
+		}
 	}
 
 
@@ -68,7 +70,9 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 			executeWithinAll(contexts, new CallableRunnable(task));
 		} catch (RuntimeException e) {
 			throw e;
-		} catch (Exception ignored) {}  // dead code: result of wrapping task with a Callable
+		} catch (Exception neverHappens) {
+			// result of wrapping with a Callable
+		}
 	}
 
 
