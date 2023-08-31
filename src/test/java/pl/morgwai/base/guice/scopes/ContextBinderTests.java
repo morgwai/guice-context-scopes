@@ -2,8 +2,8 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.concurrent.Callable;
+import java.util.function.*;
 
 import org.junit.Test;
 
@@ -63,6 +63,24 @@ public class ContextBinderTests {
 		});
 		assertNull("sanity check", tracker.getCurrentContext());
 		callbackHolder[0].accept(null, null);
+	}
+
+
+
+	@Test
+	public void testBindingCallable() throws Exception {
+		final Callable<?>[] callbackHolder = {null};
+		ctx.executeWithinSelf(() -> {
+			callbackHolder[0] = testSubject.bindToContext(
+				() -> {
+					assertSame("callable should be bound to ctx",
+							ctx, tracker.getCurrentContext());
+					return null;
+				}
+			);
+		});
+		assertNull("sanity check", tracker.getCurrentContext());
+		callbackHolder[0].call();
 	}
 
 

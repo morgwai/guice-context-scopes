@@ -60,7 +60,7 @@ class MyContextTrackingExecutor extends ThreadPoolExecutor {
     }
 }
 ```
-Deriving libs should also bind [ContextBinder](src/main/java/pl/morgwai/base/guice/scopes/ContextBinder.java) that can be used to transfer `Context`s **almost** fully automatically when passing callbacks to async functions that use `Runnable`, `Consumer` or `BiConsumer` as types for their callbacks:
+Deriving libs should also bind [ContextBinder](src/main/java/pl/morgwai/base/guice/scopes/ContextBinder.java) that can be used to transfer `Context`s **almost** fully automatically when passing callbacks to async functions that use `Runnable`, `Callable`, `Consumer` or `BiConsumer` as types for their callbacks:
 ```java
 class MyComponent {  // compare with the "manual" version above
 

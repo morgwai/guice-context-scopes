@@ -2,8 +2,8 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.concurrent.Callable;
+import java.util.function.*;
 
 
 
@@ -54,5 +54,11 @@ public class ContextBinder {
 
 	public <T, U> ContextBoundBiConsumer<T, U> bindToContext(BiConsumer<T, U> toBind) {
 		return new ContextBoundBiConsumer<>(ContextTracker.getActiveContexts(trackers), toBind);
+	}
+
+
+
+	public <T> ContextBoundCallable<T> bindToContext(Callable<T> toBind) {
+		return new ContextBoundCallable<>(ContextTracker.getActiveContexts(trackers), toBind);
 	}
 }
