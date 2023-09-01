@@ -42,8 +42,9 @@ public class ContextBinderTests {
 		final Consumer<?>[] callbackHolder = {null};
 		ctx.executeWithinSelf(() -> {
 			callbackHolder[0] = testSubject.bindToContext(
-				(p) -> assertSame("consumer should be bound to ctx",
-						ctx, tracker.getCurrentContext())
+				(p) -> {
+					assertSame("consumer should be bound to ctx", ctx, tracker.getCurrentContext());
+				}
 			);
 		});
 		assertNull("sanity check", tracker.getCurrentContext());
@@ -81,6 +82,24 @@ public class ContextBinderTests {
 		});
 		assertNull("sanity check", tracker.getCurrentContext());
 		callbackHolder[0].call();
+	}
+
+
+
+	@Test
+	public void testBindingFunction() {
+		final Function<?, ?>[] callbackHolder = {null};
+		ctx.executeWithinSelf(() -> {
+			callbackHolder[0] = testSubject.bindToContext(
+				(p) -> {
+					assertSame("function should be bound to ctx",
+							ctx, tracker.getCurrentContext());
+					return null;
+				}
+			);
+		});
+		assertNull("sanity check", tracker.getCurrentContext());
+		callbackHolder[0].apply(null);
 	}
 
 

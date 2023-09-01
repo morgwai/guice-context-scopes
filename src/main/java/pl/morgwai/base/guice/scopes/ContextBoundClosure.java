@@ -2,6 +2,7 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 
 
@@ -34,6 +35,16 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 	/** For passing to {@link TrackableContext#executeWithinAll(List, Runnable)} in subclasses. */
 	protected abstract class RunnableWrapper implements Runnable {
+
+		@Override public String toString() {
+			return boundClosure.toString();
+		}
+	}
+
+
+
+	/** For passing to {@link TrackableContext#executeWithinAll(List, Callable)} in subclasses. */
+	protected abstract class CallableWrapper<T> implements Callable<T> {
 
 		@Override public String toString() {
 			return boundClosure.toString();

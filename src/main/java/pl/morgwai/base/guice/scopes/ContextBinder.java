@@ -61,4 +61,10 @@ public class ContextBinder {
 	public <T> ContextBoundCallable<T> bindToContext(Callable<T> toBind) {
 		return new ContextBoundCallable<>(ContextTracker.getActiveContexts(trackers), toBind);
 	}
+
+
+
+	public <T, R> ContextBoundFunction<T, R> bindToContext(Function<T, R> toBind) {
+		return new ContextBoundFunction<>(ContextTracker.getActiveContexts(trackers), toBind);
+	}
 }
