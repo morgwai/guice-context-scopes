@@ -43,7 +43,8 @@ public class ContextBinderTests {
 		ctx.executeWithinSelf(() -> {
 			callbackHolder[0] = testSubject.bindToContext(
 				(p) -> {
-					assertSame("consumer should be bound to ctx", ctx, tracker.getCurrentContext());
+					assertSame("consumer should be bound to ctx",
+							ctx, tracker.getCurrentContext());
 				}
 			);
 		});
@@ -58,8 +59,10 @@ public class ContextBinderTests {
 		final BiConsumer<?, ?>[] callbackHolder = {null};
 		ctx.executeWithinSelf(() -> {
 			callbackHolder[0] = testSubject.bindToContext(
-				(p1, p2) -> assertSame("biConsumer should be bound to ctx",
-						ctx, tracker.getCurrentContext())
+				(p1, p2) -> {
+					assertSame("biConsumer should be bound to ctx",
+							ctx, tracker.getCurrentContext());
+				}
 			);
 		});
 		assertNull("sanity check", tracker.getCurrentContext());
@@ -100,6 +103,24 @@ public class ContextBinderTests {
 		});
 		assertNull("sanity check", tracker.getCurrentContext());
 		callbackHolder[0].apply(null);
+	}
+
+
+
+	@Test
+	public void testBindingBiFunction() {
+		final BiFunction<?, ?, ?>[] callbackHolder = {null};
+		ctx.executeWithinSelf(() -> {
+			callbackHolder[0] = testSubject.bindToContext(
+				(p1, p2) -> {
+					assertSame("biFunction should be bound to ctx",
+							ctx, tracker.getCurrentContext());
+					return null;
+				}
+			);
+		});
+		assertNull("sanity check", tracker.getCurrentContext());
+		callbackHolder[0].apply(null, null);
 	}
 
 

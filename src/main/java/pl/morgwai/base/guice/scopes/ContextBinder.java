@@ -67,4 +67,10 @@ public class ContextBinder {
 	public <T, R> ContextBoundFunction<T, R> bindToContext(Function<T, R> toBind) {
 		return new ContextBoundFunction<>(ContextTracker.getActiveContexts(trackers), toBind);
 	}
+
+
+
+	public <T, U, R> ContextBoundBiFunction<T, U, R> bindToContext(BiFunction<T, U, R> toBind) {
+		return new ContextBoundBiFunction<>(ContextTracker.getActiveContexts(trackers), toBind);
+	}
 }
