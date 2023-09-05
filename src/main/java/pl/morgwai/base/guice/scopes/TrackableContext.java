@@ -109,26 +109,26 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 	}
 
 	static final Logger log = Logger.getLogger(TrackableContext.class.getName());
-}
 
 
 
-class CallableRunnable implements Callable<Void> {
+	static class CallableRunnable implements Callable<Void> {
 
-	final Runnable wrappedTask;
+		final Runnable wrappedTask;
 
-	protected CallableRunnable(Runnable taskToWrap) {
-		this.wrappedTask = taskToWrap;
-	}
+		protected CallableRunnable(Runnable taskToWrap) {
+			this.wrappedTask = taskToWrap;
+		}
 
-	@Override
-	public Void call() {
-		wrappedTask.run();
-		return null;
-	}
+		@Override
+		public Void call() {
+			wrappedTask.run();
+			return null;
+		}
 
-	@Override
-	public String toString() {
-		return wrappedTask.toString();
+		@Override
+		public String toString() {
+			return wrappedTask.toString();
+		}
 	}
 }
