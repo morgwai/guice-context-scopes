@@ -11,20 +11,20 @@ import java.util.function.Function;
  * context.
  */
 public class InducedContextScope<
-		TrackableCtxT extends TrackableContext<TrackableCtxT>,
-		InducedCtxT extends InjectionContext
-	> extends ContextScope<TrackableCtxT> {
+			BaseCtxT extends TrackableContext<BaseCtxT>,
+			InducedCtxT extends InjectionContext
+		> extends ContextScope<BaseCtxT> {
 
 
 
-	final Function<TrackableCtxT, InducedCtxT> inducer;
+	final Function<BaseCtxT, InducedCtxT> inducer;
 
 
 
 	public InducedContextScope(
 		String name,
-		ContextTracker<TrackableCtxT> tracker,
-		Function<TrackableCtxT, InducedCtxT> inducer
+		ContextTracker<BaseCtxT> tracker,
+		Function<BaseCtxT, InducedCtxT> inducer
 	) {
 		super(name, tracker);
 		this.inducer = inducer;
