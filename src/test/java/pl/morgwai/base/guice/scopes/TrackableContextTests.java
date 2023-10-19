@@ -26,13 +26,46 @@ public class TrackableContextTests {
 
 
 	@Test
-	public void testExecuteWithinAll() {
+	public void testExecuteWithinAllMultipleCtxs() {
 		executeWithinAll(  // method under test
 			allCtxs,
 			() -> {
 				assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
 				assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
 				assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+			}
+		);
+	}
+
+
+
+	@Test
+	public void testExecuteWithinAllSingleCtx() {
+		executeWithinAll(  // method under test
+			List.of(ctx1),
+			() -> {
+				assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
+				assertNull("ctx2 should not be active", tracker2.getCurrentContext());
+				assertNull("ctx3 should not be active", tracker3.getCurrentContext());
+			}
+		);
+	}
+
+
+
+	@Test
+	public void testExecuteWithinAllNoCtxs() {
+		executeWithinAll(  // method under test
+			List.of(),
+			new Runnable() {
+				@Override public void run() {
+					assertNull("ctx1 should not be active", tracker1.getCurrentContext());
+					assertNull("ctx2 should not be active", tracker2.getCurrentContext());
+					assertNull("ctx3 should not be active", tracker3.getCurrentContext());
+				}
+				@Override public String toString() {
+					return "NoCtxTestTask";
+				}
 			}
 		);
 	}
