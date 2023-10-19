@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import static pl.morgwai.base.guice.scopes.ContextTracker.getActiveContexts;
 
 
 
@@ -95,14 +96,55 @@ public class ContextTrackerTests {
 
 
 	@Test
-	public void testGetActiveContexts() {
+	public void testGetActiveContextsMultipleTrackers() {
 		ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(
 				() -> {
-					final var activeCtxs = ContextTracker.getActiveContexts(allTrackers);
+					final var activeCtxs = getActiveContexts(allTrackers);
 					assertEquals("there should be 2 active ctxs",  2, activeCtxs.size());
 					assertTrue("ctx1 should be active", activeCtxs.contains(ctx1));
 					assertTrue("ctx3 should be active", activeCtxs.contains(ctx3));
+				}
+			)
+		);
+	}
+
+
+
+	@Test
+	public void testGetActiveContextsSingleTracker() {
+		ctx1.executeWithinSelf(
+			() -> ctx3.executeWithinSelf(
+				() -> {
+					final var activeCtxs = getActiveContexts(List.of(tracker1));
+					assertEquals("there should be 1 active ctx",  1, activeCtxs.size());
+					assertTrue("ctx1 should be active", activeCtxs.contains(ctx1));
+				}
+			)
+		);
+	}
+
+
+
+	@Test
+	public void testGetActiveContextsSingleTrackerWithInactiveContext() {
+		ctx3.executeWithinSelf(
+			() -> {
+				assertTrue("there should be no active ctxs",
+						getActiveContexts(List.of()).isEmpty());
+			}
+		);
+	}
+
+
+
+	@Test
+	public void testGetActiveContextsNoTrackers() {
+		ctx1.executeWithinSelf(
+			() -> ctx3.executeWithinSelf(
+				() -> {
+					assertTrue("there should be no active ctxs",
+							getActiveContexts(List.of()).isEmpty());
 				}
 			)
 		);

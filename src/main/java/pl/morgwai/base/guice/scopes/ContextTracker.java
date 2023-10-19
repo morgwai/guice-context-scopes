@@ -59,11 +59,16 @@ public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
 	 * possible trackers for use as an argument for this method.</p>
 	 */
 	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
-		final var activeContexts = new ArrayList<TrackableContext<?>>(trackers.size());
+		if (trackers.size() == 1) {  // optimize for most common tracker count
+			final var ctx = trackers.get(0).getCurrentContext();
+			return ctx != null ? List.of(ctx) : List.of();
+		}
+
+		final var activeCtxs = new ArrayList<TrackableContext<?>>(trackers.size());
 		for (var tracker: trackers) {
 			final var ctx = tracker.getCurrentContext();
-			if (ctx != null) activeContexts.add(ctx);
+			if (ctx != null) activeCtxs.add(ctx);
 		}
-		return activeContexts;
+		return activeCtxs;
 	}
 }
