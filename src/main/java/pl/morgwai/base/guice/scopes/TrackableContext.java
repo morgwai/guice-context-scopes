@@ -9,7 +9,8 @@ import java.util.logging.Logger;
 
 /**
  * An {@link InjectionContext} that can {@link #executeWithinSelf(Runnable) execute tasks within
- * itself}, so that it can be tracked across threads using the associated {@link ContextTracker}.
+ * itself}, so that it can be tracked across {@code Threads} using its associated
+ * {@link ContextTracker}.
  * <p>
  * Overriding classes must use themselves as {@code CtxT} type argument.</p>
  */
@@ -47,10 +48,10 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 
 
 	/**
-	 * Sets itself as the current context for the current thread and executes {@code task}
-	 * synchronously. Afterwards clears the current context.
-	 *
-	 * @see TrackableContext#executeWithinAll(List, Callable)
+	 * Asks the associated {@link ContextTracker} to set this {@code Context} as the current one for
+	 * the calling {@code  Thread} and executes {@code task} synchronously. Afterwards clears the
+	 * current context.
+	 * @see #executeWithinAll(List, Callable)
 	 */
 	public <T> T executeWithinSelf(Callable<T> task) throws Exception {
 		@SuppressWarnings("unchecked")

@@ -6,7 +6,10 @@ import java.util.concurrent.Callable;
 
 
 
-/** Base class for decorators that will execute their wrapped closures within supplied contexts. */
+/**
+ * Base class for decorators that execute their wrapped closures within supplied
+ * {@link TrackableContext Contexts}.
+ */
 public abstract class ContextBoundClosure<ClosureT> {
 
 

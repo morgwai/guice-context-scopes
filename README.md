@@ -30,7 +30,7 @@ class MyComponent {
     }
 }
 ```
-Additionally [ContextBoundRunnable](src/main/java/pl/morgwai/base/guice/scopes/ContextBoundRunnable.java) `Runnable` decorator that runs its wrapped task within supplied contexts, was introduced to automate `Context`s transfer when using `Executor`s:
+On top of the above, [ContextBoundRunnable](src/main/java/pl/morgwai/base/guice/scopes/ContextBoundRunnable.java) decorator for `Runnable` was introduced: it runs its wrapped `Runnable` task within supplied contexts. This allows to automate `Context` transfer when using `Executor`s:
 ```java
 class MyOtherComponent {
 
@@ -48,7 +48,7 @@ class MyOtherComponent {
     }
 }
 ```
-Deriving libs usually provide implementations of `ExecutorService` that fully automate `Context`s transfer:
+Deriving libs should provide implementations of `ExecutorService` that fully automate `Context` transfers:
 ```java
 class MyContextTrackingExecutor extends ThreadPoolExecutor {
 

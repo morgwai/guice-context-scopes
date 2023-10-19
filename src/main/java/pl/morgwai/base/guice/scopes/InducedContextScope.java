@@ -6,9 +6,10 @@ import java.util.function.Function;
 
 
 /**
- * Scopes objects to the context induced by the context obtained from the associated
- * {@link ContextTracker}. For example HTTP session context may be induced by HTTP servlet request
- * context.
+ * Scopes objects to the instance of {@code InducedCtxT} that is <i>induced</i> by the
+ * {@code BaseCtxT} instance obtained from the associated {@link ContextTracker} at a given moment.
+ * For example, entering the context of an HTTP request induces entering the context of the HTTP
+ * session, which this request belongs to.
  */
 public class InducedContextScope<
 			BaseCtxT extends TrackableContext<BaseCtxT>,

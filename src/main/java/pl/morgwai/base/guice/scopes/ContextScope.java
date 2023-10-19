@@ -5,7 +5,17 @@ import com.google.inject.*;
 
 
 
-/** Scopes objects to the current context obtained from the associated {@link ContextTracker}. */
+/**
+ * Scopes objects to the {@code  CtxT} instance that is current at a given moment (obtained from
+ * the associated {@link ContextTracker} by default). A {@code  ContextScope} instance is associated
+ * with one particular type of contexts: a subclass of {@link TrackableContext}, here denoted as
+ * {@code CtxT}. For example: a {@code Scope} of {@code Contexts} of {@code HttpServletRequests}.
+ * <p>
+ * Instances should usually be created at app startup to be used in bindings in user
+ * {@link com.google.inject.Module}s.</p>
+ * @see pl.morgwai.base.guice.scopes code organization guidelines for deriving libs in the package
+ *     docs.
+ */
 public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope {
 
 
@@ -24,18 +34,17 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 
-	/**
-	 * See {@link Scope#scope(Key, Provider)}.
-	 * @return a {@link ScopedProvider}.
-	 */
+	/** Wraps {@code unscopedProvider} with a {@link ScopedProvider}. */
 	@Override
-	public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
-		return new ScopedProvider<>(key, unscoped);
+	public <T> ScopedProvider<T> scope(Key<T> key, Provider<T> unscopedProvider) {
+		return new ScopedProvider<>(key, unscopedProvider);
 	}
 
+
+
 	/**
-	 * Returned by {@link #scope(Key, Provider)}, provides objects obtained from the current
-	 * context.
+	 * Returned by {@link #scope(Key, Provider)}, provides objects scoped to a context that is
+	 * current at the moment {@link #get()} is called (as returned by {@link #getContext()}).
 	 */
 	public class ScopedProvider<T> implements Provider<T> {
 
@@ -52,7 +61,7 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 		/**
-		 * Provides an object scoped to {@link #getContext() the current context}.
+		 * Provides an object scoped to the context returned by a call to {@link #getContext()}.
 		 * @throws OutOfScopeException if the current thread is running outside of any context. This
 		 *     most commonly happens if an async task was not
 		 *     {@link ContextBinder#bindToContext(Runnable) bound to its current context} before
@@ -82,9 +91,10 @@ public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope 
 
 
 	/**
-	 * Returns a context instance from which scoped objects should be obtained by this Scope. By
-	 * default returns directly the context obtained from {@link #tracker}. May be overridden to
-	 * return some context induced by the one from the {@link #tracker}.
+	 * Returns the context instance from which scoped objects should be obtained. Called during each
+	 * {@link ScopedProvider#get() provisioning}. By default returns the current context obtained
+	 * directly from {@link #tracker}. May be overridden for example to return a context induced by
+	 * the one from the {@link #tracker}.
 	 * @see InducedContextScope
 	 */
 	protected InjectionContext getContext() {

@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 
 
 
-/** A decorator that will execute its wrapped {@link Consumer} within supplied contexts. */
+/** A decorator that executes its wrapped {@link Consumer} within supplied {@code Contexts}. */
 public class ContextBoundConsumer<T> extends ContextBoundClosure<Consumer<T>>
 		implements Consumer<T> {
 
