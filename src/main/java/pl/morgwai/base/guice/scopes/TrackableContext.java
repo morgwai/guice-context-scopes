@@ -123,4 +123,8 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 			return wrappedTask.toString();
 		}
 	}
+
+
+
+	private static final long serialVersionUID = -1676033543790587340L;
 }
