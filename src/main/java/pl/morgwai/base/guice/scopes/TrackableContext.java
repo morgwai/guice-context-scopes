@@ -12,7 +12,7 @@ import java.util.logging.Logger;
  * itself}, so that it can be tracked across {@code Threads} using its associated
  * {@link ContextTracker}.
  * <p>
- * Overriding classes must use themselves as {@code CtxT} type argument.</p>
+ * Subclasses must use themselves as {@code CtxT} type argument.</p>
  */
 public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 		extends InjectionContext {
@@ -25,24 +25,6 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 
 	protected TrackableContext(ContextTracker<CtxT> tracker) {
 		this.tracker = tracker;
-	}
-
-
-
-	/**
-	 * Sets itself as the current context for the current thread and executes {@code task}
-	 * synchronously. Afterwards clears the current context.
-	 *
-	 * @see TrackableContext#executeWithinAll(List, Runnable)
-	 */
-	public void executeWithinSelf(Runnable task) {
-		try {
-			executeWithinSelf(new CallableRunnable(task));
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception neverHappens) {
-			// result of wrapping with a Callable
-		}
 	}
 
 
@@ -61,14 +43,10 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 
 
 
-	/**
-	 * Executes {@code task} on the current thread within all {@code contexts}.
-	 * Used to transfer active contexts after a switch to another thread.
-	 * @see ContextTracker#getActiveContexts(List)
-	 */
-	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
+	/** Version of {@link #executeWithinSelf(Callable)} that takes a {@link Runnable} param. */
+	public void executeWithinSelf(Runnable task) {
 		try {
-			executeWithinAll(contexts, new CallableRunnable(task));
+			executeWithinSelf(new CallableRunnable(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception neverHappens) {
@@ -79,12 +57,12 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 
 
 	/**
-	 * Executes {@code task} on the current thread within all {@code contexts}.
-	 * Used to transfer active contexts after a switch to another thread.
-	 * @see ContextTracker#getActiveContexts(List)
+	 * Executes {@code task} synchronously on the current thread within all {@code contexts}.
+	 * Used to transfer contexts saved with {@link ContextTracker#getActiveContexts(List)} after a
+	 * switch to another thread.
 	 */
 	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> task)
-		throws Exception {
+			throws Exception {
 		switch (contexts.size()) {
 			case 1:
 				return contexts.get(0).executeWithinSelf(task);
@@ -110,6 +88,19 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 	}
 
 	static final Logger log = Logger.getLogger(TrackableContext.class.getName());
+
+
+
+	/** Version of {@link #executeWithinAll(List, Callable)} that takes a {@link Runnable} param. */
+	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
+		try {
+			executeWithinAll(contexts, new CallableRunnable(task));
+		} catch (RuntimeException e) {
+			throw e;
+		} catch (Exception neverHappens) {
+			// result of wrapping with a Callable
+		}
+	}
 
 
 
