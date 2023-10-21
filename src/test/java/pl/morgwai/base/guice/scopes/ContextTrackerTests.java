@@ -54,20 +54,6 @@ public class ContextTrackerTests {
 
 
 	@Test
-	public void testExecutingRunnablePropagatesRuntimeException() {
-		final var thrown = new RuntimeException("thrown");
-		final Runnable throwingTask = () -> { throw  thrown; };
-		try {
-			ctx1.executeWithinSelf(throwingTask);
-			fail("RuntimeException thrown by the task should be propagated");
-		} catch (RuntimeException caught) {
-			assertSame("caught exception should be the same as thrown", thrown, caught);
-		}
-	}
-
-
-
-	@Test
 	public void testTrackingAcrossThreads() throws Exception {
 		final AssertionError[] errorHolder = {null};
 		final Runnable ctxVerifyingTask =

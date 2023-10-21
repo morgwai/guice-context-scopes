@@ -103,6 +103,20 @@ public class TrackableContextTests {
 
 
 
+	@Test
+	public void testExecutingRunnablePropagatesRuntimeException() {
+		final var thrown = new RuntimeException("thrown");
+		final Runnable throwingTask = () -> { throw  thrown; };
+		try {
+			ctx1.executeWithinSelf(throwingTask);
+			fail("RuntimeException thrown by the task should be propagated");
+		} catch (RuntimeException caught) {
+			assertSame("caught exception should be the same as thrown", thrown, caught);
+		}
+	}
+
+
+
 	static class TestContext1 extends TrackableContext<TestContext1> {
 		TestContext1(ContextTracker<TestContext1> tracker) { super(tracker); }
 	}
