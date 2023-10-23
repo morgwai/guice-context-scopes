@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 /**
  * Allows to track which {@code Thread} is running within which {@link TrackableContext Context}.
  * A {@code ContextTracker} instance is associated with one particular type of contexts represented
- * as a subclass of {@link TrackableContext}, here denoted as {@code CtxT}. For example: a
+ * as a subclass of {@link TrackableContext}, here denoted as {@code ContextT}. For example: a
  * {@code Tracker} of which {@code Thread} runs within a {@link TrackableContext Context} of which
  * {@code HttpServletRequest}.
  * <p>
@@ -18,27 +18,27 @@ import java.util.concurrent.Callable;
  * @see pl.morgwai.base.guice.scopes code organization guidelines for deriving libs in the package
  *     docs.
  */
-public class ContextTracker<CtxT extends TrackableContext<CtxT>> {
+public class ContextTracker<ContextT extends TrackableContext<ContextT>> {
 
 
 
-	private final ThreadLocal<CtxT> currentContext = new ThreadLocal<>();
+	private final ThreadLocal<ContextT> currentContext = new ThreadLocal<>();
 
 
 
 	/**
-	 * Returns the current {@code Context} of type {@code CtxT}. If {@code CtxT} is not currently
-	 * active for the calling {@code Thread}, then {@code null}.
+	 * Returns the current {@code Context} of type {@code ContextT}. If {@code ContextT} is not
+	 * currently active for the calling {@code Thread}, then {@code null}.
 	 * @see #getActiveContexts(List)
 	 */
-	public CtxT getCurrentContext() {
+	public ContextT getCurrentContext() {
 		return currentContext.get();
 	}
 
 
 
 	/** For internal use by {@link TrackableContext#executeWithinSelf(Callable)}. */
-	<T> T trackWhileExecuting(CtxT ctx, Callable<T> task) throws Exception {
+	<T> T trackWhileExecuting(ContextT ctx, Callable<T> task) throws Exception {
 		currentContext.set(ctx);
 		try {
 			return task.call();

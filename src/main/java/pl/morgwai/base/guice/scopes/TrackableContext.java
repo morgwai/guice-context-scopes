@@ -12,18 +12,18 @@ import java.util.logging.Logger;
  * itself}, so that it can be tracked across {@code Threads} using its associated
  * {@link ContextTracker}.
  * <p>
- * Subclasses must use themselves as {@code CtxT} type argument.</p>
+ * Subclasses must use themselves as {@code ContextT} type argument.</p>
  */
-public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
+public abstract class TrackableContext<ContextT extends TrackableContext<ContextT>>
 		extends InjectionContext {
 
 
 
-	final ContextTracker<CtxT> tracker;
+	final ContextTracker<ContextT> tracker;
 
 
 
-	protected TrackableContext(ContextTracker<CtxT> tracker) {
+	protected TrackableContext(ContextTracker<ContextT> tracker) {
 		this.tracker = tracker;
 	}
 
@@ -37,7 +37,7 @@ public abstract class TrackableContext<CtxT extends TrackableContext<CtxT>>
 	 */
 	public <T> T executeWithinSelf(Callable<T> task) throws Exception {
 		@SuppressWarnings("unchecked")
-		final var thisCtx = (CtxT) this;
+		final var thisCtx = (ContextT) this;
 		return tracker.trackWhileExecuting(thisCtx, task);
 	}
 

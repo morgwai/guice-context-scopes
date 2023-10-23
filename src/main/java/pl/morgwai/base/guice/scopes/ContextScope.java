@@ -6,28 +6,29 @@ import com.google.inject.*;
 
 
 /**
- * Scopes objects to the {@code  CtxT} instance that is current at a given moment (obtained from
+ * Scopes objects to the {@code  ContextT} instance that is current at a given moment (obtained from
  * the associated {@link ContextTracker} by default). A {@code  ContextScope} instance is associated
  * with one particular type of contexts: a subclass of {@link TrackableContext}, here denoted as
- * {@code CtxT}. For example: a {@code Scope} of {@code Contexts} of {@code HttpServletRequests}.
+ * {@code ContextT}. For example: a {@code Scope} of {@code Contexts} of
+ * {@code HttpServletRequests}.
  * <p>
  * Instances should usually be created at app startup to be used in bindings in user
  * {@link com.google.inject.Module}s.</p>
  * @see pl.morgwai.base.guice.scopes code organization guidelines for deriving libs in the package
  *     docs.
  */
-public class ContextScope<CtxT extends TrackableContext<CtxT>> implements Scope {
+public class ContextScope<ContextT extends TrackableContext<ContextT>> implements Scope {
 
 
 
-	protected final ContextTracker<CtxT> tracker;
+	protected final ContextTracker<ContextT> tracker;
 
 	public String getName() { return name; }
 	final String name;
 
 
 
-	public ContextScope(String name, ContextTracker<CtxT> tracker) {
+	public ContextScope(String name, ContextTracker<ContextT> tracker) {
 		this.name = name;
 		this.tracker = tracker;
 	}
