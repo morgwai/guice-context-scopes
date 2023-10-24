@@ -12,7 +12,7 @@ Asynchronous servers (such as gRPC or asynchronous `Servlet`s) often need to swi
 <br/>
 To ease this up, this lib formally introduces a notion of an [InjectionContext](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/TrackableContext.html) that can be tracked using [ContextTracker](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextTracker.html)s when switching between threads. Trackers are in turn used by [ContextScope](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextScope.html)s to obtain a `Context` that is current at a given moment, from which scoped objects will be obtained.<br/>
 <br/>
-When switching threads, static helper methods `ContextTracker.getActiveContexts(List<ContextTracker<?>>)` and `TrackableContext.executeWithinAll(List<TrackableContext>, Runnable)` can be used to manually transfer all active `Context`s:
+When switching threads, static helper methods [ContextTracker.getActiveContexts(List<ContextTracker<?>>)](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextTracker.html#getActiveContexts(java.util.List)) and [TrackableContext.executeWithinAll(List<TrackableContext>, Runnable)](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/TrackableContext.html#executeWithinAll(java.util.List,java.lang.Runnable)) can be used to manually transfer all active `Context`s:
 ```java
 class MyComponent {
 
