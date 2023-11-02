@@ -19,7 +19,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	final ContextTracker<ContextT> tracker;
+	transient ContextTracker<ContextT> tracker;
 
 
 
@@ -136,6 +136,12 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	}
 
 
+
+	/**
+	 * Sets the {@link ContextTracker} that will be used for tracking this {@code Context}.
+	 * This method should be called after each deserialization of this {@code Context}.
+	 */
+	protected void setTracker(ContextTracker<ContextT> tracker) { this.tracker = tracker; }
 
 	private static final long serialVersionUID = 9098966219169930244L;
 }
