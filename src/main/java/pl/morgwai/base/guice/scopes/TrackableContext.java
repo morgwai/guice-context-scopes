@@ -23,13 +23,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	/**
-	 * Constructs a new instance.
-	 * @param tracker {@link ContextTracker} that will be used to track this {@code Context}.
-	 * @param disableCircularProxies see {@link InjectionContext#InjectionContext(boolean)}.
-	 */
-	protected TrackableContext(ContextTracker<ContextT> tracker, boolean disableCircularProxies) {
-		super(disableCircularProxies);
+	protected TrackableContext(ContextTracker<ContextT> tracker) {
 		this.tracker = tracker;
 	}
 
@@ -138,5 +132,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	 */
 	protected void setTracker(ContextTracker<ContextT> tracker) { this.tracker = tracker; }
 
-	private static final long serialVersionUID = 9098966219169930244L;
+
+
+	private static final long serialVersionUID = -7909322069995140521L;
 }

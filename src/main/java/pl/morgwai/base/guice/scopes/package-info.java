@@ -7,9 +7,6 @@
  * Deriving libs should usually define their "central class" extending
  * {@link com.google.inject.Module} containing the following:</p>
  * <ul>
- *     <li>a constructor accepting {@code boolean disableCircularProxies} param that must be passed
- *         to {@link pl.morgwai.base.guice.scopes.InjectionContext#InjectionContext(boolean) Context
- *         constructors}.</li>
  *     <li>instances of {@link pl.morgwai.base.guice.scopes.ContextTracker}s for all defined
  *         {@link pl.morgwai.base.guice.scopes.TrackableContext} subclasses</li>
  *     <li>instances of corresponding {@link pl.morgwai.base.guice.scopes.ContextScope}s</li>
@@ -21,9 +18,7 @@
  *         {@code ContextTracker.getActiveContexts(allTrackers)}</li>
  *     <li>
  *         {@link com.google.inject.Module#configure(com.google.inject.Binder) configure(binder)}
- *         method that depending on the value of {@code disableCircularProxies} constructor
- *         param calls {@link com.google.inject.Binder#disableCircularProxies()} and creates the
- *         following bindings:
+ *         method that creates the following bindings:
  *         <ul>
  *             <li>{@code List<ContextTracker<?>>} to {@code  allTrackers}</li>
  *             <li>{@link pl.morgwai.base.guice.scopes.ContextBinder} to {@code contextBinder}</li>

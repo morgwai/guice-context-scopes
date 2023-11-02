@@ -70,6 +70,6 @@ public class ContextScopeTests {
 
 
 	static class TestContext extends TrackableContext<TestContext> {
-		TestContext(ContextTracker<TestContext> tracker) { super(tracker, true); }
+		TestContext(ContextTracker<TestContext> tracker) { super(tracker); }
 	}
 }

@@ -22,66 +22,8 @@ public class InjectionContextTests {
 
 
 
-	public interface Husband {
-		Wife getWife();
-	}
-
-	public static class WorkingHusband implements Husband {
-		private final Wife wife;
-		public Wife getWife() { return wife; }
-		@Inject public WorkingHusband(Wife wife) { this.wife = wife; }
-	}
-
-	public static class Wife {
-		private final Husband husband;
-		public Husband getHusband() { return husband; }
-		@Inject public Wife(Husband husband) { this.husband = husband; }
-	}
-
-	public static class FamilyContext extends InjectionContext {
-
-		FamilyContext(boolean disableCircularProxies) {
-			super(disableCircularProxies);
-		}
-
-		public Husband marryArgumentIfHusbandAbsent(Husband husbandCandidate) {
-			return produceIfAbsent(Key.get(Husband.class), () -> husbandCandidate);
-		}
-
-		private static final long serialVersionUID = 8197597143001637687L;
-	}
-
-
-
-	public void testCircularProxies(boolean disableCircularProxies) {
-		final var injector = Guice.createInjector((binder) -> {
-			binder.bind(Husband.class).to(WorkingHusband.class);
-			binder.bind(Wife.class);
-		});
-		final var realHusband = injector.getInstance(Husband.class);
-		final var husbandProxy = realHusband.getWife().getHusband();
-		assertTrue("sanity check", Scopes.isCircularProxy(husbandProxy));
-		final var family = new FamilyContext(disableCircularProxies);
-		assertSame("on paper, husbandProxy should seem like a family member",
-				husbandProxy, family.marryArgumentIfHusbandAbsent(husbandProxy));
-		if (disableCircularProxies) {
-			assertSame("family should assume there are no proxies and honor the first marriage",
-					husbandProxy, family.marryArgumentIfHusbandAbsent(realHusband));
-		} else {
-			assertNotSame("husbandProxy should not be a real member of family and when realHusband "
-					+ "finally arrives, he should replace husbandProxy",
-					husbandProxy, family.marryArgumentIfHusbandAbsent(realHusband));
-		}
-	}
-
-	@Test
-	public void testCircularProxiesDisabled() {
-		testCircularProxies(true);
-	}
-
-	@Test
-	public void testCircularProxiesEnabled() {
-		testCircularProxies(false);
+	public static class TestContext extends InjectionContext {
+		private static final long serialVersionUID = 647980192537461531L;
 	}
 
 
@@ -133,7 +75,7 @@ public class InjectionContextTests {
 
 	public void testSerialization(boolean checkIdempotence)
 			throws IOException, ClassNotFoundException, NoSuchFieldException {
-		final var origin = new FamilyContext(true);
+		final var origin = new TestContext();
 		final var serializableObject = new SerializableNamedObject(namedString);
 		final var theChosenNumber = Integer.valueOf(666);
 		final var anotherNumber = Integer.valueOf(13);
@@ -165,13 +107,13 @@ public class InjectionContextTests {
 		) {
 			serializedObjects.writeObject(origin);
 		}
-		final FamilyContext deserialized;
+		final TestContext deserialized;
 		try (
 			final var serializedBytesInput =
 				new ByteArrayInputStream(serializedBytesOutput.toByteArray());
 			final var serializedObjects = new ObjectInputStream(serializedBytesInput);
 		) {
-			deserialized = (FamilyContext) serializedObjects.readObject();
+			deserialized = (TestContext) serializedObjects.readObject();
 		}
 		if (checkIdempotence) origin.restoreAfterDeserialization();
 

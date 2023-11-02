@@ -7,7 +7,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 
 import com.google.inject.*;
 
@@ -41,44 +40,7 @@ public abstract class InjectionContext implements Serializable {
 
 
 
-	final boolean disableCircularProxies;
-	private transient ConcurrentMap<Key<?>, Object> scopedObjects;
-
-
-
-	/**
-	 * Constructs a new instance.
-	 * @param disableCircularProxies tells this {@code Context} if
-	 *     {@link Binder#disableCircularProxies() Guice CircularProxies are disabled}. If so, then a
-	 *     {@link ConcurrentHashMap} may be used instead of locking the whole {@code Context}, which
-	 *     may greatly improve performance. Furthermore, {@code CircularProxies} are not
-	 *     {@link Serializable} and may lead to
-	 *     {@link Scopes#isCircularProxy(Object) scoping errors}.
-	 */
-	protected InjectionContext(boolean disableCircularProxies) {
-		this.disableCircularProxies = disableCircularProxies;
-		scopedObjects = createScopedObjectsMap(disableCircularProxies);
-	}
-
-	static ConcurrentMap<Key<?>, Object> createScopedObjectsMap(boolean disableCircularProxies) {
-		if (disableCircularProxies) {
-			return new ConcurrentHashMap<>();
-		} else {
-			return new ConcurrentHashMap<>() {
-				@Override
-				public Object computeIfAbsent(Key<?> key, Function<? super Key<?>, ?> provider) {
-					synchronized (this) {
-						var scopedObject = get(key);
-						if (scopedObject == null) {
-							scopedObject = provider.apply(key);
-							if ( !Scopes.isCircularProxy(scopedObject)) put(key, scopedObject);
-						}
-						return scopedObject;
-					}
-				}
-			};
-		}
-	}
+	private transient ConcurrentMap<Key<?>, Object> scopedObjects = new ConcurrentHashMap<>();
 
 
 
@@ -210,7 +172,7 @@ public abstract class InjectionContext implements Serializable {
 	 */
 	protected void restoreAfterDeserialization() throws ClassNotFoundException {
 		if (serializableScopedObjectEntries == null) return;
-		scopedObjects = createScopedObjectsMap(disableCircularProxies);
+		scopedObjects = new ConcurrentHashMap<>();
 		for (var deserializedEntry: serializableScopedObjectEntries) {
 			scopedObjects.put(constructKey(deserializedEntry), deserializedEntry.scopedObject);
 		}
@@ -246,5 +208,5 @@ public abstract class InjectionContext implements Serializable {
 
 
 
-	private static final long serialVersionUID = 2834461348587890572L;
+	private static final long serialVersionUID = -638657699306072517L;
 }
