@@ -137,5 +137,5 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	private static final long serialVersionUID = -1676033543790587340L;
+	private static final long serialVersionUID = 9098966219169930244L;
 }

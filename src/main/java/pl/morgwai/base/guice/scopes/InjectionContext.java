@@ -74,11 +74,12 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Removes the object given by {@code key} from this context. This forces retrieval of a new
-	 * instance during the {@link #provideIfAbsent(Key, Provider) next provision} within the
-	 * {@link ContextScope scope of this context}. This is useful if the currently stored instance
-	 * is not usable anymore (for example a timed-out connection, expired token, etc).<br>
-	 * If there's no object stored under {@code key} in this context, this method has no effect.
+	 * Removes the object given by {@code key} from this {@code Context}. This forces production of
+	 * a new instance during the {@link #produceIfAbsent(Key, Provider) next provisioning} within
+	 * the {@link ContextScope Scope of this Context}. This is useful if the currently stored
+	 * instance is not usable anymore (for example a timed-out connection, expired token, etc).<br>
+	 * If there's no object stored under {@code key} in this (@code Context}, this method has no
+	 * effect.
 	 * <p>
 	 * <b>Note:</b> If multiple threads run within the same context, care must be taken to prevent
 	 * some of them from retaining the old stale instances.</p>
@@ -91,16 +92,16 @@ public abstract class InjectionContext implements Serializable {
 
 	/**
 	 * Provides the object given by {@code key}. If there already is an instance scoped to this
-	 * context, it is returned immediately. Otherwise, a new instance is obtained
-	 * from {@code provider} and stored for subsequent calls.
+	 * {@code Context}, it is returned immediately. Otherwise, a new instance is obtained
+	 * from {@code producer} and stored for subsequent calls.
 	 */
-	protected <T> T provideIfAbsent(Key<T> key, Provider<T> provider) {
+	protected <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
 		@SuppressWarnings("unchecked")
-		final var result = (T) scopedObjects.computeIfAbsent(key, (ignored) -> provider.get());
+		final var result = (T) scopedObjects.computeIfAbsent(key, (ignored) -> producer.get());
 		return result;
 	}
 
 
 
-	private static final long serialVersionUID = 5939049347722528201L;
+	private static final long serialVersionUID = 8803513009557046606L;
 }

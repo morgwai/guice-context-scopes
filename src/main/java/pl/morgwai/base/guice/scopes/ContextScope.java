@@ -35,10 +35,10 @@ public class ContextScope<ContextT extends TrackableContext<ContextT>> implement
 
 
 
-	/** Wraps {@code unscopedProvider} with a {@link ScopedProvider}. */
+	/** Wraps {@code producer} with a {@link ScopedProvider}. */
 	@Override
-	public <T> ScopedProvider<T> scope(Key<T> key, Provider<T> unscopedProvider) {
-		return new ScopedProvider<>(key, unscopedProvider);
+	public <T> ScopedProvider<T> scope(Key<T> key, Provider<T> producer) {
+		return new ScopedProvider<>(key, producer);
 	}
 
 
@@ -50,13 +50,13 @@ public class ContextScope<ContextT extends TrackableContext<ContextT>> implement
 	public class ScopedProvider<T> implements Provider<T> {
 
 		final Key<T> key;
-		final Provider<T> unscoped;
+		final Provider<T> producer;
 
 
 
-		ScopedProvider(Key<T> key, Provider<T> unscoped) {
+		ScopedProvider(Key<T> key, Provider<T> producer) {
 			this.key = key;
-			this.unscoped = unscoped;
+			this.producer = producer;
 		}
 
 
@@ -71,7 +71,7 @@ public class ContextScope<ContextT extends TrackableContext<ContextT>> implement
 		 */
 		@Override public T get() {
 			try {
-				return getContext().provideIfAbsent(key, unscoped);
+				return getContext().produceIfAbsent(key, producer);
 			} catch (NullPointerException e) {
 				// result of a bug that will be fixed in development phase: don't check manually
 				// in production each time.
@@ -84,7 +84,7 @@ public class ContextScope<ContextT extends TrackableContext<ContextT>> implement
 
 
 		@Override public String toString() {
-			return "ScopedProvider { scope=\"" + name + "\", key=" + key + ", unscoped=" + unscoped
+			return "ScopedProvider { scope=\"" + name + "\", key=" + key + ", producer=" + producer
 					+ " }";
 		}
 	}

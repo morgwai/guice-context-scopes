@@ -35,7 +35,7 @@ public class InjectionContextTests {
 		}
 
 		public Husband marryArgumentIfHusbandAbsent(Husband husbandCandidate) {
-			return provideIfAbsent(Key.get(Husband.class), () -> husbandCandidate);
+			return produceIfAbsent(Key.get(Husband.class), () -> husbandCandidate);
 		}
 	}
 
