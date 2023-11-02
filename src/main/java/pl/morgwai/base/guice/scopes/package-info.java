@@ -9,8 +9,10 @@
  * {@link pl.morgwai.base.guice.scopes.ContextScope}s for all defined
  * {@link pl.morgwai.base.guice.scopes.TrackableContext} subclasses as instance vars.</p>
  * <p>
- * For convenience such central class is also a {@link com.google.inject.Module} that defines the
- * below utility bindings:</p>
+ * For convenience such central class should also be a {@link com.google.inject.Module} that defines
+ * the below infrastructure bindings in its
+ * {@link com.google.inject.Module#configure(com.google.inject.Binder) configure(binder)} method:
+ * </p>
  * <ul>
  *   <li>{@code List<ContextTracker<?>>} to a {@code  List} of all defined {@code ContextTracker}
  *       instances</li>
@@ -26,6 +28,13 @@
  *       {@link pl.morgwai.base.guice.scopes.ContextBinder#ContextBinder(java.util.List) its
  *       constructor}</li>
  * </ul>
+ * <p>
+ * The central {@code Module} should have a {@code boolean} constructor param named
+ * {@code disableCircularProxies}, that will be passed to
+ * {@link pl.morgwai.base.guice.scopes.InjectionContext#InjectionContext(boolean) Context
+ * constructors}. Additionally, if its value is {@code true}, then
+ * {@link com.google.inject.Module#configure(com.google.inject.Binder) configure(binder)} method
+ * should call {@link com.google.inject.Binder#disableCircularProxies()}.</p>
  * @see <a href='https://github.com/morgwai/guice-context-scopes#guice-context-scopes'>
  *     project homepage</a>
  */

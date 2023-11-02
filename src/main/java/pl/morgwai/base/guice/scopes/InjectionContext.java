@@ -4,9 +4,9 @@ package pl.morgwai.base.guice.scopes;
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
-import com.google.inject.Key;
-import com.google.inject.Provider;
+import com.google.inject.*;
 
 
 
@@ -33,7 +33,43 @@ public abstract class InjectionContext implements Serializable {
 
 
 
-	private final ConcurrentMap<Key<?>, Object> scopedObjects = new ConcurrentHashMap<>();
+	private final ConcurrentMap<Key<?>, Object> scopedObjects;
+
+
+
+	/**
+	 * Constructs a new instance.
+	 * @param disableCircularProxies tells this {@code Context} if
+	 *     {@link Binder#disableCircularProxies() Guice CircularProxies are disabled}. If so, then a
+	 *     {@link ConcurrentHashMap} may be used instead of locking the whole {@code Context}, which
+	 *     may greatly improve performance. Furthermore, {@code CircularProxies} are not
+	 *     {@link Serializable} and may lead to
+	 *     {@link Scopes#isCircularProxy(Object) scoping errors}.
+	 */
+	protected InjectionContext(boolean disableCircularProxies) {
+		if (disableCircularProxies) {
+			scopedObjects = new ConcurrentHashMap<>();
+		} else {
+			scopedObjects = new ConcurrentHashMap<>() {
+				@Override
+				public Object computeIfAbsent(Key<?> key, Function<? super Key<?>, ?> provider) {
+					synchronized (this) {
+						var scopedObject = get(key);
+						if (scopedObject == null) {
+							scopedObject = provider.apply(key);
+							if ( !Scopes.isCircularProxy(scopedObject)) put(key, scopedObject);
+						}
+						return scopedObject;
+					}
+				}
+			};
+		}
+	}
+
+	/** Calls {@link #InjectionContext(boolean) this(true)}. */
+	protected InjectionContext() {
+		this(true);
+	}
 
 
 

@@ -23,8 +23,19 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	protected TrackableContext(ContextTracker<ContextT> tracker) {
+	/**
+	 * Constructs a new {@code Context}.
+	 * @param tracker {@link ContextTracker} that will be used to track this {@code Context}.
+	 * @param disableCircularProxies See {@link InjectionContext#InjectionContext(boolean)}.
+	 */
+	protected TrackableContext(ContextTracker<ContextT> tracker, boolean disableCircularProxies) {
+		super(disableCircularProxies);
 		this.tracker = tracker;
+	}
+
+	/** Calls {@link #TrackableContext(ContextTracker, boolean) this(tracker, true)}. */
+	protected TrackableContext(ContextTracker<ContextT> tracker) {
+		this(tracker, true);
 	}
 
 
