@@ -80,11 +80,6 @@ public abstract class InjectionContext implements Serializable {
 		}
 	}
 
-	/** Calls {@link #InjectionContext(boolean) this(true)}. */
-	protected InjectionContext() {
-		this(true);
-	}
-
 
 
 	/**

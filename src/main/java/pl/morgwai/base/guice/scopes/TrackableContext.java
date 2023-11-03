@@ -33,11 +33,6 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 		this.tracker = tracker;
 	}
 
-	/** Calls {@link #TrackableContext(ContextTracker, boolean) this(tracker, true)}. */
-	protected TrackableContext(ContextTracker<ContextT> tracker) {
-		this(tracker, true);
-	}
-
 
 
 	/**

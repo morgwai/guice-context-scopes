@@ -75,7 +75,9 @@ public class InducedContextScopeTests {
 
 
 
-	static class InducedParentContext extends InjectionContext {}
+	static class InducedParentContext extends InjectionContext {
+		InducedParentContext() { super(true); }
+	}
 
 	static class ChildContext extends TrackableContext<ChildContext> {
 
@@ -83,7 +85,7 @@ public class InducedContextScopeTests {
 		final InducedParentContext parentCtx;
 
 		ChildContext(ContextTracker<ChildContext> tracker, InducedParentContext parentCtx) {
-			super(tracker);
+			super(tracker, true);
 			this.parentCtx = parentCtx;
 		}
 	}

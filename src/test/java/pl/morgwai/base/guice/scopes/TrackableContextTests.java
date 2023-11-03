@@ -118,14 +118,14 @@ public class TrackableContextTests {
 
 
 	static class TestContext1 extends TrackableContext<TestContext1> {
-		TestContext1(ContextTracker<TestContext1> tracker) { super(tracker); }
+		TestContext1(ContextTracker<TestContext1> tracker) { super(tracker, true); }
 	}
 
 	static class TestContext2 extends TrackableContext<TestContext2> {
-		TestContext2(ContextTracker<TestContext2> tracker) { super(tracker); }
+		TestContext2(ContextTracker<TestContext2> tracker) { super(tracker, true); }
 	}
 
 	static class TestContext3 extends TrackableContext<TestContext3> {
-		TestContext3(ContextTracker<TestContext3> tracker) { super(tracker); }
+		TestContext3(ContextTracker<TestContext3> tracker) { super(tracker, true); }
 	}
 }
