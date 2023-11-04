@@ -19,21 +19,21 @@ import com.google.inject.*;
  * combining several calls etc. Each concrete subclass corresponds to a specific type of events and
  * each instance corresponds to a single such event. For example an instance of
  * {@code HttpRequestContext} may correspond to the processing of a single HTTP request. Creation of
- * the instance must be hooked at the beginning of a given processing: for example in Java Servlet
+ * instances must be hooked at the beginning of a given processing: for example in Java Servlet
  * environment, a {@code HttpRequestContext} may be created in a {@code Filter}.
  * <p>
- * Note: most context classes should rather extend {@link TrackableContext} subclass instead of
- * this one. The main exception are context types that are
- * {@link InducedContextScope induced by other contexts}.</p>
+ * Note: most {@code Context} classes should rather extend {@link TrackableContext} subclass instead
+ * of this one. The main exception are {@code Context} types that are
+ * {@link InducedContextScope induced by other Contexts}.</p>
  * <p>
- * Subclasses usually add properties and methods specific to their type, like
- * their call's arguments, a reference to their session object etc.</p>
+ * Subclasses usually add properties and methods specific to their types, like
+ * their call's arguments, a reference to their event objects etc.</p>
  * <p>
- * Multiple threads may run within the same context, but the scoped objects that they access must be
- * thread-safe or properly synchronized.</p>
+ * Multiple threads may run within the same {@code Context}, but the scoped objects that they access
+ * must be thread-safe or access must be properly synchronized.</p>
  * <p>
  * During the standard {@link Serializable Java serialization}, non-serializable scoped objects will
- * be filtered out and the serializable part will be properly serialized.<br/>
+ * be filtered out and the remaining part will be properly serialized.<br/>
  * Methods {@link #prepareForSerialization()} and {@link #restoreAfterDeserialization()} are
  * provided for other serialization mechanisms.</p>
  */

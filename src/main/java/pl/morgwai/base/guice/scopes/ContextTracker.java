@@ -50,13 +50,15 @@ public class ContextTracker<ContextT extends TrackableContext<ContextT>> {
 
 
 	/**
-	 * Retrieves from {@code trackers} all contexts active (current within their class) for the
-	 * calling {@code  Thread}. The returned {@code List} can be then used as an argument to
-	 * {@link TrackableContext#executeWithinAll(List, Runnable)} to transfer the contexts when
-	 * switching to another {@code  Thread}.
+	 * Retrieves from {@code trackers} all {@link TrackableContext}s active (current within their
+	 * class) for the calling {@code  Thread}. The returned {@code List} can be then used as an
+	 * argument to {@link TrackableContext#executeWithinAll(List, Runnable)} to transfer the
+	 * {@code Contexts} when switching to another {@code  Thread}. All {@link InducedContextScope
+	 * Contexts induced} by any of the returned {@link TrackableContext}s will also "follow"
+	 * automatically their inducers to the new {@code Thread}.
 	 * <p>
 	 * Deriving libs should bind {@code List<ContextTracker<?>>} to an instance containing all
-	 * possible trackers for use as an argument for this method.</p>
+	 * possible {@link ContextTracker}s for use as an argument for this method.</p>
 	 */
 	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
 		if (trackers.size() == 1) {  // optimize for most common tracker count

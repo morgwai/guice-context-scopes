@@ -44,8 +44,8 @@ public class ContextScope<ContextT extends TrackableContext<ContextT>> implement
 
 
 	/**
-	 * Returned by {@link #scope(Key, Provider)}, provides objects scoped to a context that is
-	 * current at the moment {@link #get()} is called (as returned by {@link #getContext()}).
+	 * Returned by {@link #scope(Key, Provider)}, provides objects scoped to a {@code Context} that
+	 * is current at the moment {@link #get()} is called (as returned by {@link #getContext()}).
 	 */
 	public class ScopedProvider<T> implements Provider<T> {
 
@@ -62,12 +62,13 @@ public class ContextScope<ContextT extends TrackableContext<ContextT>> implement
 
 
 		/**
-		 * Provides an object scoped to the context returned by a call to {@link #getContext()}.
-		 * @throws OutOfScopeException if the current thread is running outside of any context. This
-		 *     most commonly happens if an async task was not
-		 *     {@link ContextBinder#bindToContext(Runnable) bound to its current context} before
-		 *     being dispatched to this thread. Use {@code ContextTrackingExecutor}s that bind
-		 *     tasks automatically or bind manually using {@link ContextBinder}.
+		 * Provides an object scoped to the {@code Context} returned by a call to
+		 * {@link #getContext()}.
+		 * @throws OutOfScopeException if the current {@code Thread} is running outside of any
+		 *     {@code Context}. This most commonly happens if an async task was not
+		 *     {@link ContextBinder#bindToContext(Runnable) bound to the Context} before being
+		 *     dispatched to this {@code Thread}. Use {@code ContextTrackingExecutor}s that transfer
+		 *     {@code Contexts} automatically or bind manually using {@link ContextBinder}.
 		 */
 		@Override public T get() {
 			try {
@@ -75,9 +76,11 @@ public class ContextScope<ContextT extends TrackableContext<ContextT>> implement
 			} catch (NullPointerException e) {
 				// result of a bug that will be fixed in development phase: don't check manually
 				// in production each time.
-				throw new OutOfScopeException("no context for thread \""
-						+ Thread.currentThread().getName() + "\" in scope \"" + name
-						+ "\". See the javadoc for ContextScope.ScopedProvider.get()");
+				throw new OutOfScopeException("no Context of Scope \"" + name + "\" in Thread \""
+						+ Thread.currentThread().getName() + "\". See the javadoc for "
+						+ "ContextScope.ScopedProvider.get() -> https://javadoc.io/doc/pl.morgwai."
+						+  "base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/"
+						+ "ContextScope.ScopedProvider.html#get()");
 			}
 		}
 
@@ -92,10 +95,10 @@ public class ContextScope<ContextT extends TrackableContext<ContextT>> implement
 
 
 	/**
-	 * Returns the context instance from which scoped objects should be obtained. Called during each
-	 * {@link ScopedProvider#get() provisioning}. By default returns the current context obtained
-	 * directly from {@link #tracker}. May be overridden for example to return a context induced by
-	 * the one from the {@link #tracker}.
+	 * Returns the {@code Context} from which scoped objects should be obtained. Called during each
+	 * {@link ScopedProvider#get() provisioning}. By default returns the current {@code Context}
+	 * obtained directly from {@link #tracker}. May be overridden for example to return some
+	 * {@code Context} induced by the one from the {@link #tracker}.
 	 * @see InducedContextScope
 	 */
 	protected InjectionContext getContext() {

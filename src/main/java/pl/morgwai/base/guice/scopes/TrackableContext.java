@@ -24,9 +24,9 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 	/**
-	 * Constructs a new {@code Context}.
+	 * Constructs a new instance.
 	 * @param tracker {@link ContextTracker} that will be used to track this {@code Context}.
-	 * @param disableCircularProxies See {@link InjectionContext#InjectionContext(boolean)}.
+	 * @param disableCircularProxies see {@link InjectionContext#InjectionContext(boolean)}.
 	 */
 	protected TrackableContext(ContextTracker<ContextT> tracker, boolean disableCircularProxies) {
 		super(disableCircularProxies);
@@ -37,7 +37,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 	/**
 	 * Asks the associated {@link ContextTracker} to set this {@code Context} as the current one for
-	 * the calling {@code  Thread} and executes {@code task} synchronously. Afterwards clears the
+	 * the calling {@code Thread} and executes {@code task} synchronously. Afterwards clears the
 	 * current context.
 	 * @see #executeWithinAll(List, Callable)
 	 */
@@ -63,9 +63,9 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 	/**
-	 * Executes {@code task} synchronously on the current thread within all {@code contexts}.
-	 * Used to transfer contexts saved with {@link ContextTracker#getActiveContexts(List)} after a
-	 * switch to another thread.
+	 * Executes {@code task} synchronously on the current {@code Thread} within all
+	 * {@code contexts}. Used to transfer {@code Contexts} saved with
+	 * {@link ContextTracker#getActiveContexts(List)} after a switch to another thread.
 	 */
 	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> task)
 			throws Exception {
@@ -73,8 +73,8 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 			case 1:
 				return contexts.get(0).executeWithinSelf(task);
 			case 0:
-				final var warningMessage = "thread \"" + Thread.currentThread().getName()
-						+ "\" is executing task " + task + " outside of any context";
+				final var warningMessage = "Thread \"" + Thread.currentThread().getName()
+						+ "\" is executing task " + task + " outside of any Context";
 				System.err.println(warningMessage);
 				log.warning(warningMessage);
 				return task.call();
