@@ -3,7 +3,7 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
 
-import org.junit.*;
+import org.junit.Test;
 
 import static org.junit.Assert.*;
 import static pl.morgwai.base.guice.scopes.TrackableContext.executeWithinAll;
