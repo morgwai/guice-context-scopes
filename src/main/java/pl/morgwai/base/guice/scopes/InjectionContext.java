@@ -135,31 +135,33 @@ public abstract class InjectionContext implements Serializable {
 	protected void prepareForSerialization() {
 		if (serializableScopedObjectEntries != null) return;
 		serializableScopedObjectEntries = new ArrayList<>(scopedObjects.size());
-		for (var scopedObjectEntry: scopedObjects.entrySet()) {
-			final var key = scopedObjectEntry.getKey();
-			final var scopedObject = scopedObjectEntry.getValue();
+		try (
+			final var buffer = new ByteArrayOutputStream(64);
+			final var objectOutputStream = new ObjectOutputStream(buffer);
+		) {
+			for (var scopedObjectEntry: scopedObjects.entrySet()) {
+				final var key = scopedObjectEntry.getKey();
+				final var scopedObject = scopedObjectEntry.getValue();
 
-			// omit entries of non-Serializable objects
-			if ( !(scopedObject instanceof Serializable)) continue;
+				// omit entries of non-Serializable objects
+				if ( !(scopedObject instanceof Serializable)) continue;
 
-			// verify that the object actually serializes
-			try (
-				final var buffer = new ByteArrayOutputStream(64);
-				final var objectOutputStream = new ObjectOutputStream(buffer);
-			) {
-				objectOutputStream.writeObject(scopedObject);
-			} catch (IOException e) {
-				continue;
+				// verify that the object actually serializes
+				try {
+					objectOutputStream.writeObject(scopedObject);
+				} catch (IOException e) {
+					continue;
+				}
+
+				// add SerializableScopedObjectEntry for the given scopedObjectEntry
+				serializableScopedObjectEntries.add(new SerializableScopedObjectEntry(
+					key.getTypeLiteral().getType(),
+					key.getAnnotationType() != null ? key.getAnnotationType().getName() : null,
+					key.getAnnotation(),
+					(Serializable) scopedObject
+				));
 			}
-
-			// add SerializableScopedObjectEntry for the given scopedObjectEntry
-			serializableScopedObjectEntries.add(new SerializableScopedObjectEntry(
-				key.getTypeLiteral().getType(),
-				key.getAnnotationType() != null ? key.getAnnotationType().getName() : null,
-				key.getAnnotation(),
-				(Serializable) scopedObject
-			));
-		}
+		} catch (IOException ignored) {}
 	}
 
 
