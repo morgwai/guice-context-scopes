@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.google.inject.*;
 
+import static pl.morgwai.base.guice.scopes.InjectionContext.Null.NULL;
+
 
 
 /**
@@ -67,10 +69,19 @@ public abstract class InjectionContext implements Serializable {
 	 * from {@code producer} and stored for subsequent calls.
 	 */
 	protected <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
+		final var stored = scopedObjects.computeIfAbsent(
+			key,
+			(ignored) -> {
+				final var fresh = producer.get();
+				return fresh == null ? NULL : fresh;
+			}
+		);
 		@SuppressWarnings("unchecked")
-		final var result = (T) scopedObjects.computeIfAbsent(key, (ignored) -> producer.get());
+		final var result = (T) (stored == NULL ? null : stored);
 		return result;
 	}
+
+	enum Null { NULL };
 
 
 

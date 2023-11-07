@@ -28,6 +28,17 @@ public class InjectionContextTests {
 
 
 
+	@Test
+	public void testScopingNulls() {
+		final var ctx = new TestContext();
+		assertNull("scoping null should return null",
+				ctx.produceIfAbsent(Key.get(Long.class), () -> null));
+		assertNull("a Key bound to null should retain null",
+				ctx.produceIfAbsent(Key.get(Long.class), () -> 666L));
+	}
+
+
+
 	public static class SerializableNamedObject implements Serializable {
 		final String name;
 		SerializableNamedObject(String name) { this.name = name; }
@@ -51,25 +62,16 @@ public class InjectionContextTests {
 
 
 	public static class TheChosenOneImpl implements TheChosenOne, Serializable {
-
-		@Override public Class<? extends Annotation> annotationType() {
-			return TheChosenOne.class;
-		}
-
+		@Override public Class<? extends Annotation> annotationType() { return TheChosenOne.class; }
 		private static final long serialVersionUID = 4422834049166922562L;
 	}
 
 
 
-	@TheChosenOne
-	final String theChosenString = "theChosenString";
-
-
+	@TheChosenOne final String theChosenString = "theChosenString";
 
 	static final String STRING_NAME = "theString";
-
-	@Named(STRING_NAME)
-	final String namedString = "namedString";
+	@Named(STRING_NAME) final String namedString = "namedString";
 
 
 
@@ -98,6 +100,7 @@ public class InjectionContextTests {
 				Key.get(NonSerializableNamedObject.class), () -> nonSerializableObject);
 		origin.produceIfAbsent(Key.get(listType), () -> listOfInts);
 		origin.produceIfAbsent(Key.get(arrayType), () -> arrayOfInts);
+		origin.produceIfAbsent(Key.get(Long.class), () -> null);
 
 		if (checkIdempotence) origin.prepareForSerialization();
 		final var serializedBytesOutput = new ByteArrayOutputStream(500);
@@ -207,6 +210,8 @@ public class InjectionContextTests {
 				() -> "yetAnotherString"
 			)
 		);
+		assertNull("a Key bound to null should retain null",
+				deserialized.produceIfAbsent(Key.get(Long.class), () -> 666L));
 	}
 
 	@Test
