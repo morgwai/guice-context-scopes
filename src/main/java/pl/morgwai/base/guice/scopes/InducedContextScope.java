@@ -6,10 +6,11 @@ import java.util.function.Function;
 
 
 /**
- * Scopes objects to the instance of {@code InducedContextT} that is <i>induced</i> by the
- * {@code BaseContextT} instance obtained from the associated {@link ContextTracker} at a given
- * moment. For example, entering the context of an HTTP request induces entering the context of the
- * HTTP session, which this request belongs to.
+ * Scopes objects to the instance of {@code InducedContextT} that is <i>induced</i> by the current
+ * at a given moment {@code BaseContextT} instance (obtained from the associated
+ * {@link ContextTracker}).
+ * For example, entering the context of an HTTP request induces entering the context of the HTTP
+ * session, which this request belongs to.
  */
 public class InducedContextScope<
 			BaseContextT extends TrackableContext<BaseContextT>,
