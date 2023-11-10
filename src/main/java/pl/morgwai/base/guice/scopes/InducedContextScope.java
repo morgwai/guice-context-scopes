@@ -18,22 +18,34 @@ public class InducedContextScope<
 
 
 
-	final Function<BaseContextT, InducedContextT> inducer;
+	final Function<BaseContextT, InducedContextT> inducedCtxRetriever;
 
 
 
+	/**
+	 * Constructs a new instance.
+	 * @param inducedCtxRetriever retrieves the instance of {@code InducedContextT} that is induced
+	 *     by a given {@code BaseContextT} instance argument. For example an
+	 *     {@code inducedCtxRetriever} for {@code HttpSessionScope} should return the
+	 *     {@code Context} of the HTTP session to which the HTTP request given by an argument
+	 *     {@code HttpRequestContext} belongs to.
+	 */
 	public InducedContextScope(
 		String name,
 		ContextTracker<BaseContextT> tracker,
-		Function<BaseContextT, InducedContextT> inducer
+		Function<BaseContextT, InducedContextT> inducedCtxRetriever
 	) {
 		super(name, tracker);
-		this.inducer = inducer;
+		this.inducedCtxRetriever = inducedCtxRetriever;
 	}
 
 
 
+	/**
+	 * Returns the {@code InducedContextT} instance induced by a {@code BaseContextT} instance
+	 * obtained from {@link #tracker}.
+	 */
 	protected InjectionContext getContext() {
-		return inducer.apply(tracker.getCurrentContext());
+		return inducedCtxRetriever.apply(tracker.getCurrentContext());
 	}
 }
