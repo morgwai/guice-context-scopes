@@ -7,10 +7,10 @@ import com.google.inject.*;
 
 /**
  * Scopes objects to the {@code  ContextT} instance that is current at a given moment (obtained from
- * the associated {@link ContextTracker} by default). A {@code  ContextScope} instance is associated
- * with one particular type of contexts: a subclass of {@link TrackableContext}, here denoted as
- * {@code ContextT}. For example: a {@code Scope} of {@code Contexts} of
- * {@code HttpServletRequests}.
+ * the associated {@link ContextTracker} by default).
+ * A {@code  ContextScope} instance is associated with one particular type of contexts: a subclass
+ * of {@link TrackableContext}, here denoted as {@code ContextT}. For example: a {@code Scope} of
+ * {@code Contexts} of {@code HttpServletRequests}.
  * <p>
  * Instances should usually be created at app startup to be used in bindings in user
  * {@link com.google.inject.Module}s.</p>
@@ -67,8 +67,8 @@ public class ContextScope<ContextT extends TrackableContext<ContextT>> implement
 		 * @throws OutOfScopeException if the current {@code Thread} is running outside of any
 		 *     {@code Context}. This most commonly happens if an async task was not
 		 *     {@link ContextBinder#bindToContext(Runnable) bound to the Context} before being
-		 *     dispatched to this {@code Thread}. Use {@code ContextTrackingExecutor}s that transfer
-		 *     {@code Contexts} automatically or bind manually using {@link ContextBinder}.
+		 *     dispatched to the current {@code Thread}. Use {@code ContextTrackingExecutor}s that
+		 *     transfer {@code Contexts} automatically or bind manually using {@link ContextBinder}.
 		 */
 		@Override public T get() {
 			try {
