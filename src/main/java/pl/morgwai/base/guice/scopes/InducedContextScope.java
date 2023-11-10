@@ -45,7 +45,7 @@ public class InducedContextScope<
 	 * Returns the {@code InducedContextT} instance induced by a {@code BaseContextT} instance
 	 * obtained from {@link #tracker}.
 	 */
-	protected InjectionContext getContext() {
+	protected InducedContextT getContext() {
 		return inducedCtxRetriever.apply(tracker.getCurrentContext());
 	}
 }
