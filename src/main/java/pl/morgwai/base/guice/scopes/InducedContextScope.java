@@ -13,13 +13,13 @@ import java.util.function.Function;
  * session, which this request belongs to.
  */
 public class InducedContextScope<
-			BaseContextT extends TrackableContext<BaseContextT>,
+			BaseContextT extends TrackableContext<? super BaseContextT>,
 			InducedContextT extends InjectionContext
 		> extends ContextScope<BaseContextT> {
 
 
 
-	final Function<BaseContextT, InducedContextT> inducedCtxRetriever;
+	final Function<? super BaseContextT, ? extends InducedContextT> inducedCtxRetriever;
 
 
 
@@ -34,7 +34,7 @@ public class InducedContextScope<
 	public InducedContextScope(
 		String name,
 		ContextTracker<BaseContextT> tracker,
-		Function<BaseContextT, InducedContextT> inducedCtxRetriever
+		Function<? super BaseContextT, ? extends InducedContextT> inducedCtxRetriever
 	) {
 		super(name, tracker);
 		this.inducedCtxRetriever = inducedCtxRetriever;

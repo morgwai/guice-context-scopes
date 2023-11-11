@@ -19,7 +19,7 @@ import java.util.concurrent.Callable;
  * @see pl.morgwai.base.guice.scopes code organization guidelines for deriving libs in the package
  *     docs.
  */
-public class ContextTracker<ContextT extends TrackableContext<ContextT>> {
+public class ContextTracker<ContextT extends TrackableContext<? super ContextT>> {
 
 
 

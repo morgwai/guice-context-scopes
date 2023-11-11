@@ -17,7 +17,7 @@ import com.google.inject.*;
  * @see pl.morgwai.base.guice.scopes code organization guidelines for deriving libs in the package
  *     docs.
  */
-public class ContextScope<ContextT extends TrackableContext<ContextT>> implements Scope {
+public class ContextScope<ContextT extends TrackableContext<? super ContextT>> implements Scope {
 
 
 
