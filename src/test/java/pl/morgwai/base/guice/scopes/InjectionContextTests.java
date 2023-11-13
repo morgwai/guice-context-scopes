@@ -5,6 +5,7 @@ import java.io.*;
 import java.lang.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.inject.*;
 import com.google.inject.name.Named;
@@ -26,11 +27,35 @@ public class InjectionContextTests {
 		private static final long serialVersionUID = 647980192537461531L;
 	}
 
+	final TestContext ctx = new TestContext();
+
 
 
 	@Test
-	public void testScopingNulls() {
-		final var ctx = new TestContext();
+	public void testStoringAndRemovingObjects() {
+		final var producerCallCount = new AtomicInteger(0);
+		final Provider<String> producer = () -> String.valueOf(producerCallCount.incrementAndGet());
+		final var key = Key.get(String.class);
+
+		final var firstScopedString = ctx.produceIfAbsent(key, producer);
+		assertSame("firstScopedString should be stored in ctx for subsequent calls",
+				firstScopedString, ctx.produceIfAbsent(key, producer));
+		assertEquals("producer should be called only once",
+				1, producerCallCount.get());
+		assertEquals("sanity check",
+				"1", firstScopedString);
+
+		ctx.removeScopedObject(key);
+		assertNotEquals("after removing firstScopedString, a new String should be produced",
+				firstScopedString, ctx.produceIfAbsent(key, producer));
+		assertEquals("after removing firstScopedString, producer should be called for the 2nd time",
+				2, producerCallCount.get());
+	}
+
+
+
+	@Test
+	public void testStoringNulls() {
 		assertNull("scoping null should return null",
 				ctx.produceIfAbsent(Key.get(Long.class), () -> null));
 		assertNull("a Key bound to null should retain null",
@@ -77,7 +102,6 @@ public class InjectionContextTests {
 
 	public void testSerialization(boolean checkIdempotence)
 			throws IOException, ClassNotFoundException, NoSuchFieldException {
-		final var origin = new TestContext();
 		final var serializableObject = new SerializableNamedObject(namedString);
 		final var theChosenNumber = Integer.valueOf(666);
 		final var anotherNumber = Integer.valueOf(13);
@@ -88,42 +112,42 @@ public class InjectionContextTests {
 		final Integer[] arrayOfInts = {theChosenNumber};
 		final TypeLiteral<Integer[]> arrayType = new TypeLiteral<>() {};
 		final String anotherString = "anotherString";
-		origin.produceIfAbsent(
+		ctx.produceIfAbsent(
 				Key.get(SerializableNamedObject.class), () -> serializableObject);
-		origin.produceIfAbsent(
+		ctx.produceIfAbsent(
 				Key.get(String.class, Names.named(STRING_NAME)), () -> namedString);
-		origin.produceIfAbsent(
+		ctx.produceIfAbsent(
 				Key.get(String.class, TheChosenOne.class), () -> theChosenString);
-		origin.produceIfAbsent(
+		ctx.produceIfAbsent(
 				Key.get(Integer.class, new TheChosenOneImpl()), () -> theChosenNumber);
-		origin.produceIfAbsent(
+		ctx.produceIfAbsent(
 				Key.get(NonSerializableNamedObject.class), () -> nonSerializableObject);
-		origin.produceIfAbsent(Key.get(listType), () -> listOfInts);
-		origin.produceIfAbsent(Key.get(arrayType), () -> arrayOfInts);
-		origin.produceIfAbsent(Key.get(Long.class), () -> null);
+		ctx.produceIfAbsent(Key.get(listType), () -> listOfInts);
+		ctx.produceIfAbsent(Key.get(arrayType), () -> arrayOfInts);
+		ctx.produceIfAbsent(Key.get(Long.class), () -> null);
 
-		if (checkIdempotence) origin.prepareForSerialization();
+		if (checkIdempotence) ctx.prepareForSerialization();
 		final var serializedBytesOutput = new ByteArrayOutputStream(500);
 		try (
 			serializedBytesOutput;
 			final var serializedObjects = new ObjectOutputStream(serializedBytesOutput);
 		) {
-			serializedObjects.writeObject(origin);
+			serializedObjects.writeObject(ctx);
 		}
-		final TestContext deserialized;
+		final TestContext deserializedCtx;
 		try (
 			final var serializedBytesInput =
-				new ByteArrayInputStream(serializedBytesOutput.toByteArray());
+					new ByteArrayInputStream(serializedBytesOutput.toByteArray());
 			final var serializedObjects = new ObjectInputStream(serializedBytesInput);
 		) {
-			deserialized = (TestContext) serializedObjects.readObject();
+			deserializedCtx = (TestContext) serializedObjects.readObject();
 		}
-		if (checkIdempotence) origin.restoreAfterDeserialization();
+		if (checkIdempotence) ctx.restoreAfterDeserialization();
 
 		assertEquals(
 			"unannotated serializableObject should (de)serialize",
 			serializableObject.name,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 				Key.get(SerializableNamedObject.class),
 				() -> new SerializableNamedObject(anotherString)
 			).name
@@ -131,7 +155,7 @@ public class InjectionContextTests {
 		assertEquals(
 			"namedString annotated with @Named(stringName) should (de)serialize",
 			namedString,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 					Key.get(String.class, Names.named(STRING_NAME)), () -> anotherString)
 		);
 		final Named namedReflectiveAnnotation =
@@ -140,19 +164,19 @@ public class InjectionContextTests {
 		assertEquals(
 			"namedString should be obtainable by @Named reflective instance",
 			namedString,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 					Key.get(String.class, namedReflectiveAnnotation), () -> anotherString)
 		);
 		assertEquals(
 			"theChosenString annotated with @TheChosenOne should (de)serialize",
 			theChosenString,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 					Key.get(String.class, TheChosenOne.class), () -> anotherString)
 		);
 		assertEquals(
 			"theChosenString should be obtainable by @TheChosenOne anonymous instance",
 			theChosenString,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 					Key.get(String.class, () -> TheChosenOne.class), () -> anotherString)
 		);
 		final TheChosenOne theChosenOneReflectiveAnnotation =
@@ -161,19 +185,19 @@ public class InjectionContextTests {
 		assertEquals(
 			"theChosenString should be obtainable by @TheChosenOne reflective instance",
 			theChosenString,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 				Key.get(String.class, theChosenOneReflectiveAnnotation), () -> anotherString)
 		);
 		assertEquals(
 			"theChosenNumber should be obtainable by @TheChosenOne type",
 			theChosenNumber,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 					Key.get(Integer.class, TheChosenOne.class), () -> anotherNumber)
 		);
 		assertNotEquals(
 			"nonSerializableObject should NOT (de)serialize",
 			nonSerializableObject.name,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 				Key.get(NonSerializableNamedObject.class),
 				() -> new NonSerializableNamedObject(anotherString)
 			).name
@@ -181,37 +205,37 @@ public class InjectionContextTests {
 		assertEquals(
 			"listOfInts should (de)serialize and have the same size",
 			listOfInts.size(),
-			deserialized.produceIfAbsent(Key.get(listType), List::of).size()
+			deserializedCtx.produceIfAbsent(Key.get(listType), List::of).size()
 		);
 		assertEquals(
 			"listOfInts should (de)serialize and have the same content",
 			listOfInts.get(0),
-			deserialized.produceIfAbsent(Key.get(listType), List::of).get(0)
+			deserializedCtx.produceIfAbsent(Key.get(listType), List::of).get(0)
 		);
 		assertEquals(
 			"arrayOfInts should (de)serialize and have the same size",
 			arrayOfInts.length,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 					Key.get(arrayType), () -> new Integer[arrayOfInts.length + 1]).length
 		);
 		assertEquals(
 			"arrayOfInts should (de)serialize and have the same content",
 			arrayOfInts[0],
-			deserialized.produceIfAbsent(Key.get(arrayType), () -> new Integer[1])[0]
+			deserializedCtx.produceIfAbsent(Key.get(arrayType), () -> new Integer[1])[0]
 		);
 		assertSame(
 			"deserialized name of serializableObject and namedString should be the same object",
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 				Key.get(SerializableNamedObject.class),
 				() -> new SerializableNamedObject(anotherString)
 			).name,
-			deserialized.produceIfAbsent(
+			deserializedCtx.produceIfAbsent(
 				Key.get(String.class, Names.named(STRING_NAME)),
 				() -> "yetAnotherString"
 			)
 		);
 		assertNull("a Key bound to null should retain null",
-				deserialized.produceIfAbsent(Key.get(Long.class), () -> 666L));
+				deserializedCtx.produceIfAbsent(Key.get(Long.class), () -> 666L));
 	}
 
 	@Test
