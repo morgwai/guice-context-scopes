@@ -87,8 +87,8 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 
 		@Override public String toString() {
-			return "ScopedProvider { scope=\"" + name + "\", key=" + key + ", producer=" + producer
-					+ " }";
+			return "ScopedProvider { scope = \"" + name + "\", key = " + key + ", producer = "
+					+ producer + " }";
 		}
 	}
 
@@ -109,6 +109,6 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 	@Override
 	public String toString() {
-		return name;
+		return "ContextScope { name = \"" + name + "\" }";
 	}
 }
