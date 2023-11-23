@@ -62,7 +62,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * possible {@link ContextTracker}s for use as an argument for this method.</p>
 	 */
 	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
-		if (trackers.size() == 1) {  // optimize for most common tracker count
+		if (trackers.size() == 1) {  // optimize for the most common tracker count
 			final var ctx = trackers.get(0).getCurrentContext();
 			return ctx != null ? List.of(ctx) : List.of();
 		}
