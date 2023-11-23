@@ -195,7 +195,7 @@ public class InjectionContextTests {
 		) {
 			deserializedCtx = (TestContext) serializedObjects.readObject();
 		}
-		if (checkIdempotence) ctx.restoreAfterDeserialization();
+		if (checkIdempotence) deserializedCtx.restoreAfterDeserialization();
 
 		assertNotEquals(
 			"nonSerializableObject should NOT (de)serialize",
