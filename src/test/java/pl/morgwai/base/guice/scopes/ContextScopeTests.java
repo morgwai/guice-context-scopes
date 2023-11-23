@@ -17,24 +17,27 @@ public class ContextScopeTests {
 	final ContextScope<TestContext> scope = new ContextScope<>("testScope", tracker);
 
 	int sequence = 0;
-	final Provider<Integer> provider = () -> ++sequence;
+	final Provider<Integer> producer = () -> ++sequence;
 	final Key<Integer> key = Key.get(Integer.class);
 
 
 
 	@Test
 	public void testScoping() {
+		assertNotNull("toString() should not crash", scope.toString());
 		new TestContext(tracker).executeWithinSelf(
 			() -> {
-				final var scopedProvider = scope.scope(key, provider);
+				final var scopedProvider = scope.scope(key, producer);
+				assertNotNull("scopedProvider.toString() should not crash",
+						scopedProvider.toString());
 				final var scopedInt = scopedProvider.get();
-				assertSame("scoped provider should keep providing the same object in a given ctx",
+				assertSame("scopedProvider should keep providing the same object in a given ctx",
 						scopedInt, scopedProvider.get());
-				final var unscopedInt = provider.get();
-				assertNotEquals("unscoped provider should provide an object different than scoped",
+				final var unscopedInt = producer.get();
+				assertNotEquals("producer should provide an object different than scoped",
 						scopedInt, unscopedInt);
-				assertNotEquals("unscoped provider should provide a new object each time",
-						unscopedInt, provider.get());
+				assertNotEquals("producer should provide a new object each time",
+						unscopedInt, producer.get());
 			}
 		);
 	}
@@ -44,8 +47,8 @@ public class ContextScopeTests {
 	@Test
 	public void testOutOfCtxScopingThrows() {
 		try {
-			scope.scope(key, provider).get();
-			fail("scoping outside of any context should throw an OutOfScopeException");
+			scope.scope(key, producer).get();
+			fail("provisioning outside of any context should throw an OutOfScopeException");
 		} catch (OutOfScopeException expected) {}
 	}
 
@@ -55,11 +58,11 @@ public class ContextScopeTests {
 	public void testRemoveFromScope() {
 		new TestContext(tracker).executeWithinSelf(
 			() -> {
-				final var scopedProvider = scope.scope(key, provider);
+				final var scopedProvider = scope.scope(key, producer);
 				final var oldScopedInt = scopedProvider.get();
 				tracker.getCurrentContext().removeScopedObject(key);
 				final var newScopedInt = scopedProvider.get();
-				assertNotEquals("after removing, a scoped provider should provide a new object",
+				assertNotEquals("after removing, scopedProvider should provide a new object",
 						oldScopedInt, newScopedInt);
 				assertSame("the new scoped object should remain the same on subsequent calls",
 						newScopedInt, scopedProvider.get());
