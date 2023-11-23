@@ -117,6 +117,22 @@ public class TrackableContextTests {
 
 
 
+	@Test
+	public void testSetTracker() {
+		final var ctx = new TestContext1(null);
+		ctx.setTracker(tracker1);
+		try {
+			ctx.setTracker(tracker1);
+			fail("resetting tracker should throw an IllegalStateException");
+		} catch (IllegalStateException expected) {}
+		try {
+			ctx1.setTracker(tracker1);
+			fail("resetting tracker should throw an IllegalStateException");
+		} catch (IllegalStateException expected) {}
+	}
+
+
+
 	static class TestContext1 extends TrackableContext<TestContext1> {
 		TestContext1(ContextTracker<TestContext1> tracker) { super(tracker); }
 	}
