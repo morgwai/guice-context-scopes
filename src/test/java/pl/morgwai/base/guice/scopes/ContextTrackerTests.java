@@ -117,7 +117,7 @@ public class ContextTrackerTests {
 		ctx3.executeWithinSelf(
 			() -> {
 				assertTrue("there should be no active ctxs",
-						getActiveContexts(List.of()).isEmpty());
+						getActiveContexts(List.of(tracker1)).isEmpty());
 			}
 		);
 	}
