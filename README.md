@@ -66,11 +66,13 @@ Deriving libs should provide implementations of `ExecutorService` that fully aut
 ```java
 class MyContextTrackingExecutor extends ThreadPoolExecutor {
 
-    ContextBinder ctxBinder;
+    final ContextBinder ctxBinder;
 
     @Override public void execute(Runnable task) {
         super.execute(ctxBinder.bindToContext(task));
     }
+
+    // constructors here...
 }
 ```
 See the [package level javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/package-summary.html) for full code organization guidelines for deriving libs.
