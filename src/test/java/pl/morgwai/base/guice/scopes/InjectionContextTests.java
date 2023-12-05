@@ -64,6 +64,60 @@ public class InjectionContextTests {
 
 
 
+	static TestContext serialize(TestContext ctx) throws IOException, ClassNotFoundException {
+		final var serializedBytesOutput = new ByteArrayOutputStream(500);
+		try (
+			serializedBytesOutput;
+			final var serializedObjects = new ObjectOutputStream(serializedBytesOutput);
+		) {
+			serializedObjects.writeObject(ctx);
+		}
+		try (
+			final var serializedBytesInput =
+					new ByteArrayInputStream(serializedBytesOutput.toByteArray());
+			final var serializedObjects = new ObjectInputStream(serializedBytesInput);
+		) {
+			return  (TestContext) serializedObjects.readObject();
+		}
+	}
+
+
+
+	@Test
+	public void testDoubleSerializationWithStoringInBetween()
+			throws IOException, ClassNotFoundException {
+		final var scopedString = "scopedString";
+		ctx.produceIfAbsent(Key.get(Integer.class), () -> 666);
+		ctx.prepareForSerialization();
+		ctx.produceIfAbsent(Key.get(String.class), () -> scopedString);
+		final var deserializedCtx = serialize(ctx);
+		assertEquals(
+			"ctx should be re-prepared after storing a new object",
+			scopedString,
+			deserializedCtx.produceIfAbsent(Key.get(String.class), () -> "anotherString")
+		);
+	}
+
+
+
+	@Test
+	public void testDoubleSerializationWithRemovingInBetween()
+		throws IOException, ClassNotFoundException {
+		final var scopedString = "scopedString";
+		ctx.produceIfAbsent(Key.get(Integer.class), () -> 666);
+		ctx.produceIfAbsent(Key.get(String.class), () -> scopedString);
+		ctx.prepareForSerialization();
+		ctx.removeScopedObject(Key.get(String.class));
+		final var deserializedCtx = serialize(ctx);
+		assertNotEquals(
+			"ctx should be re-prepared after removing a scoped object",
+			scopedString,
+			deserializedCtx.produceIfAbsent(Key.get(String.class), () -> "anotherString")
+		);
+	}
+
+
+
 	public static class SerializableNamedObject implements Serializable {
 
 		final String name;
@@ -180,21 +234,7 @@ public class InjectionContextTests {
 			objectWithRefToNonSerializable3Key, () -> objectWithRefToNonSerializable3);
 
 		if (checkIdempotence) ctx.prepareForSerialization();
-		final var serializedBytesOutput = new ByteArrayOutputStream(500);
-		try (
-			serializedBytesOutput;
-			final var serializedObjects = new ObjectOutputStream(serializedBytesOutput);
-		) {
-			serializedObjects.writeObject(ctx);
-		}
-		final TestContext deserializedCtx;
-		try (
-			final var serializedBytesInput =
-					new ByteArrayInputStream(serializedBytesOutput.toByteArray());
-			final var serializedObjects = new ObjectInputStream(serializedBytesInput);
-		) {
-			deserializedCtx = (TestContext) serializedObjects.readObject();
-		}
+		final var deserializedCtx = serialize(ctx);
 		if (checkIdempotence) deserializedCtx.restoreAfterDeserialization();
 
 		assertNotEquals(

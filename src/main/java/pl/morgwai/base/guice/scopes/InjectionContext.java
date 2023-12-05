@@ -58,7 +58,7 @@ public abstract class InjectionContext implements Serializable {
 	 * some of them from retaining the old stale instances.</p>
 	 */
 	public void removeScopedObject(Key<?> key) {
-		scopedObjects.remove(key);
+		if (scopedObjects.remove(key) != null) serializableScopedObjectEntries = null;
 	}
 
 
@@ -72,6 +72,7 @@ public abstract class InjectionContext implements Serializable {
 		final var stored = scopedObjects.computeIfAbsent(
 			key,
 			(ignored) -> {
+				serializableScopedObjectEntries = null;
 				final var fresh = producer.get();
 				return fresh == null ? NULL : fresh;
 			}
