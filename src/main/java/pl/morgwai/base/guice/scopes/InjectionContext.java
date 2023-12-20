@@ -30,13 +30,17 @@ import static pl.morgwai.base.guice.scopes.InjectionContext.Null.NULL;
  * Subclasses usually add properties and methods specific to their types, like
  * their call's arguments, a reference to their event objects etc.</p>
  * <p>
- * Multiple threads may run within the same {@code Context}, but the scoped objects that they access
- * must be thread-safe or access must be properly synchronized.</p>
+ * Multiple threads may run within the same {@code Context} and access or remove the same scoped
+ * objects as the state is backed by a {@link ConcurrentMap}. Nevertheless, concurrently accessed
+ * scoped objects themself must be thread-safe or accessing them must be properly synchronized in
+ * such case.</p>
  * <p>
  * During the standard {@link Serializable Java serialization}, non-serializable scoped objects will
  * be filtered out and the remaining part will be properly serialized.<br/>
  * Methods {@link #prepareForSerialization()} and {@link #restoreAfterDeserialization()} are
- * provided for other serialization mechanisms.</p>
+ * provided for other serialization mechanisms.<br/>
+ * The serialization is <b>not</b> thread-safe, so a {@code Context} that is being serialized must
+ * not be accessed by other threads in any way during the process.</p>
  */
 public abstract class InjectionContext implements Serializable {
 
@@ -132,6 +136,9 @@ public abstract class InjectionContext implements Serializable {
 	 * {@link #produceIfAbsent(Key, Provider)} and the actual serialization, so it is safe to call
 	 * it manually if it is unknown whether the standard Java serialization or some other mechanism
 	 * will be used.</p>
+	 * <p>
+	 * It must be ensured, that no other threads may access a given {@code Context} between the call
+	 * to this method and the actual serialization.</p>
 	 */
 	protected void prepareForSerialization() {
 		if (serializableScopedObjectEntries != null) return;
