@@ -62,7 +62,7 @@ public abstract class InjectionContext implements Serializable {
 	 * some of them from retaining the old stale instances.</p>
 	 */
 	public void removeScopedObject(Key<?> key) {
-		if (scopedObjects.remove(key) != null) serializableScopedObjectEntries = null;
+		scopedObjects.remove(key);
 	}
 
 
@@ -76,7 +76,6 @@ public abstract class InjectionContext implements Serializable {
 		final var stored = scopedObjects.computeIfAbsent(
 			key,
 			(ignored) -> {
-				serializableScopedObjectEntries = null;
 				final var fresh = producer.get();
 				return fresh == null ? NULL : fresh;
 			}
@@ -132,16 +131,14 @@ public abstract class InjectionContext implements Serializable {
 	 * This method is called automatically during the standard Java serialization. It may be called
 	 * manually if some other serialization mechanism is used.
 	 * <p>
-	 * This method is idempotent between the last invocation of
-	 * {@link #produceIfAbsent(Key, Provider)} and the actual serialization, so it is safe to call
-	 * it manually if it is unknown whether the standard Java serialization or some other mechanism
-	 * will be used.</p>
+	 * This method is idempotent between the most recent modification of this {@code Context}'s
+	 * state and the actual serialization, so it is safe to call it manually if it is unknown
+	 * whether the standard Java serialization or some other mechanism will be used.</p>
 	 * <p>
 	 * It must be ensured, that no other threads may access a given {@code Context} between the call
 	 * to this method and the actual serialization.</p>
 	 */
 	protected void prepareForSerialization() {
-		if (serializableScopedObjectEntries != null) return;
 		serializableScopedObjectEntries = new ArrayList<>(scopedObjects.size());
 		try (
 			final var buffer = new ByteArrayOutputStream(64);
@@ -187,9 +184,10 @@ public abstract class InjectionContext implements Serializable {
 	 * This method is called automatically during the standard Java deserialization. It may be
 	 * called manually if some other deserialization mechanism is used.
 	 * <p>
-	 * This method is idempotent between the actual deserialization and the first invocation of
-	 * {@link #produceIfAbsent(Key, Provider)}, so it is safe to call it manually if it is unknown
-	 * whether the standard Java deserialization or some other mechanism will be used.</p>
+	 * This method is idempotent between the actual deserialization and the next invocation of
+	 * {@link #prepareForSerialization()}, so it is safe to call it manually right after
+	 * deserialization if it is unknown whether the standard Java deserialization or some other
+	 * mechanism was used.</p>
 	 */
 	protected void restoreAfterDeserialization() throws ClassNotFoundException {
 		if (serializableScopedObjectEntries == null) return;

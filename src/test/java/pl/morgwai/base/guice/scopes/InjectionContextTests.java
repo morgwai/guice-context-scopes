@@ -102,7 +102,7 @@ public class InjectionContextTests {
 
 	@Test
 	public void testDoubleSerializationWithRemovingInBetween()
-		throws IOException, ClassNotFoundException {
+			throws IOException, ClassNotFoundException {
 		final var scopedString = "scopedString";
 		ctx.produceIfAbsent(Key.get(Integer.class), () -> 666);
 		ctx.produceIfAbsent(Key.get(String.class), () -> scopedString);
@@ -113,6 +113,37 @@ public class InjectionContextTests {
 			"ctx should be re-prepared after removing a scoped object",
 			scopedString,
 			deserializedCtx.produceIfAbsent(Key.get(String.class), () -> "anotherString")
+		);
+	}
+
+
+
+	public static class NonSerializableNamedObject {
+		final String name;
+		NonSerializableNamedObject(String name) { this.name = name; }
+		@Override public String toString() {
+			return "NonSerializableNamedObject { name=\"" + name + "\" }";
+		}
+	}
+
+
+
+	@Test
+	public void testDoubleSerializationWithModifyingScopedObjectInBetween()
+			throws IOException, ClassNotFoundException {
+		final var listKey = Key.get(new TypeLiteral<List<Object>>() {});
+		final var scopedList = new ArrayList<Object>(2);
+		final var nonSerializableObject = new NonSerializableNamedObject("whatever");
+		scopedList.add(nonSerializableObject);
+		ctx.produceIfAbsent(listKey, () -> scopedList);
+		ctx.prepareForSerialization();
+		scopedList.remove(nonSerializableObject);
+		final var deserializedCtx = serialize(ctx);
+		final var anotherList = new ArrayList<Object>(2);
+		assertNotSame(
+			"scopedList should be serialized after removing nonSerializableObject from it",
+			anotherList,
+			deserializedCtx.produceIfAbsent(listKey, () -> anotherList)
 		);
 	}
 
@@ -137,16 +168,6 @@ public class InjectionContextTests {
 		}
 
 		private static final long serialVersionUID = -750527283388014106L;
-	}
-
-
-
-	public static class NonSerializableNamedObject {
-		final String name;
-		NonSerializableNamedObject(String name) { this.name = name; }
-		@Override public String toString() {
-			return "NonSerializableNamedObject { name=\"" + name + "\" }";
-		}
 	}
 
 
