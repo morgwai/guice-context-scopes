@@ -28,8 +28,9 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 
 
 	/**
-	 * Returns the current {@code Context} of type {@code ContextT}. If {@code ContextT} is not
-	 * currently active for the calling {@code Thread}, then {@code null}.
+	 * Returns the current {@code Context} of type {@code ContextT}.
+	 * If {@code ContextT} is not currently active for the calling {@code Thread}, then
+	 * {@code null}.
 	 * @see #getActiveContexts(List)
 	 */
 	public ContextT getCurrentContext() {
@@ -52,11 +53,12 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 
 	/**
 	 * Retrieves from {@code trackers} all {@link TrackableContext}s active (current within their
-	 * class) for the calling {@code  Thread}. The returned {@code List} can be then used as an
-	 * argument to {@link TrackableContext#executeWithinAll(List, Runnable)} to transfer the
-	 * {@code Contexts} when switching to another {@code  Thread}. All {@link InducedContextScope
-	 * Contexts induced} by any of the returned {@link TrackableContext}s will also "follow"
-	 * automatically their inducers to the new {@code Thread}.
+	 * class) for the calling {@code  Thread}.
+	 * The returned {@code List} can be then used as an argument to
+	 * {@link TrackableContext#executeWithinAll(List, Runnable)} to transfer the {@code Contexts}
+	 * when switching to another {@code  Thread}. All {@link InducedContextScope Contexts induced}
+	 * by any of the returned {@link TrackableContext}s will also "follow" automatically their
+	 * inducers to the new {@code Thread}.
 	 * <p>
 	 * Deriving libs should bind {@code List<ContextTracker<?>>} to an instance containing all
 	 * possible {@link ContextTracker}s for use as an argument for this method.</p>

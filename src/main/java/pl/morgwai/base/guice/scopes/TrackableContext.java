@@ -31,8 +31,8 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 	/**
 	 * Asks the associated {@link ContextTracker} to set this {@code Context} as the current one for
-	 * the calling {@code Thread} and executes {@code task} synchronously. Afterwards clears the
-	 * current context.
+	 * the calling {@code Thread} and executes {@code task} synchronously.
+	 * Afterwards clears the current context.
 	 * @see #executeWithinAll(List, Callable)
 	 */
 	public <T> T executeWithinSelf(Callable<T> task) throws Exception {
@@ -58,8 +58,9 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 	/**
 	 * Executes {@code task} synchronously on the current {@code Thread} within all
-	 * {@code contexts}. Used to transfer {@code Contexts} saved with
-	 * {@link ContextTracker#getActiveContexts(List)} after a switch to another thread.
+	 * {@code contexts}.
+	 * Used to transfer {@code Contexts} saved with {@link ContextTracker#getActiveContexts(List)}
+	 * after a switch to another thread.
 	 */
 	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> task)
 			throws Exception {
@@ -127,8 +128,10 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 	/**
-	 * Sets the {@link ContextTracker} that will be used for tracking this {@code Context}.
-	 * This method should be called after each deserialization of this {@code Context}.
+	 * Sets a {@link ContextTracker} that will be used for tracking this {@code Context}.
+	 * This method must be called once immediately after each deserialization of this
+	 * {@code Context}.
+	 * @throws IllegalStateException if a tracker for this {@code Context} has already been set.
 	 */
 	protected void setTracker(ContextTracker<ContextT> tracker) {
 		if (this.tracker != null) throw new IllegalStateException("tracker already set");

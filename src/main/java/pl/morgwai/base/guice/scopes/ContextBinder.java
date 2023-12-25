@@ -9,7 +9,8 @@ import java.util.function.*;
 
 /**
  * Binds closures to {@link InjectionContext Contexts} that were active at the time of a given
- * binding. This can be used to transfer {@code Contexts} when passing callbacks to async functions:
+ * binding.
+ * This can be used to transfer {@code Contexts} when passing callbacks to async functions:
  * <pre>
  * class MyComponent {
  *

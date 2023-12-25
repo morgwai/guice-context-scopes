@@ -95,10 +95,10 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 
 	/**
-	 * Returns the {@code Context} from which scoped objects should be obtained. Called during each
-	 * {@link ScopedProvider#get() provisioning}. By default returns the current {@code Context}
-	 * obtained directly from {@link #tracker}. May be overridden for example to return some
-	 * {@code Context} induced by the one from the {@link #tracker}.
+	 * Returns the {@code Context} from which scoped objects should be obtained.
+	 * Called during each {@link ScopedProvider#get() provisioning}. By default returns the current
+	 * {@code Context} obtained directly from {@link #tracker}. May be overridden for example to
+	 * return some {@code Context} induced by the one from the {@link #tracker}.
 	 * @see InducedContextScope
 	 */
 	protected InjectionContext getContext() {

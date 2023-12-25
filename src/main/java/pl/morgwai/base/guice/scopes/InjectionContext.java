@@ -17,11 +17,12 @@ import static pl.morgwai.base.guice.scopes.InjectionContext.Null.NULL;
 /**
  * Stores objects {@link com.google.inject.Scope scoped} to the context of some
  * processing/call/request/session, such as an RPC, a servlet request processing, a session
- * combining several calls etc. Each concrete subclass corresponds to a specific type of events and
- * each instance corresponds to a single such event. For example an instance of
- * {@code HttpRequestContext} may correspond to the processing of a single HTTP request. Creation of
- * instances must be hooked at the beginning of a given processing: for example in Java Servlet
- * environment, a {@code HttpRequestContext} may be created in a {@code Filter}.
+ * combining several calls etc.
+ * Each concrete subclass corresponds to a specific type of events and each instance corresponds to
+ * a single such event. For example an instance of {@code HttpRequestContext} may correspond to the
+ * processing of a single HTTP request. Creation of instances must be hooked at the beginning of a
+ * given processing: for example in Java Servlet environment, a {@code HttpRequestContext} may be
+ * created in a {@code Filter}.
  * <p>
  * Note: most {@code Context} classes should rather extend {@link TrackableContext} subclass instead
  * of this one. The main exception are {@code Context} types that are
@@ -51,10 +52,11 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Removes the object given by {@code key} from this {@code Context}. This forces production of
-	 * a new instance during the {@link #produceIfAbsent(Key, Provider) next provisioning} within
-	 * the {@link ContextScope Scope of this Context}. This is useful if the currently stored
-	 * instance is not usable anymore (for example a timed-out connection, expired token, etc).<br>
+	 * Removes the object given by {@code key} from this {@code Context}.
+	 * This forces production of a new instance during the {@link #produceIfAbsent(Key, Provider)
+	 * next provisioning} within the {@link ContextScope Scope of this Context}. This is useful if
+	 * the currently stored instance is not usable anymore (for example a timed-out connection,
+	 * expired token, etc).<br>
 	 * If there's no object stored under {@code key} in this (@code Context}, this method has no
 	 * effect.
 	 * <p>
@@ -68,9 +70,10 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Provides the object given by {@code key}. If there already is an instance scoped to this
-	 * {@code Context}, it is returned immediately. Otherwise, a new instance is obtained
-	 * from {@code producer} and stored for subsequent calls.
+	 * Provides the scoped object given by {@code key}.
+	 * If there already is an instance scoped to this {@code Context}, it is returned immediately.
+	 * Otherwise, a new instance is first obtained from {@code producer}, stored for subsequent
+	 * calls and returned.
 	 */
 	protected <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
 		final var stored = scopedObjects.computeIfAbsent(
