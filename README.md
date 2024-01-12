@@ -1,11 +1,11 @@
 # Guice Context Scopes
 
 Classes for building Guice `Scope`s, that get automatically transferred when dispatching work to other threads.<br/>
-<br/>
-**latest release: [9.2](https://search.maven.org/artifact/pl.morgwai.base/guice-context-scopes/9.2/jar)**
-([javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/9.2))
+`<br/>
+**latest release: [9.3](https://search.maven.org/artifact/pl.morgwai.base/guice-context-scopes/9.3/jar)**
+([javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/9.3))
 
-
+`
 ## OVERVIEW
 
 Asynchronous servers (such as gRPC or asynchronous `Servlet`s) often need to switch between various threads. This requires extra care to not lose a given current Guice `Scope`: it needs to be preserved as long as we are in the  _context_  of a given request/call/session, regardless of thread switching.<br/>
