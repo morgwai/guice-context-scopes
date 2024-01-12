@@ -142,7 +142,8 @@ public abstract class InjectionContext implements Serializable {
 	 * to this method and the actual serialization.</p>
 	 */
 	protected void prepareForSerialization() {
-		serializableScopedObjectEntries = new ArrayList<>(scopedObjects.size());
+		final var serializableScopedObjectEntries =
+				new ArrayList<SerializableScopedObjectEntry>(scopedObjects.size());
 		try (
 			final var buffer = new ByteArrayOutputStream(64);
 			final var objectOutputStream = new ObjectOutputStream(buffer);
@@ -170,6 +171,7 @@ public abstract class InjectionContext implements Serializable {
 				));
 			}
 		} catch (IOException ignored) {}
+		this.serializableScopedObjectEntries = serializableScopedObjectEntries;
 	}
 
 
