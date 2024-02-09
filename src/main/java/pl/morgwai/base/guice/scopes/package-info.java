@@ -1,4 +1,4 @@
-// Copyright (c) Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
+// Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 /**
  * Classes for building Guice {@link com.google.inject.Scope}s, that get automatically transferred
  * when dispatching work to other threads.
