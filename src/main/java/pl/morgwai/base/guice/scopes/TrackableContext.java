@@ -46,7 +46,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	/** Version of {@link #executeWithinSelf(Callable)} that takes a {@link Runnable} param. */
 	public void executeWithinSelf(Runnable task) {
 		try {
-			executeWithinSelf(new CallableRunnable(task));
+			executeWithinSelf(new CallableAdapter(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception neverHappens) {
@@ -95,7 +95,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	/** Version of {@link #executeWithinAll(List, Callable)} that takes a {@link Runnable} param. */
 	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
 		try {
-			executeWithinAll(contexts, new CallableRunnable(task));
+			executeWithinAll(contexts, new CallableAdapter(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception neverHappens) {
@@ -105,11 +105,11 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	static class CallableRunnable implements Callable<Void> {
+	static class CallableAdapter implements Callable<Void> {
 
 		final Runnable wrappedTask;
 
-		protected CallableRunnable(Runnable taskToWrap) {
+		protected CallableAdapter(Runnable taskToWrap) {
 			this.wrappedTask = taskToWrap;
 		}
 
