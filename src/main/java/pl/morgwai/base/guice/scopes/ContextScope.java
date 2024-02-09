@@ -74,12 +74,10 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 			try {
 				return getContext().produceIfAbsent(key, producer);
 			} catch (NullPointerException e) {
-				// result of a bug that will be fixed in development phase: don't check manually
-				// in production each time.
 				throw new OutOfScopeException("no Context of Scope \"" + name + "\" in Thread \""
 						+ Thread.currentThread().getName() + "\". See the javadoc for "
 						+ "ContextScope.ScopedProvider.get() -> https://javadoc.io/doc/pl.morgwai."
-						+  "base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/"
+						+ "base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/"
 						+ "ContextScope.ScopedProvider.html#get()");
 			}
 		}

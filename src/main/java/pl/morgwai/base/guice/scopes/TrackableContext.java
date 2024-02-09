@@ -43,7 +43,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	/** Version of {@link #executeWithinSelf(Callable)} that takes a {@link Runnable} param. */
+	/** Variant of {@link #executeWithinSelf(Callable)} for {@link Runnable} {@code task}s. */
 	public void executeWithinSelf(Runnable task) {
 		try {
 			executeWithinSelf(new CallableAdapter(task));
@@ -60,7 +60,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	 * Executes {@code task} synchronously on the current {@code Thread} within all
 	 * {@code contexts}.
 	 * Used to transfer {@code Contexts} saved with {@link ContextTracker#getActiveContexts(List)}
-	 * after a switch to another thread.
+	 * after dispatching to another {@code Thread}.
 	 */
 	public static <T> T executeWithinAll(List<TrackableContext<?>> contexts, Callable<T> task)
 			throws Exception {
@@ -92,7 +92,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	/** Version of {@link #executeWithinAll(List, Callable)} that takes a {@link Runnable} param. */
+	/** Variant of {@link #executeWithinAll(List, Callable)} for {@link Runnable} {@code task}s. */
 	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
 		try {
 			executeWithinAll(contexts, new CallableAdapter(task));

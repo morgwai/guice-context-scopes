@@ -39,7 +39,12 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 
 
 
-	/** For internal use by {@link TrackableContext#executeWithinSelf(Callable)}. */
+	/**
+	 * Sets {@code ctx} as the current {@code Context} for the calling {@code Thread} and executes
+	 * {@code task} synchronously. Afterwards clears the current context.
+	 * <p>
+	 * For internal use by {@link TrackableContext#executeWithinSelf(Callable)}.</p>
+	 */
 	<T> T trackWhileExecuting(ContextT ctx, Callable<T> task) throws Exception {
 		currentContext.set(ctx);
 		try {
@@ -53,7 +58,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 
 	/**
 	 * Retrieves from {@code trackers} all {@link TrackableContext}s active (current within their
-	 * class) for the calling {@code  Thread}.
+	 * type) for the calling {@code  Thread}.
 	 * The returned {@code List} can be then used as an argument to
 	 * {@link TrackableContext#executeWithinAll(List, Runnable)} to transfer the {@code Contexts}
 	 * when switching to another {@code  Thread}. All {@link InducedContextScope Contexts induced}

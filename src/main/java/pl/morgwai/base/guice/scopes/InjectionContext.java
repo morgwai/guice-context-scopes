@@ -134,12 +134,12 @@ public abstract class InjectionContext implements Serializable {
 	 * This method is called automatically during the standard Java serialization. It may be called
 	 * manually if some other serialization mechanism is used.
 	 * <p>
-	 * This method is idempotent between the most recent modification of this {@code Context}'s
-	 * state and the actual serialization, so it is safe to call it manually if it is unknown
-	 * whether the standard Java serialization or some other mechanism will be used.</p>
+	 * This method is safe to call several times between the most recent modification of this
+	 * {@code Context}'s state and the actual serialization in case it is unknown whether the
+	 * standard Java serialization or some other mechanism will be used.</p>
 	 * <p>
-	 * It must be ensured, that no other threads may access a given {@code Context} between the call
-	 * to this method and the actual serialization.</p>
+	 * It must be ensured, that no other {@code Threads} may access a given {@code Context} between
+	 * the call to this method and the actual serialization.</p>
 	 */
 	protected void prepareForSerialization() {
 		final var serializableScopedObjectEntries =
@@ -189,10 +189,10 @@ public abstract class InjectionContext implements Serializable {
 	 * This method is called automatically during the standard Java deserialization. It may be
 	 * called manually if some other deserialization mechanism is used.
 	 * <p>
-	 * This method is idempotent between the actual deserialization and the next invocation of
-	 * {@link #prepareForSerialization()}, so it is safe to call it manually right after
-	 * deserialization if it is unknown whether the standard Java deserialization or some other
-	 * mechanism was used.</p>
+	 * This method is idempotent between the actual deserialization and the next modification of
+	 * this {@code Context}'s state or an invocation of {@link #prepareForSerialization()}, so it is
+	 * safe to call it manually right after deserialization if it is unknown whether the standard
+	 * Java deserialization or some other mechanism was used.</p>
 	 */
 	protected void restoreAfterDeserialization() throws ClassNotFoundException {
 		if (serializableScopedObjectEntries == null) return;

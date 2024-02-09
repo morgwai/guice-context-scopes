@@ -28,8 +28,8 @@ public class InducedContextScope<
 	 * @param inducedCtxRetriever retrieves the instance of {@code InducedContextT} that is induced
 	 *     by a given {@code BaseContextT} instance argument. For example an
 	 *     {@code inducedCtxRetriever} for {@code HttpSessionScope} should return the
-	 *     {@code Context} of the HTTP session to which the HTTP request given by an argument
-	 *     {@code HttpRequestContext} belongs to.
+	 *     {@code Context} of the HTTP session to which the HTTP request given by the param belongs
+	 *     to.
 	 */
 	public InducedContextScope(
 		String name,
