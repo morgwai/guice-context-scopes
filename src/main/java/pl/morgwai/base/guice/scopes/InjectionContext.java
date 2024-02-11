@@ -145,8 +145,8 @@ public abstract class InjectionContext implements Serializable {
 		final var serializableScopedObjectEntries =
 				new ArrayList<SerializableScopedObjectEntry>(scopedObjects.size());
 		try (
-			final var buffer = new ByteArrayOutputStream(64);
-			final var objectOutputStream = new ObjectOutputStream(buffer);
+			final var serializationTestBuffer = new ByteArrayOutputStream(64);
+			final var serializationTestStream = new ObjectOutputStream(serializationTestBuffer);
 		) {
 			for (var scopedObjectEntry: scopedObjects.entrySet()) {
 				final var key = scopedObjectEntry.getKey();
@@ -155,9 +155,9 @@ public abstract class InjectionContext implements Serializable {
 				// omit entries of non-Serializable objects
 				if ( !(scopedObject instanceof Serializable)) continue;
 
-				// verify that the object actually serializes
+				// test if the object actually serializes
 				try {
-					objectOutputStream.writeObject(scopedObject);
+					serializationTestStream.writeObject(scopedObject);
 				} catch (IOException e) {
 					continue;
 				}
