@@ -33,8 +33,7 @@ import static pl.morgwai.base.guice.scopes.InjectionContext.Null.NULL;
  * <p>
  * Multiple threads may run within the same {@code Context} and access or remove the same scoped
  * objects as the state is backed by a {@link ConcurrentMap}. Nevertheless, concurrently accessed
- * scoped objects themself must be thread-safe or accessing them must be properly synchronized in
- * such case.</p>
+ * scoped objects themself must be thread-safe or accessing them must be properly synchronized.</p>
  * <p>
  * During the standard {@link Serializable Java serialization}, non-serializable scoped objects will
  * be filtered out and the remaining part will be properly serialized.<br/>
@@ -53,11 +52,11 @@ public abstract class InjectionContext implements Serializable {
 
 	/**
 	 * Removes the object given by {@code key} from this {@code Context}.
-	 * This forces production of a new instance during the {@link #produceIfAbsent(Key, Provider)
-	 * next provisioning} within the {@link ContextScope Scope of this Context}. This is useful if
-	 * the currently stored instance is not usable anymore (for example a timed-out connection,
-	 * expired token, etc).<br>
-	 * If there's no object stored under {@code key} in this (@code Context}, this method has no
+	 * This forces production of a new instance during the next
+	 * {@link #produceIfAbsent(Key, Provider) provisioning} within the
+	 * {@link ContextScope Scope of this Context}. This is useful if the currently stored instance
+	 * is no longer usable (for example a timed-out connection, expired token, etc).<br/>
+	 * If there's no object stored under {@code key} in this {@code Context}, this method has no
 	 * effect.
 	 * <p>
 	 * <b>Note:</b> If multiple threads run within the same context, care must be taken to prevent
@@ -129,8 +128,8 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Stores {@link Serializable} entries from {@link #scopedObjects} into a fully
-	 * {@link Serializable} private {@code List}.
+	 * Picks {@link Serializable} objects scoped to this {@code Context} from its {@code transient}
+	 * state and stores them into a fully {@link Serializable} private {@code List} of entries.
 	 * This method is called automatically during the standard Java serialization. It may be called
 	 * manually if some other serialization mechanism is used.
 	 * <p>
@@ -184,7 +183,7 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Restores the state of {@link #scopedObjects} from the deserialized data from the private
+	 * Restores the state of this {@code Context} from the deserialized data in the private
 	 * {@code List} that was filled before serialization with {@link #prepareForSerialization()}.
 	 * This method is called automatically during the standard Java deserialization. It may be
 	 * called manually if some other deserialization mechanism is used.
