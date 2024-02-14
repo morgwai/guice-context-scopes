@@ -141,10 +141,10 @@ public abstract class InjectionContext implements Serializable {
 	 * the call to this method and the actual serialization.</p>
 	 */
 	protected void prepareForSerialization() {
+		if (serializationTestBuffer == null) serializationTestBuffer = new ByteArrayOutputStream();
 		final var serializableScopedObjectEntries =
 				new ArrayList<SerializableScopedObjectEntry>(scopedObjects.size());
 		try (
-			final var serializationTestBuffer = new ByteArrayOutputStream(64);
 			final var serializationTestStream = new ObjectOutputStream(serializationTestBuffer);
 		) {
 			for (var scopedObjectEntry: scopedObjects.entrySet()) {
@@ -169,9 +169,14 @@ public abstract class InjectionContext implements Serializable {
 					(Serializable) scopedObject
 				));
 			}
-		} catch (IOException ignored) {}
+		} catch (IOException ignored) {
+		} finally {
+			serializationTestBuffer.reset();  // reuse the buffer during the next call
+		}
 		this.serializableScopedObjectEntries = serializableScopedObjectEntries;
 	}
+
+	transient ByteArrayOutputStream serializationTestBuffer;
 
 
 
@@ -231,5 +236,5 @@ public abstract class InjectionContext implements Serializable {
 
 
 
-	private static final long serialVersionUID = -638657699306072517L;
+	private static final long serialVersionUID = 2497090317063335154L;
 }
