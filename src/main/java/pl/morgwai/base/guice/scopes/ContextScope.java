@@ -6,13 +6,18 @@ import com.google.inject.*;
 
 
 /**
- * Scopes objects to the {@code  ContextT} instance that is current at a given moment (obtained from
- * the associated {@link ContextTracker} by default).
- * A {@code  ContextScope} instance is associated with one particular type of contexts: a subclass
- * of {@link TrackableContext}, here denoted as {@code ContextT}. For example: a {@code Scope} of
- * {@code Contexts} of {@code HttpServletRequests}.
+ * Scopes objects to the instance of {@code  ContextT} current during a given
+ * {@link ScopedProvider#get() provisioning}.
+ * By default {@code ContextT} instances are {@link #getContext() obtained} directly from the
+ * associated {@link ContextTracker} passed via
+ * {@link #ContextScope(String, ContextTracker) the contructor}.
  * <p>
- * Instances should usually be created at app startup to be used in bindings in user
+ * A {@code  ContextScope} instance is associated with one particular subclass of
+ * {@link TrackableContext} (or of {@link InjectionContext} in case of {@link InducedContextScope}),
+ * here denoted as {@code ContextT}. For example: a {@code Scope} of {@code Contexts} of
+ * {@code HttpServletRequests}.</p>
+ * <p>
+ * Instances should usually be created at an app startup to be used in bindings in user
  * {@link com.google.inject.Module}s.</p>
  * @see pl.morgwai.base.guice.scopes code organization guidelines for deriving libs in the package
  *     docs.
@@ -93,10 +98,10 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 
 	/**
-	 * Returns the {@code Context} from which scoped objects should be obtained.
+	 * Returns the {@code Context} from which a scoped object should be obtained.
 	 * Called during each {@link ScopedProvider#get() provisioning}. By default returns the current
 	 * {@code Context} obtained directly from {@link #tracker}. May be overridden for example to
-	 * return some {@code Context} induced by the one from the {@link #tracker}.
+	 * return some {@code Context} induced by the one from {@link #tracker}.
 	 * @see InducedContextScope
 	 */
 	protected InjectionContext getContext() {

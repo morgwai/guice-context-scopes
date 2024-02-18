@@ -55,7 +55,7 @@ public abstract class InjectionContext implements Serializable {
 	 * This forces production of a new instance during the next
 	 * {@link #produceIfAbsent(Key, Provider) provisioning} within the
 	 * {@link ContextScope Scope of this Context}. This is useful if the currently stored instance
-	 * is no longer usable (for example a timed-out connection, expired token, etc).<br/>
+	 * is no longer usable (for example a broken connection, expired token, etc).<br/>
 	 * If there's no object stored under {@code key} in this {@code Context}, this method has no
 	 * effect.
 	 * <p>
@@ -69,10 +69,10 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Provides the scoped object given by {@code key}.
-	 * If there already is an instance scoped to this {@code Context}, it is returned immediately.
-	 * Otherwise, a new instance is first obtained from {@code producer}, stored for subsequent
-	 * calls and returned.
+	 * Provides an object scoped to this {@code Context} given by {@code key}.
+	 * If there is already an object scoped to this {@code Context} under {@code key}, it is
+	 * returned immediately. Otherwise, a new instance is first obtained from {@code producer},
+	 * stored for subsequent calls and then returned.
 	 */
 	protected <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
 		final var stored = scopedObjects.computeIfAbsent(
@@ -92,7 +92,7 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Filled with the {@link Serializable} part of {@link #scopedObjects} content right before
+	 * Filled with the {@link Serializable} part of {@link #scopedObjects} content right before a
 	 * serialization occurs.
 	 */
 	private ArrayList<SerializableScopedObjectEntry> serializableScopedObjectEntries;
@@ -130,8 +130,10 @@ public abstract class InjectionContext implements Serializable {
 	/**
 	 * Picks {@link Serializable} objects scoped to this {@code Context} from its {@code transient}
 	 * state and stores them into a fully {@link Serializable} private {@code List} of entries.
+	 * After a deserialization, the state can restored using {@link #restoreAfterDeserialization()}.
+	 * <p>
 	 * This method is called automatically during the standard Java serialization. It may be called
-	 * manually if some other serialization mechanism is used.
+	 * manually if some other serialization mechanism is used.</p>
 	 * <p>
 	 * This method is safe to call several times between the most recent modification of this
 	 * {@code Context}'s state and the actual serialization in case it is unknown whether the
@@ -189,9 +191,10 @@ public abstract class InjectionContext implements Serializable {
 
 	/**
 	 * Restores the state of this {@code Context} from the deserialized data in the private
-	 * {@code List} that was filled before serialization with {@link #prepareForSerialization()}.
+	 * {@code List} filled using {@link #prepareForSerialization()}.
+	 * <p>
 	 * This method is called automatically during the standard Java deserialization. It may be
-	 * called manually if some other deserialization mechanism is used.
+	 * called manually if some other deserialization mechanism is used.</p>
 	 * <p>
 	 * This method is idempotent between the actual deserialization and the next modification of
 	 * this {@code Context}'s state or an invocation of {@link #prepareForSerialization()}, so it is
