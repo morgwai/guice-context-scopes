@@ -40,8 +40,9 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 
 
 	/**
-	 * Sets {@code ctx} as the current {@code Context} for the calling {@code Thread} and executes
-	 * {@code task} synchronously. Afterwards clears the current context.
+	 * Sets {@code ctx} as {@link #currentContext the current Context} for the calling
+	 * {@code Thread} and executes {@code task} synchronously.
+	 * Afterwards clears {@link #currentContext}.
 	 * <p>
 	 * For internal use by {@link TrackableContext#executeWithinSelf(Callable)}.</p>
 	 */

@@ -7,10 +7,13 @@ import java.util.function.Function;
 
 /**
  * Scopes objects to the instance of {@code InducedContextT} that is <i>induced</i> by the current
- * at a given moment {@code BaseContextT} instance (obtained from the associated
- * {@link ContextTracker}).
- * For example, entering the context of an HTTP request induces entering the context of the HTTP
- * session, which this request belongs to.
+ * {@code BaseContextT} instance.
+ * For example, entering the {@code Context} of an {@code HttpServletRequest} induces entering the
+ * {@code Context} of the {@code HttpSession}, to which this {@code HttpServletRequest} belongs.
+ * <p>
+ * {@code BaseContextT} instances are {@link #getContext() obtained} during
+ * {@link ScopedProvider#get() provisioning} directly from the associated {@link ContextTracker}
+ * passed via {@link #InducedContextScope(String, ContextTracker, Function) the constructor}.</p>
  */
 public class InducedContextScope<
 			BaseContextT extends TrackableContext<? super BaseContextT>,
@@ -28,8 +31,8 @@ public class InducedContextScope<
 	 * @param inducedCtxRetriever retrieves the instance of {@code InducedContextT} that is induced
 	 *     by a given {@code BaseContextT} instance argument. For example an
 	 *     {@code inducedCtxRetriever} for {@code HttpSessionScope} should return the
-	 *     {@code Context} of the HTTP session to which the HTTP request given by the param belongs
-	 *     to.
+	 *     {@code Context} of the {@code HttpSession}, to which a given {@code HttpServletRequest}
+	 *     belongs.
 	 */
 	public InducedContextScope(
 		String name,
@@ -43,8 +46,10 @@ public class InducedContextScope<
 
 
 	/**
-	 * Returns the {@code InducedContextT} instance induced by a {@code BaseContextT} instance
-	 * obtained from {@link #tracker}.
+	 * Applies {@code inducedCtxRetriever} {@link Function} (passed via
+	 * {@link #InducedContextScope(String, ContextTracker, Function) the constructor}) to a
+	 * {@code BaseContextT} obtained from {@link #tracker}.
+	 * @return {@code InducedContextT} instance induced by the current {@code BaseContextT}.
 	 */
 	@Override
 	protected InducedContextT getContext() {

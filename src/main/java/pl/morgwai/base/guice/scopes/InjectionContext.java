@@ -16,13 +16,13 @@ import static pl.morgwai.base.guice.scopes.InjectionContext.Null.NULL;
 
 /**
  * Stores objects {@link com.google.inject.Scope scoped} to the context of some
- * processing/call/request/session, such as an RPC, a servlet request processing, a session
- * combining several calls etc.
+ * event/call/request/session, such as an RPC, a servlet request processing, a session combining
+ * several events etc.
  * Each concrete subclass corresponds to a specific type of events and each instance corresponds to
  * a single such event. For example an instance of {@code HttpRequestContext} may correspond to the
  * processing of a single HTTP request. Creation of instances must be hooked at the beginning of a
- * given processing: for example in Java Servlet environment, a {@code HttpRequestContext} may be
- * created in a {@code Filter}.
+ * given event: for example in Java Servlet environment, a {@code HttpRequestContext} may be created
+ * in a {@code Filter}.
  * <p>
  * Note: most {@code Context} classes should rather extend {@link TrackableContext} subclass instead
  * of this one. The main exception are {@code Context} types that are
@@ -31,9 +31,10 @@ import static pl.morgwai.base.guice.scopes.InjectionContext.Null.NULL;
  * Subclasses usually add properties and methods specific to their types, like
  * their call's arguments, a reference to their event objects etc.</p>
  * <p>
- * Multiple threads may run within the same {@code Context} and access or remove the same scoped
- * objects as the state is backed by a {@link ConcurrentMap}. Nevertheless, concurrently accessed
- * scoped objects themself must be thread-safe or accessing them must be properly synchronized.</p>
+ * Multiple {@code Threads} may run within the same {@code Context} and access or remove the same
+ * scoped objects as the state is backed by a {@link ConcurrentMap}. Nevertheless, concurrently
+ * accessed scoped objects themself must either be thread-safe or accessing them must be properly
+ * synchronized.</p>
  * <p>
  * During the standard {@link Serializable Java serialization}, non-serializable scoped objects will
  * be filtered out and the remaining part will be properly serialized.<br/>
@@ -51,10 +52,10 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Provides the scoped object given by {@code key}.
-	 * If there already is an instance scoped to this {@code Context}, it is returned immediately.
-	 * Otherwise, a new instance is first obtained from {@code producer}, stored for subsequent
-	 * calls and returned.
+	 * Provides an object scoped to this {@code Context} given by {@code key}.
+	 * If there is already an object scoped to this {@code Context} under {@code key}, it is
+	 * returned immediately. Otherwise, a new instance is first obtained from {@code producer},
+	 * stored for subsequent calls and then returned.
 	 */
 	protected <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
 		final var stored = scopedObjects.computeIfAbsent(
@@ -78,12 +79,12 @@ public abstract class InjectionContext implements Serializable {
 	 * This forces production of a new instance during the next
 	 * {@link #produceIfAbsent(Key, Provider) provisioning} within the
 	 * {@link ContextScope Scope of this Context}. This is useful if the currently stored instance
-	 * is no longer usable (for example a timed-out connection, expired token, etc).<br/>
+	 * is no longer usable (for example a broken connection, expired token, etc).<br/>
 	 * If there's no object stored under {@code key} in this {@code Context}, this method has no
 	 * effect.
 	 * <p>
-	 * <b>Note:</b> If multiple threads run within the same context, care must be taken to prevent
-	 * some of them from retaining the old stale instances.</p>
+	 * <b>Note:</b> If multiple threads run within the same {@code Context}, care must be taken to
+	 * prevent some of them from retaining the old stale instances.</p>
 	 */
 	public void removeScopedObject(Key<?> key) {
 		scopedObjects.remove(key);
@@ -92,17 +93,14 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Filled with the {@link Serializable} part of {@link #scopedObjects} content right before
-	 * serialization occurs.
+	 * Filled with the {@link Serializable} part of {@link #scopedObjects} content by
+	 * {@link #prepareForSerialization()} right before a serialization occurs.
 	 */
 	private ArrayList<SerializableScopedObjectEntry> serializableScopedObjectEntries;
 
 
 
-	/**
-	 * Data of {@link Key} and the corresponding object from {@link #scopedObjects} in a
-	 * {@link Serializable} form.
-	 */
+	/** An {@link java.util.Map.Entry} from {@link #scopedObjects} in a {@link Serializable} form.*/
 	static class SerializableScopedObjectEntry implements Serializable {
 
 		final Type type;
@@ -130,8 +128,10 @@ public abstract class InjectionContext implements Serializable {
 	/**
 	 * Picks {@link Serializable} objects scoped to this {@code Context} from its {@code transient}
 	 * state and stores them into a fully {@link Serializable} private {@code List} of entries.
+	 * After a deserialization, the state can restored using {@link #restoreAfterDeserialization()}.
+	 * <p>
 	 * This method is called automatically during the standard Java serialization. It may be called
-	 * manually if some other serialization mechanism is used.
+	 * manually if some other serialization mechanism is used.</p>
 	 * <p>
 	 * This method is safe to call several times between the most recent modification of this
 	 * {@code Context}'s state and the actual serialization in case it is unknown whether the
@@ -165,7 +165,7 @@ public abstract class InjectionContext implements Serializable {
 					(Serializable) scopedObject
 				));
 			}
-		} catch (IOException ignored) {
+		} catch (IOException ignored) {  // excp in serializationTestStream.close() is harmless
 		} finally {
 			serializationTestBuffer.reset();  // reuse the buffer during the next call
 		}
@@ -185,9 +185,10 @@ public abstract class InjectionContext implements Serializable {
 
 	/**
 	 * Restores the state of this {@code Context} from the deserialized data in the private
-	 * {@code List} that was filled before serialization with {@link #prepareForSerialization()}.
+	 * {@code List} filled using {@link #prepareForSerialization()}.
+	 * <p>
 	 * This method is called automatically during the standard Java deserialization. It may be
-	 * called manually if some other deserialization mechanism is used.
+	 * called manually if some other deserialization mechanism is used.</p>
 	 * <p>
 	 * This method is idempotent between the actual deserialization and the next modification of
 	 * this {@code Context}'s state or an invocation of {@link #prepareForSerialization()}, so it is

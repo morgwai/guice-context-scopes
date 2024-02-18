@@ -8,9 +8,9 @@ import java.util.logging.Logger;
 
 
 /**
- * An {@link InjectionContext} that can {@link #executeWithinSelf(Runnable) execute tasks within
- * itself}, so that it can be tracked across {@code Threads} using its associated
- * {@link ContextTracker}.
+ * An {@link InjectionContext} that can
+ * {@link #executeWithinSelf(Callable) execute tasks within itself}, so that it can be tracked
+ * across {@code Threads} using its associated {@link ContextTracker}.
  * <p>
  * Subclasses must use themselves as {@code ContextT} type argument.</p>
  */
