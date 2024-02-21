@@ -51,6 +51,29 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
+	 * Provides the scoped object given by {@code key}.
+	 * If there already is an instance scoped to this {@code Context}, it is returned immediately.
+	 * Otherwise, a new instance is first obtained from {@code producer}, stored for subsequent
+	 * calls and returned.
+	 */
+	protected <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
+		final var stored = scopedObjects.computeIfAbsent(
+			key,
+			(ignored) -> {
+				final T fresh = producer.get();
+				return fresh == null ? NULL : fresh;
+			}
+		);
+		@SuppressWarnings("unchecked")
+		final T result = stored == NULL ? null : (T) stored;
+		return result;
+	}
+
+	enum Null { NULL }
+
+
+
+	/**
 	 * Removes the object given by {@code key} from this {@code Context}.
 	 * This forces production of a new instance during the next
 	 * {@link #produceIfAbsent(Key, Provider) provisioning} within the
@@ -65,29 +88,6 @@ public abstract class InjectionContext implements Serializable {
 	public void removeScopedObject(Key<?> key) {
 		scopedObjects.remove(key);
 	}
-
-
-
-	/**
-	 * Provides the scoped object given by {@code key}.
-	 * If there already is an instance scoped to this {@code Context}, it is returned immediately.
-	 * Otherwise, a new instance is first obtained from {@code producer}, stored for subsequent
-	 * calls and returned.
-	 */
-	protected <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
-		final var stored = scopedObjects.computeIfAbsent(
-			key,
-			(ignored) -> {
-				final var fresh = producer.get();
-				return fresh == null ? NULL : fresh;
-			}
-		);
-		@SuppressWarnings("unchecked")
-		final var result = (T) (stored == NULL ? null : stored);
-		return result;
-	}
-
-	enum Null { NULL };
 
 
 
@@ -148,20 +148,16 @@ public abstract class InjectionContext implements Serializable {
 			final var serializationTestStream = new ObjectOutputStream(serializationTestBuffer);
 		) {
 			for (var scopedObjectEntry: scopedObjects.entrySet()) {
-				final var key = scopedObjectEntry.getKey();
 				final var scopedObject = scopedObjectEntry.getValue();
-
-				// omit entries of non-Serializable objects
-				if ( !(scopedObject instanceof Serializable)) continue;
-
-				// test if the object actually serializes
-				try {
+				if ( !(scopedObject instanceof Serializable)) continue;  // omit non-Serializable
+				try {  // test if the object actually serializes
 					serializationTestStream.writeObject(scopedObject);
 				} catch (IOException e) {
 					continue;
 				}
 
 				// add SerializableScopedObjectEntry for the given scopedObjectEntry
+				final var key = scopedObjectEntry.getKey();
 				serializableScopedObjectEntries.add(new SerializableScopedObjectEntry(
 					key.getTypeLiteral().getType(),
 					key.getAnnotationType() != null ? key.getAnnotationType().getName() : null,
@@ -210,20 +206,18 @@ public abstract class InjectionContext implements Serializable {
 	static Key<?> constructKey(SerializableScopedObjectEntry deserializedEntry)
 			throws ClassNotFoundException {
 		final var type = deserializedEntry.type;
-		final var annotationTypeName = deserializedEntry.annotationTypeName;
 		final var annotation = deserializedEntry.annotation;
-		final Key<?> key;
-		if (annotationTypeName != null && annotation == null) {
+		if (annotation != null) return Key.get(type, annotation);
+
+		final var annotationTypeName = deserializedEntry.annotationTypeName;
+		if (annotationTypeName != null) {
 			@SuppressWarnings("unchecked")
-			final var annotationClass =
-					(Class<? extends Annotation>) Class.forName(annotationTypeName);
-			key = Key.get(type, annotationClass);
-		} else if (annotation != null) {
-			key = Key.get(type, annotation);
-		} else {
-			key = Key.get(type);
+			final var annotationClass = (Class<? extends Annotation>)
+					Class.forName(annotationTypeName);
+			return  Key.get(type, annotationClass);
 		}
-		return key;
+
+		return Key.get(type);
 	}
 
 
