@@ -87,7 +87,7 @@ public abstract class InjectionContext implements Serializable {
 		return result;
 	}
 
-	enum Null { NULL };
+	enum Null { NULL }
 
 
 
@@ -213,20 +213,18 @@ public abstract class InjectionContext implements Serializable {
 	static Key<?> constructKey(SerializableScopedObjectEntry deserializedEntry)
 			throws ClassNotFoundException {
 		final var type = deserializedEntry.type;
-		final var annotationTypeName = deserializedEntry.annotationTypeName;
 		final var annotation = deserializedEntry.annotation;
-		final Key<?> key;
-		if (annotationTypeName != null && annotation == null) {
+		if (annotation != null) return Key.get(type, annotation);
+
+		final var annotationTypeName = deserializedEntry.annotationTypeName;
+		if (annotationTypeName != null) {
 			@SuppressWarnings("unchecked")
-			final var annotationClass =
-					(Class<? extends Annotation>) Class.forName(annotationTypeName);
-			key = Key.get(type, annotationClass);
-		} else if (annotation != null) {
-			key = Key.get(type, annotation);
-		} else {
-			key = Key.get(type);
+			final var annotationClass = (Class<? extends Annotation>)
+					Class.forName(annotationTypeName);
+			return  Key.get(type, annotationClass);
 		}
-		return key;
+
+		return Key.get(type);
 	}
 
 
