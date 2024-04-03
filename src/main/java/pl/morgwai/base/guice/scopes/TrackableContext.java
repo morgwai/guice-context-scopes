@@ -68,10 +68,13 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 			case 1:
 				return contexts.get(0).executeWithinSelf(task);
 			case 0:
-				final var warningMessage = "Thread \"" + Thread.currentThread().getName()
-						+ "\" is executing task " + task + " outside of any Context";
-				System.err.println(warningMessage);
-				log.warning(warningMessage);
+				final var noCtxWarning = String.format(
+					NO_CONTEXT_WARNING,
+					Thread.currentThread().getName(),
+					task.toString()
+				);
+				System.err.println(noCtxWarning);
+				log.warning(noCtxWarning);
 				return task.call();
 			default:
 				return executeWithinAll(
@@ -88,6 +91,8 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 		}
 	}
 
+	static final String NO_CONTEXT_WARNING =
+			"Thread \"%s\" is executing task %s outside of any Context";
 	static final Logger log = Logger.getLogger(TrackableContext.class.getName());
 
 
@@ -140,5 +145,5 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	private static final long serialVersionUID = -3945175048865839510L;
+	private static final long serialVersionUID = 5613154173540357269L;
 }
