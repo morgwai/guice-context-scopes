@@ -55,11 +55,16 @@ public class InjectionContextTests {
 
 
 	@Test
-	public void testStoringNulls() {
+	public void testStoringAndRemovingNulls() {
+		final Long NON_NULL = 666L;
+		final var key = Key.get(Long.class);
 		assertNull("scoping null should return null",
-				ctx.produceIfAbsent(Key.get(Long.class), () -> null));
+				ctx.produceIfAbsent(key, () -> null));
 		assertNull("a Key bound to null should retain null",
-				ctx.produceIfAbsent(Key.get(Long.class), () -> 666L));
+				ctx.produceIfAbsent(key, () -> NON_NULL));
+		ctx.removeScopedObject(Key.get(Long.class));
+		assertSame("null should be correctly removed and replaced by NON_NULL object",
+				NON_NULL, ctx.produceIfAbsent(key, () -> NON_NULL));
 	}
 
 
