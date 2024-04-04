@@ -23,6 +23,9 @@ public class InjectionContextTests {
 
 
 
+	static final Key<Integer> INT_KEY = Key.get(Integer.class);
+	static final Key<String> STRING_KEY = Key.get(String.class);
+
 	public static class TestContext extends InjectionContext {
 		private static final long serialVersionUID = 647980192537461531L;
 	}
@@ -35,19 +38,18 @@ public class InjectionContextTests {
 	public void testStoringAndRemovingObjects() {
 		final var producerCallCount = new AtomicInteger(0);
 		final Provider<String> producer = () -> String.valueOf(producerCallCount.incrementAndGet());
-		final var key = Key.get(String.class);
 
-		final var firstScopedString = ctx.produceIfAbsent(key, producer);
+		final var firstScopedString = ctx.produceIfAbsent(STRING_KEY, producer);
 		assertSame("firstScopedString should be stored in ctx for subsequent calls",
-				firstScopedString, ctx.produceIfAbsent(key, producer));
+				firstScopedString, ctx.produceIfAbsent(STRING_KEY, producer));
 		assertEquals("producer should be called only once",
 				1, producerCallCount.get());
 		assertEquals("sanity check",
 				"1", firstScopedString);
 
-		ctx.removeScopedObject(key);
+		ctx.removeScopedObject(STRING_KEY);
 		assertNotEquals("after removing firstScopedString, a new String should be produced",
-				firstScopedString, ctx.produceIfAbsent(key, producer));
+				firstScopedString, ctx.produceIfAbsent(STRING_KEY, producer));
 		assertEquals("after removing firstScopedString, producer should be called for the 2nd time",
 				2, producerCallCount.get());
 	}
@@ -56,15 +58,14 @@ public class InjectionContextTests {
 
 	@Test
 	public void testStoringAndRemovingNulls() {
-		final Long NON_NULL = 666L;
-		final var key = Key.get(Long.class);
+		final var NON_NULL = "nonNull";
 		assertNull("scoping null should return null",
-				ctx.produceIfAbsent(key, () -> null));
+				ctx.produceIfAbsent(STRING_KEY, () -> null));
 		assertNull("a Key bound to null should retain null",
-				ctx.produceIfAbsent(key, () -> NON_NULL));
-		ctx.removeScopedObject(Key.get(Long.class));
+				ctx.produceIfAbsent(STRING_KEY, () -> NON_NULL));
+		ctx.removeScopedObject(STRING_KEY);
 		assertSame("null should be correctly removed and replaced by NON_NULL object",
-				NON_NULL, ctx.produceIfAbsent(key, () -> NON_NULL));
+				NON_NULL, ctx.produceIfAbsent(STRING_KEY, () -> NON_NULL));
 	}
 
 
@@ -94,15 +95,12 @@ public class InjectionContextTests {
 	@Test
 	public void testDoubleSerializationWithStoringInBetween() throws IOException {
 		final var scopedString = "scopedString";
-		ctx.produceIfAbsent(Key.get(Integer.class), () -> 666);
+		ctx.produceIfAbsent(INT_KEY, () -> 666);
 		ctx.prepareForSerialization();
-		ctx.produceIfAbsent(Key.get(String.class), () -> scopedString);
+		ctx.produceIfAbsent(STRING_KEY, () -> scopedString);
 		final var deserializedCtx = serialize(ctx);
-		assertEquals(
-			"ctx should be re-prepared after storing a new object",
-			scopedString,
-			deserializedCtx.produceIfAbsent(Key.get(String.class), () -> "anotherString")
-		);
+		assertEquals("ctx should be re-prepared after storing a new object",
+				scopedString, deserializedCtx.produceIfAbsent(STRING_KEY, () -> "anotherString"));
 	}
 
 
@@ -110,16 +108,13 @@ public class InjectionContextTests {
 	@Test
 	public void testDoubleSerializationWithRemovingInBetween() throws IOException {
 		final var scopedString = "scopedString";
-		ctx.produceIfAbsent(Key.get(Integer.class), () -> 666);
-		ctx.produceIfAbsent(Key.get(String.class), () -> scopedString);
+		ctx.produceIfAbsent(INT_KEY, () -> 666);
+		ctx.produceIfAbsent(STRING_KEY, () -> scopedString);
 		ctx.prepareForSerialization();
-		ctx.removeScopedObject(Key.get(String.class));
+		ctx.removeScopedObject(STRING_KEY);
 		final var deserializedCtx = serialize(ctx);
-		assertNotEquals(
-			"ctx should be re-prepared after removing a scoped object",
-			scopedString,
-			deserializedCtx.produceIfAbsent(Key.get(String.class), () -> "anotherString")
-		);
+		assertNotEquals("ctx should be re-prepared after removing a scoped object",
+				scopedString, deserializedCtx.produceIfAbsent(STRING_KEY, () -> "anotherString"));
 	}
 
 
