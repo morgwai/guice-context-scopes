@@ -29,7 +29,7 @@ public class ContextTrackerTests {
 		assertNull("current context should be unset initially", tracker1.getCurrentContext());
 		ctx1.executeWithinSelf(
 			() -> assertSame("executing context should be set as the current",
-				ctx1, tracker1.getCurrentContext())
+					ctx1, tracker1.getCurrentContext())
 		);
 		assertNull("current context should be cleared at the end", tracker1.getCurrentContext());
 	}
@@ -43,12 +43,13 @@ public class ContextTrackerTests {
 		final var obtained = ctx1.executeWithinSelf(
 			() -> {
 				assertSame("executing context should be set as the current",
-					ctx1, tracker1.getCurrentContext());
+						ctx1, tracker1.getCurrentContext());
 				return result;
 			}
 		);
 		assertNull("current context should be cleared at the end", tracker1.getCurrentContext());
-		assertSame("obtained object should be the same as returned", result, obtained);
+		assertSame("obtained object should be the same as returned",
+				result, obtained);
 	}
 
 
@@ -56,16 +57,16 @@ public class ContextTrackerTests {
 	@Test
 	public void testTrackingAcrossThreads() throws Exception {
 		final AssertionError[] errorHolder = {null};
-		final Runnable ctxVerifyingTask =
-				() -> assertSame("executing context should be set as the current",
-						ctx1, tracker1.getCurrentContext());
 		ctx1.executeWithinSelf(() -> {
 			final var currentContext = tracker1.getCurrentContext();
 			final var thread = new Thread(() -> {
 				try {
 					assertNull("current context should be unset initially in a new thread",
 							tracker1.getCurrentContext());
-					currentContext.executeWithinSelf(ctxVerifyingTask);
+					currentContext.executeWithinSelf(
+						() -> assertSame("executing context should be set as the current",
+									ctx1, tracker1.getCurrentContext())
+					);
 					assertNull("current context should be cleared at the end",
 							tracker1.getCurrentContext());
 				} catch (AssertionError e) {
@@ -87,7 +88,8 @@ public class ContextTrackerTests {
 			() -> ctx3.executeWithinSelf(
 				() -> {
 					final var activeCtxs = getActiveContexts(allTrackers);
-					assertEquals("there should be 2 active ctxs",  2, activeCtxs.size());
+					assertEquals("there should be 2 active ctxs",
+							2, activeCtxs.size());
 					assertTrue("ctx1 should be active", activeCtxs.contains(ctx1));
 					assertTrue("ctx3 should be active", activeCtxs.contains(ctx3));
 				}
@@ -103,7 +105,8 @@ public class ContextTrackerTests {
 			() -> ctx3.executeWithinSelf(
 				() -> {
 					final var activeCtxs = getActiveContexts(List.of(tracker1));
-					assertEquals("there should be 1 active ctx",  1, activeCtxs.size());
+					assertEquals("there should be 1 active ctx",
+							1, activeCtxs.size());
 					assertTrue("ctx1 should be active", activeCtxs.contains(ctx1));
 				}
 			)
@@ -115,10 +118,8 @@ public class ContextTrackerTests {
 	@Test
 	public void testGetActiveContextsSingleTrackerWithInactiveContext() {
 		ctx3.executeWithinSelf(
-			() -> {
-				assertTrue("there should be no active ctxs",
-						getActiveContexts(List.of(tracker1)).isEmpty());
-			}
+			() -> assertTrue("there should be no active ctxs",
+					getActiveContexts(List.of(tracker1)).isEmpty())
 		);
 	}
 
@@ -128,10 +129,8 @@ public class ContextTrackerTests {
 	public void testGetActiveContextsNoTrackers() {
 		ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(
-				() -> {
-					assertTrue("there should be no active ctxs",
-							getActiveContexts(List.of()).isEmpty());
-				}
+				() -> assertTrue("there should be no active ctxs",
+						getActiveContexts(List.of()).isEmpty())
 			)
 		);
 	}

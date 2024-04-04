@@ -97,7 +97,8 @@ public class TrackableContextTests {
 			executeWithinAll(allCtxs, throwingTask);
 			fail("RuntimeException thrown by the task should be propagated");
 		} catch (RuntimeException caught) {
-			assertSame("caught exception should be the same as thrown", thrown, caught);
+			assertSame("caught exception should be the same as thrown",
+					thrown, caught);
 		}
 	}
 
@@ -111,7 +112,8 @@ public class TrackableContextTests {
 			ctx1.executeWithinSelf(throwingTask);
 			fail("RuntimeException thrown by the task should be propagated");
 		} catch (RuntimeException caught) {
-			assertSame("caught exception should be the same as thrown", thrown, caught);
+			assertSame("caught exception should be the same as thrown",
+					thrown, caught);
 		}
 	}
 

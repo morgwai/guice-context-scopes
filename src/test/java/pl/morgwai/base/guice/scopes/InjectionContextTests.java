@@ -172,12 +172,12 @@ public class InjectionContextTests {
 
 
 
+	@TheChosenOne final String theChosenString = "theChosenString";
+
 	@Retention(RUNTIME)
-	@Target({ FIELD, PARAMETER, LOCAL_VARIABLE })
+	@Target({ FIELD, PARAMETER })
 	@BindingAnnotation
 	public @interface TheChosenOne {}
-
-
 
 	public static class TheChosenOneImpl implements TheChosenOne, Serializable {
 		@Override public Class<? extends Annotation> annotationType() { return TheChosenOne.class; }
@@ -186,10 +186,8 @@ public class InjectionContextTests {
 
 
 
-	@TheChosenOne final String theChosenString = "theChosenString";
-
-	static final String STRING_NAME = "theString";
-	@Named(STRING_NAME) final String namedString = "namedString";
+	static final String STRING_NAME = "namedString";  // same as the var name below for convenience
+	@Named(STRING_NAME) final String namedString = "namedStringValue";
 
 
 
@@ -321,7 +319,7 @@ public class InjectionContextTests {
 			)
 		);
 		final Named namedReflectiveAnnotation =
-				InjectionContextTests.class.getDeclaredField(namedString)
+				InjectionContextTests.class.getDeclaredField(STRING_NAME)
 						.getAnnotation(Named.class);
 		assertEquals(
 			"namedString should be obtainable by @Named reflective instance",
