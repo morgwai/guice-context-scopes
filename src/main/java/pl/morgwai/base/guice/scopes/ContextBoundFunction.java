@@ -23,11 +23,7 @@ public class ContextBoundFunction<T, R> extends ContextBoundClosure<Function<T, 
 		try {
 			return TrackableContext.executeWithinAll(
 				contexts,
-				new CallableWrapper<R>() {
-					@Override public R call() {
-						return boundClosure.apply(param);
-					}
-				}
+				new CallableWrapper<>(() -> boundClosure.apply(param))
 			);
 		} catch (RuntimeException e) {
 			throw e;

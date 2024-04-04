@@ -13,7 +13,9 @@ public class ContextBoundBiFunction<T, U, R> extends ContextBoundClosure<BiFunct
 
 
 	protected ContextBoundBiFunction(
-			List<TrackableContext<?>> contexts, BiFunction<T, U, R> biFunctionToBind) {
+		List<TrackableContext<?>> contexts,
+		BiFunction<T, U, R> biFunctionToBind
+	) {
 		super(contexts, biFunctionToBind);
 	}
 
@@ -24,11 +26,7 @@ public class ContextBoundBiFunction<T, U, R> extends ContextBoundClosure<BiFunct
 		try {
 			return TrackableContext.executeWithinAll(
 				contexts,
-				new CallableWrapper<R>() {
-					@Override public R call() {
-						return boundClosure.apply(param1, param2);
-					}
-				}
+				new CallableWrapper<>(() -> boundClosure.apply(param1, param2))
 			);
 		} catch (RuntimeException e) {
 			throw e;

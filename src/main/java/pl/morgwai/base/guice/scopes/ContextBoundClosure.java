@@ -37,7 +37,17 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 
 	/** For passing to {@link TrackableContext#executeWithinAll(List, Runnable)} in subclasses. */
-	protected abstract class RunnableWrapper implements Runnable {
+	protected class RunnableWrapper implements Runnable {
+
+		final Runnable runnableWrappedClosure;
+
+		public RunnableWrapper(Runnable runnableWrappedClosure) {
+			this.runnableWrappedClosure = runnableWrappedClosure;
+		}
+
+		@Override public void run() {
+			runnableWrappedClosure.run();
+		}
 
 		@Override public String toString() {
 			return boundClosure.toString();
@@ -47,7 +57,17 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 
 	/** For passing to {@link TrackableContext#executeWithinAll(List, Callable)} in subclasses. */
-	protected abstract class CallableWrapper<T> implements Callable<T> {
+	protected class CallableWrapper<T> implements Callable<T> {
+
+		final Callable<T> callableWrappedClosure;
+
+		protected CallableWrapper(Callable<T> callableWrappedClosure) {
+			this.callableWrappedClosure = callableWrappedClosure;
+		}
+
+		@Override public T call() throws Exception {
+			return callableWrappedClosure.call();
+		}
 
 		@Override public String toString() {
 			return boundClosure.toString();
