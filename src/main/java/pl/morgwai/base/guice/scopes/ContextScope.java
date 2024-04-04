@@ -23,8 +23,9 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 	protected final ContextTracker<ContextT> tracker;
 
-	public String getName() { return name; }
+	/** Name of this {@code Scope} initialized via {@link #ContextScope(String, ContextTracker)}. */
 	public final String name;
+	public String getName() { return name; }
 
 
 
@@ -107,8 +108,9 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 
 
+	/** Returns {@link #name}. */
 	@Override
 	public String toString() {
-		return "ContextScope { name = \"" + name + "\" }";
+		return name;
 	}
 }
