@@ -15,10 +15,10 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 
 	public List<TrackableContext<?>> getContexts() { return contexts; }
-	protected final List<TrackableContext<?>> contexts;
+	public final List<TrackableContext<?>> contexts;
 
 	public ClosureT getBoundClosure() { return boundClosure; }
-	protected final ClosureT boundClosure;
+	public final ClosureT boundClosure;
 
 
 

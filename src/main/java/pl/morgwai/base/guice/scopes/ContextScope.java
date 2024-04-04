@@ -24,7 +24,7 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 	protected final ContextTracker<ContextT> tracker;
 
 	public String getName() { return name; }
-	final String name;
+	public final String name;
 
 
 
