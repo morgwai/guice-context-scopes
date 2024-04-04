@@ -12,24 +12,28 @@ public class ContextScopeTests {
 
 
 
-	final ContextTracker<TestContext> tracker = new ContextTracker<>();
+	static final Key<Integer> INT_KEY = Key.get(Integer.class);
 
+	final ContextTracker<TestContext> tracker = new ContextTracker<>();
 	final ContextScope<TestContext> scope = new ContextScope<>("testScope", tracker);
 
 	int sequence = 0;
-	final Provider<Integer> producer = () -> ++sequence;
-	final Key<Integer> key = Key.get(Integer.class);
+	final Provider<Integer> producer = new Provider<>() {
+		@Override public Integer get() {
+			return ++sequence;
+		}
+		@Override public String toString() {
+			return "producer";
+		}
+	};
 
 
 
 	@Test
 	public void testScoping() {
-		assertNotNull("toString() should not crash", scope.toString());
 		new TestContext(tracker).executeWithinSelf(
 			() -> {
-				final var scopedProvider = scope.scope(key, producer);
-				assertNotNull("scopedProvider.toString() should not crash",
-						scopedProvider.toString());
+				final var scopedProvider = scope.scope(INT_KEY, producer);
 				final var scopedInt = scopedProvider.get();
 				assertSame("scopedProvider should keep providing the same object in a given ctx",
 						scopedInt, scopedProvider.get());
@@ -47,7 +51,7 @@ public class ContextScopeTests {
 	@Test
 	public void testOutOfCtxScopingThrows() {
 		try {
-			scope.scope(key, producer).get();
+			scope.scope(INT_KEY, producer).get();
 			fail("provisioning outside of any context should throw an OutOfScopeException");
 		} catch (OutOfScopeException expected) {}
 	}
@@ -58,9 +62,9 @@ public class ContextScopeTests {
 	public void testRemoveFromScope() {
 		new TestContext(tracker).executeWithinSelf(
 			() -> {
-				final var scopedProvider = scope.scope(key, producer);
+				final var scopedProvider = scope.scope(INT_KEY, producer);
 				final var oldScopedInt = scopedProvider.get();
-				tracker.getCurrentContext().removeScopedObject(key);
+				tracker.getCurrentContext().removeScopedObject(INT_KEY);
 				final var newScopedInt = scopedProvider.get();
 				assertNotEquals("after removing, scopedProvider should provide a new object",
 						oldScopedInt, newScopedInt);
@@ -68,6 +72,14 @@ public class ContextScopeTests {
 						newScopedInt, scopedProvider.get());
 			}
 		);
+	}
+
+
+
+	@Test
+	public void testScopedProviderToString() {
+		assertTrue("scopedProvider.toString() should contain result of producer.toString()",
+				scope.scope(INT_KEY, producer).toString().contains(producer.toString()));
 	}
 
 
