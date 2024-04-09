@@ -82,7 +82,7 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 				return getContext().produceIfAbsent(key, producer);
 			} catch (NullPointerException e) {
 				throw new OutOfScopeException(
-					String.format(NO_CONTEXT_MESSAGE, name, Thread.currentThread().getName()));
+						String.format(NO_CONTEXT_MESSAGE, name, Thread.currentThread().getName()));
 			}
 		}
 
