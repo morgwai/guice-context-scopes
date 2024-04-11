@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.*;
 
+import static pl.morgwai.base.guice.scopes.ContextTracker.getActiveContexts;
+
 
 
 /**
@@ -31,7 +33,7 @@ public class ContextBinder {
 
 
 
-	final List<ContextTracker<?>> trackers;
+	protected final List<ContextTracker<?>> trackers;
 
 
 
@@ -42,36 +44,36 @@ public class ContextBinder {
 
 
 	public ContextBoundRunnable bindToContext(Runnable toBind) {
-		return new ContextBoundRunnable(ContextTracker.getActiveContexts(trackers), toBind);
+		return new ContextBoundRunnable(getActiveContexts(trackers), toBind);
 	}
 
 
 
 	public <T> ContextBoundConsumer<T> bindToContext(Consumer<T> toBind) {
-		return new ContextBoundConsumer<>(ContextTracker.getActiveContexts(trackers), toBind);
+		return new ContextBoundConsumer<>(getActiveContexts(trackers), toBind);
 	}
 
 
 
 	public <T, U> ContextBoundBiConsumer<T, U> bindToContext(BiConsumer<T, U> toBind) {
-		return new ContextBoundBiConsumer<>(ContextTracker.getActiveContexts(trackers), toBind);
+		return new ContextBoundBiConsumer<>(getActiveContexts(trackers), toBind);
 	}
 
 
 
 	public <T> ContextBoundCallable<T> bindToContext(Callable<T> toBind) {
-		return new ContextBoundCallable<>(ContextTracker.getActiveContexts(trackers), toBind);
+		return new ContextBoundCallable<>(getActiveContexts(trackers), toBind);
 	}
 
 
 
 	public <T, R> ContextBoundFunction<T, R> bindToContext(Function<T, R> toBind) {
-		return new ContextBoundFunction<>(ContextTracker.getActiveContexts(trackers), toBind);
+		return new ContextBoundFunction<>(getActiveContexts(trackers), toBind);
 	}
 
 
 
 	public <T, U, R> ContextBoundBiFunction<T, U, R> bindToContext(BiFunction<T, U, R> toBind) {
-		return new ContextBoundBiFunction<>(ContextTracker.getActiveContexts(trackers), toBind);
+		return new ContextBoundBiFunction<>(getActiveContexts(trackers), toBind);
 	}
 }
