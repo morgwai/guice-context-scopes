@@ -36,17 +36,20 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 
 
-	/** For passing to {@link TrackableContext#executeWithinAll(List, Runnable)} in subclasses. */
+	/**
+	 * Provides nice {@link Object#toString() toString()} for wrapped lambdas passed to
+	 * {@link TrackableContext#executeWithinAll(List, Runnable)} in subclasses.
+	 */
 	protected class RunnableWrapper implements Runnable {
 
-		final Runnable runnableWrappedClosure;
+		final Runnable wrappedLambda;
 
-		public RunnableWrapper(Runnable runnableWrappedClosure) {
-			this.runnableWrappedClosure = runnableWrappedClosure;
+		public RunnableWrapper(Runnable lambdaToWrap) {
+			this.wrappedLambda = lambdaToWrap;
 		}
 
 		@Override public void run() {
-			runnableWrappedClosure.run();
+			wrappedLambda.run();
 		}
 
 		@Override public String toString() {
@@ -56,17 +59,20 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 
 
-	/** For passing to {@link TrackableContext#executeWithinAll(List, Callable)} in subclasses. */
+	/**
+	 * Provides nice {@link Object#toString() toString()} for wrapped lambdas passed to
+	 * {@link TrackableContext#executeWithinAll(List, Runnable)} in subclasses.
+	 */
 	protected class CallableWrapper<T> implements Callable<T> {
 
-		final Callable<T> callableWrappedClosure;
+		final Callable<T> wrappedLambda;
 
-		public CallableWrapper(Callable<T> callableWrappedClosure) {
-			this.callableWrappedClosure = callableWrappedClosure;
+		public CallableWrapper(Callable<T> lambdaToWrap) {
+			this.wrappedLambda = lambdaToWrap;
 		}
 
 		@Override public T call() throws Exception {
-			return callableWrappedClosure.call();
+			return wrappedLambda.call();
 		}
 
 		@Override public String toString() {
