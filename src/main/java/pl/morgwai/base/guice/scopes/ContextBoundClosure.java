@@ -61,7 +61,7 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 		final Callable<T> callableWrappedClosure;
 
-		protected CallableWrapper(Callable<T> callableWrappedClosure) {
+		public CallableWrapper(Callable<T> callableWrappedClosure) {
 			this.callableWrappedClosure = callableWrappedClosure;
 		}
 
