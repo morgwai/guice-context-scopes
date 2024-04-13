@@ -16,6 +16,8 @@ public class ContextBinderTests {
 
 
 
+	static final String RESULT = "result";
+
 	final ContextTracker<TestContext> tracker = new ContextTracker<>();
 	final ContextBinder testSubject = new ContextBinder(List.of(tracker));
 	final TestContext ctx = new TestContext(tracker);
@@ -79,12 +81,13 @@ public class ContextBinderTests {
 				() -> {
 					assertSame("callable should be bound to ctx",
 							ctx, tracker.getCurrentContext());
-					return null;
+					return RESULT;
 				}
 			);
 		});
 		assertNull("sanity check", tracker.getCurrentContext());
-		callbackHolder[0].call();
+		assertSame("result should match",
+				RESULT, callbackHolder[0].call());
 	}
 
 
@@ -97,12 +100,13 @@ public class ContextBinderTests {
 				(p) -> {
 					assertSame("function should be bound to ctx",
 							ctx, tracker.getCurrentContext());
-					return null;
+					return RESULT;
 				}
 			);
 		});
 		assertNull("sanity check", tracker.getCurrentContext());
-		callbackHolder[0].apply(null);
+		assertSame("result should match",
+				RESULT, callbackHolder[0].apply(null));
 	}
 
 
@@ -115,12 +119,13 @@ public class ContextBinderTests {
 				(p1, p2) -> {
 					assertSame("biFunction should be bound to ctx",
 							ctx, tracker.getCurrentContext());
-					return null;
+					return RESULT;
 				}
 			);
 		});
 		assertNull("sanity check", tracker.getCurrentContext());
-		callbackHolder[0].apply(null, null);
+		assertSame("result should match",
+				RESULT, callbackHolder[0].apply(null, null));
 	}
 
 
