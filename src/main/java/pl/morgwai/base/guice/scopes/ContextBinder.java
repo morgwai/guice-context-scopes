@@ -76,4 +76,11 @@ public class ContextBinder {
 	public <T, U, R> ContextBoundBiFunction<T, U, R> bindToContext(BiFunction<T, U, R> toBind) {
 		return new ContextBoundBiFunction<>(getActiveContexts(trackers), toBind);
 	}
+
+
+
+	// Callable and Supplier have indistinguishable lambdas, hence different method name
+	public <T> ContextBoundSupplier<T> bindSupplierToContext(Supplier<T> toBind) {
+		return new ContextBoundSupplier<>(getActiveContexts(trackers), toBind);
+	}
 }

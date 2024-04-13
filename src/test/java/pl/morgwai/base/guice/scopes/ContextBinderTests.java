@@ -130,6 +130,25 @@ public class ContextBinderTests {
 
 
 
+	@Test
+	public void testBindingSupplier() {
+		final Supplier<?>[] callbackHolder = {null};
+		ctx.executeWithinSelf(() -> {
+			callbackHolder[0] = testSubject.bindSupplierToContext(
+				() -> {
+					assertSame("callable should be bound to ctx",
+						ctx, tracker.getCurrentContext());
+					return RESULT;
+				}
+			);
+		});
+		assertNull("sanity check", tracker.getCurrentContext());
+		assertSame("result should match",
+				RESULT, callbackHolder[0].get());
+	}
+
+
+
 	static class TestContext extends TrackableContext<TestContext> {
 		TestContext(ContextTracker<TestContext> tracker) { super(tracker); }
 	}
