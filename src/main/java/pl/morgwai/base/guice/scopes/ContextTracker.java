@@ -14,10 +14,9 @@ import java.util.concurrent.Callable;
  * {@code Tracker} of which {@code Thread} runs within a {@link TrackableContext Context} of which
  * {@code HttpServletRequest}.
  * <p>
- * Instances should usually be created at app startup to be in turn used by instances of
- * {@link ContextScope}s.</p>
- * @see pl.morgwai.base.guice.scopes code organization guidelines for deriving libs in the package
- *     docs.
+ * {@code ContextTracker} instances are usually created at an app startup to be in turn used by
+ * instances of {@link ContextScope}s. See code organization guidelines for deriving libs in
+ * {@link pl.morgwai.base.guice.scopes the package docs}.</p>
  */
 public class ContextTracker<ContextT extends TrackableContext<? super ContextT>> {
 
@@ -61,7 +60,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * Retrieves from {@code trackers} all {@link TrackableContext}s active (current within their
 	 * type) for the calling {@code  Thread}.
 	 * The returned {@code List} can be then used as an argument to
-	 * {@link TrackableContext#executeWithinAll(List, Runnable)} to transfer the {@code Contexts}
+	 * {@link TrackableContext#executeWithinAll(List, Callable)} to transfer the {@code Contexts}
 	 * when switching to another {@code  Thread}. All {@link InducedContextScope Contexts induced}
 	 * by any of the returned {@link TrackableContext}s will also "follow" automatically their
 	 * inducers to the new {@code Thread}.

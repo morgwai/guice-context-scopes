@@ -6,21 +6,21 @@ import com.google.inject.*;
 
 
 /**
- * Scopes objects to the instance of {@code  ContextT} that is current during a given
+ * Scopes objects to the {@link InjectionContext Context} that is current during a given
  * {@link Provider#get() provisioning}.
- * By default {@code ContextT} instances are {@link #getContext() obtained} directly from the
- * associated {@link ContextTracker} passed via
- * {@link #ContextScope(String, ContextTracker) the contructor}.
  * <p>
  * A {@code  ContextScope} instance is associated with one particular subclass of
- * {@link TrackableContext} (or of {@link InjectionContext} in case of {@link InducedContextScope}),
- * here denoted as {@code ContextT}. For example: a {@code Scope} of {@code Contexts} of
- * {@code HttpServletRequests}.</p>
+ * {@link InjectionContext}: for example an instance called {@code httpRequestScope} could be
+ * associated with a class called {@code HttpRequestContext}, that stores objects scoped to
+ * processing of HTTP requests.<br/>
+ * By default a {@code ContextScope} instance is associated with {@code ContextT} class and its
+ * instances are {@link #getContext() obtained} directly from the associated
+ * {@link ContextTracker} passed via {@link #ContextScope(String, ContextTracker) the contructor}.
+ * </p>
  * <p>
- * Instances should usually be created at an app startup to be used in bindings in user
- * {@link com.google.inject.Module}s.</p>
- * @see pl.morgwai.base.guice.scopes code organization guidelines for deriving libs in the package
- *     docs.
+ * {@code  ContextScope} instances are usually created at an app startup to be used in bindings in
+ * user {@link com.google.inject.Module}s. See code organization guidelines for deriving libs in
+ * {@link pl.morgwai.base.guice.scopes the package docs}.</p>
  */
 public class ContextScope<ContextT extends TrackableContext<? super ContextT>> implements Scope {
 
@@ -28,7 +28,7 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 	protected final ContextTracker<ContextT> tracker;
 
-	/** Name of this {@code Scope} initialized via {@link #ContextScope(String, ContextTracker)}. */
+	/** Name of this {@code Scope} for logging and debugging purposes. */
 	public final String name;
 	public String getName() { return name; }
 
@@ -50,9 +50,8 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 
 	/**
-	 * Returned by {@link #scope(Key, Provider)}, provides objects scoped to a {@code Context} that
-	 * is current (as returned by {@link #getContext()}) at the moment of
-	 * {@link #get() provisioning}.
+	 * Returned by {@link #scope(Key, Provider)}, provides objects scoped to the
+	 * {@link #getContext() Context current} at the moment of a given {@link #get() provisioning}.
 	 */
 	public class ScopedProvider<T> implements Provider<T> {
 
@@ -72,10 +71,11 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 		 * Provides an object scoped to the {@code Context} returned by a call to
 		 * {@link #getContext()}.
 		 * @throws OutOfScopeException if the current {@code Thread} is running outside of any
-		 *     {@code Context}. This most commonly happens if an async task was not
-		 *     {@link ContextBinder#bindToContext(Runnable) bound to the current Context} before
+		 *     {@code Context} of the associated {@code ContextT} type. This most commonly happens
+		 *     if an async task was not
+		 *     {@link ContextBinder#bindToContext(Runnable) bound to its current Context} before
 		 *     being dispatched to this {@code Thread}. Use {@code ContextTrackingExecutor}s that
-		 *     transfer {@code Contexts} automatically or bind manually using {@link ContextBinder}.
+		 *     transfer {@code Context}s automatically or bind manually using {@link ContextBinder}.
 		 */
 		@Override public T get() {
 			try {

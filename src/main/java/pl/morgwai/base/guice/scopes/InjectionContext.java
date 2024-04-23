@@ -135,7 +135,8 @@ public abstract class InjectionContext implements Serializable {
 	 * <p>
 	 * This method is safe to call several times between the most recent modification of this
 	 * {@code Context}'s state and the actual serialization in case it is unknown whether the
-	 * standard Java serialization or some other mechanism will be used.</p>
+	 * standard Java serialization or some other mechanism will be used. This will cause performance
+	 * penalty nevertheless, so should be avoided if possible.</p>
 	 * <p>
 	 * It must be ensured, that no other {@code Threads} may access a given {@code Context} between
 	 * the call to this method and the actual serialization.</p>
