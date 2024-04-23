@@ -52,7 +52,7 @@ public class InducedContextScope<
 	 * @return the current {@code InducedContextT} (induced by the current {@code BaseContextT}).
 	 */
 	@Override
-	protected InducedContextT getContext() {
+	protected InducedContextT getCurrentContext() {
 		return inducedCtxRetriever.apply(tracker.getCurrentContext());
 	}
 }

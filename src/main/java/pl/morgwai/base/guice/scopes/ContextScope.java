@@ -14,7 +14,7 @@ import com.google.inject.*;
  * associated with a class called {@code HttpRequestContext}, that stores objects scoped to
  * processing of HTTP requests.<br/>
  * By default a {@code ContextScope} instance is associated with {@code ContextT} class and its
- * instances are {@link #getContext() obtained} directly from the associated
+ * instances are {@link #getCurrentContext()  obtained} directly from the associated
  * {@link ContextTracker} passed via {@link #ContextScope(String, ContextTracker) the contructor}.
  * </p>
  * <p>
@@ -51,7 +51,8 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 	/**
 	 * Returned by {@link #scope(Key, Provider)}, provides objects scoped to the
-	 * {@link #getContext() Context current} at the moment of a given {@link #get() provisioning}.
+	 * {@link #getCurrentContext() Context current} at the moment of a given
+	 * {@link #get() provisioning}.
 	 */
 	public class ScopedProvider<T> implements Provider<T> {
 
@@ -69,7 +70,7 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 		/**
 		 * Provides an object scoped to the {@code Context} returned by a call to
-		 * {@link #getContext()}.
+		 * {@link #getCurrentContext()}.
 		 * @throws OutOfScopeException if the current {@code Thread} is running outside of any
 		 *     {@code Context} of the associated {@code ContextT} type. This most commonly happens
 		 *     if an async task was not
@@ -79,7 +80,7 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 		 */
 		@Override public T get() {
 			try {
-				return getContext().produceIfAbsent(key, producer);
+				return getCurrentContext().produceIfAbsent(key, producer);
 			} catch (NullPointerException e) {
 				throw new OutOfScopeException(
 						String.format(NO_CONTEXT_MESSAGE, name, Thread.currentThread().getName()));
@@ -108,7 +109,7 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 	 * {@link #tracker}. May be overridden for example to return some {@code Context} induced by the
 	 * one from {@link #tracker} (see {@link InducedContextScope}).
 	 */
-	protected InjectionContext getContext() {
+	protected InjectionContext getCurrentContext() {
 		return tracker.getCurrentContext();
 	}
 
