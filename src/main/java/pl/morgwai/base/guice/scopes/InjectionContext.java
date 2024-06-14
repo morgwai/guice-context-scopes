@@ -15,33 +15,33 @@ import static pl.morgwai.base.guice.scopes.InjectionContext.Null.NULL;
 
 
 /**
- * Stores objects {@link com.google.inject.Scope scoped} to the context of some
- * event/call/request/session, such as an RPC, a servlet request processing, a session combining
- * several events etc.
+ * Stores {@code Object}s {@link com.google.inject.Scope scoped} to the context of some
+ * event/call/request/session, such as an RPC, a {@code ServletRequest} processing, a session
+ * combining several events etc.
  * Each concrete subclass corresponds to a specific type of events and each instance corresponds to
  * a single such event. For example an instance of {@code HttpRequestContext} may correspond to the
  * processing of a single HTTP request. Creation of instances must be hooked at the beginning of a
- * given event: for example in Java Servlet environment, a {@code HttpRequestContext} may be created
- * in a {@code Filter}.
+ * given event processing: for example in Java Servlet environment, a {@code HttpRequestContext} may
+ * be created in a {@code Filter}.
  * <p>
  * Note: most {@code Context} classes should rather extend {@link TrackableContext} subclass instead
  * of this one. The main exception are {@code Context} types that are
  * {@link InducedContextScope induced by other Contexts}.</p>
  * <p>
  * Subclasses usually add properties and methods specific to their types, like
- * their call's arguments, a reference to their event objects etc.</p>
+ * their call's arguments, a reference to their event {@code Object}s etc.</p>
  * <p>
- * Multiple {@code Threads} may run within the same {@code Context} and access or remove the same
- * scoped objects as the state is backed by a {@link ConcurrentMap}. Nevertheless, concurrently
- * accessed scoped objects themself must either be thread-safe or accessing them must be properly
- * synchronized.</p>
+ * Multiple {@code Thread}s may run within the same {@code Context} and access or remove the same
+ * scoped {@code Object}s as the state is backed by a {@link ConcurrentMap}. Nevertheless,
+ * concurrently accessed scoped {@code Object}s themself must either be thread-safe or accessing
+ * them must be properly synchronized.</p>
  * <p>
- * During the standard {@link Serializable Java serialization}, non-serializable scoped objects will
- * be filtered out and the remaining part will be properly serialized.<br/>
+ * During the standard {@link Serializable Java serialization}, non-serializable scoped
+ * {@code Object}s will be filtered out and the remaining part will be properly serialized.<br/>
  * Methods {@link #prepareForSerialization()} and {@link #restoreAfterDeserialization()} are
  * provided for other serialization mechanisms.<br/>
  * The serialization is <b>not</b> thread-safe, so a {@code Context} that is being serialized must
- * not be accessed by other threads in any way during the process.</p>
+ * not be accessed by other {@code Thread}s in any way during the process.</p>
  */
 public abstract class InjectionContext implements Serializable {
 
@@ -52,8 +52,8 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Provides an object scoped to this {@code Context} given by {@code key}.
-	 * If there is already an object scoped to this {@code Context} under {@code key}, it is
+	 * Provides an {@code Object} scoped to this {@code Context} given by {@code key}.
+	 * If there is already an {@code Object} scoped to this {@code Context} under {@code key}, it is
 	 * returned immediately. Otherwise, a new instance is first obtained from {@code producer},
 	 * stored for subsequent calls and then returned.
 	 */
@@ -75,16 +75,16 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Removes the object given by {@code key} from this {@code Context}.
+	 * Removes the {@code Object} given by {@code key} from this {@code Context}.
 	 * This forces production of a new instance during the next
 	 * {@link #produceIfAbsent(Key, Provider) provisioning} within the
 	 * {@link ContextScope Scope of this Context}. This is useful if the currently stored instance
 	 * is no longer usable (for example a broken connection, expired token, etc).<br/>
-	 * If there's no object stored under {@code key} in this {@code Context}, this method has no
-	 * effect.
+	 * If there's no {@code Object} stored under {@code key} in this {@code Context}, this method
+	 * has no effect.
 	 * <p>
-	 * <b>Note:</b> If multiple threads run within the same {@code Context}, care must be taken to
-	 * prevent some of them from retaining the old stale instances.</p>
+	 * <b>Note:</b> If multiple {@code Thread}s run within the same {@code Context}, care must be
+	 * taken to prevent some of them from retaining the old stale instances.</p>
 	 */
 	public void removeScopedObject(Key<?> key) {
 		scopedObjects.remove(key);
@@ -126,19 +126,22 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Picks {@link Serializable} objects scoped to this {@code Context} from its {@code transient}
-	 * state and stores them into a fully {@link Serializable} private {@code List} of entries.
-	 * After a deserialization, the state can restored using {@link #restoreAfterDeserialization()}.
+	 * Picks {@link Serializable} {@code Object}s scoped to this {@code Context} from its
+	 * {@code transient} state and stores them into a fully {@link Serializable} private
+	 * {@code List} of entries.
+	 * After a deserialization, the state can be restored using
+	 * {@link #restoreAfterDeserialization()}.
 	 * <p>
 	 * This method is called automatically during the standard Java serialization. It may be called
 	 * manually if some other serialization mechanism is used.</p>
 	 * <p>
 	 * This method is safe to call several times between the most recent modification of this
 	 * {@code Context}'s state and the actual serialization in case it is unknown whether the
-	 * standard Java serialization or some other mechanism will be used. This will cause performance
-	 * penalty nevertheless, so should be avoided if possible.</p>
+	 * standard Java serialization or some other mechanism will be used. This may nevertheless cause
+	 * some performance penalty in case of a large number of slow to serialize scoped
+	 * {@code Object}s, so it should be avoided if possible.</p>
 	 * <p>
-	 * It must be ensured, that no other {@code Threads} may access a given {@code Context} between
+	 * It must be ensured, that no other {@code Thread}s may access a given {@code Context} between
 	 * the call to this method and the actual serialization.</p>
 	 */
 	protected void prepareForSerialization() {
@@ -151,7 +154,7 @@ public abstract class InjectionContext implements Serializable {
 			for (var scopedObjectEntry: scopedObjects.entrySet()) {
 				final var scopedObject = scopedObjectEntry.getValue();
 				if ( !(scopedObject instanceof Serializable)) continue;  // omit non-Serializable
-				try {  // test if the object actually serializes
+				try {  // test if scopedObject actually serializes
 					serializationTestStream.writeObject(scopedObject);
 				} catch (IOException e) {
 					continue;
@@ -166,7 +169,7 @@ public abstract class InjectionContext implements Serializable {
 					(Serializable) scopedObject
 				));
 			}
-		} catch (IOException ignored) {  // excp in serializationTestStream.close() is harmless
+		} catch (IOException ignored) {  // exception in serializationTestStream.close() is harmless
 		} finally {
 			serializationTestBuffer.reset();  // reuse the buffer during the next call
 		}

@@ -1,10 +1,10 @@
 // Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 /**
- * Classes for building Guice {@link com.google.inject.Scope}s, that get automatically transferred
- * when dispatching work to other threads.
+ * Classes for building Guice {@link com.google.inject.Scope}s easily transferable when dispatching
+ * work to other {@link java.lang.Thread}s.
  * <h3>Code organization guidelines for deriving libs:</h3>
  * <p>
- * Deriving libs should usually define their "central class" extending
+ * Deriving libs should usually define their "central class" implementing
  * {@link com.google.inject.Module} containing the following:</p>
  * <ul>
  *     <li>instances of {@link pl.morgwai.base.guice.scopes.ContextTracker}s for all defined
@@ -27,7 +27,7 @@
  *                 {@code Context} instances, usually defined similarly to 1 of the below:
  *                 <ul>
  *                     <li>for {@link pl.morgwai.base.guice.scopes.TrackableContext}s:
- *                         {@code respectiveTrackerInstance::getCurrentContext}</li>
+ *                         {@code respectiveTracker::getCurrentContext}</li>
  *                     <li>for induced {@link pl.morgwai.base.guice.scopes.InjectionContext}s:
  *                         {@code () ->
  *                         inducingContextTracker.getCurrentContext().getRespectiveInducedContext()}

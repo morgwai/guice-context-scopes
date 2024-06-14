@@ -6,14 +6,13 @@ import java.util.function.Function;
 
 
 /**
- * Scopes objects to the {@code InducedContextT} instance <i>induced</i> by the instance of
+ * Scopes {@code Object}s to the {@code InducedContextT} instance <i>induced</i> by the instance of
  * {@code BaseContextT} current during a given
  * {@link com.google.inject.Provider#get() provisioning}.
  * For example, entering the {@code Context} of an {@code HttpServletRequest} induces entering the
- * {@code Context} of the {@code HttpSession}, to which this {@code HttpServletRequest} belongs.
+ * {@code Context} of the {@code HttpSession} to which this {@code HttpServletRequest} belongs.
  * <p>
- * Current {@code BaseContextT} instances are obtained directly from the associated
- * {@link #tracker}.</p>
+ * {@code BaseContextT} instances are obtained directly from the associated {@link #tracker}.</p>
  */
 public class InducedContextScope<
 			BaseContextT extends TrackableContext<? super BaseContextT>,

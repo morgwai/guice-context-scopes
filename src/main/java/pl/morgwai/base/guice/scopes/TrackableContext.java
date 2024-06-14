@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 /**
  * An {@link InjectionContext} that can
  * {@link #executeWithinSelf(Callable) execute tasks within itself}, so that it can be tracked
- * across {@code Threads} using its associated {@link ContextTracker}.
+ * across {@code Thread}s using its associated {@link ContextTracker}.
  * <p>
  * Subclasses must use themselves as {@code ContextT} type argument.</p>
  */
@@ -32,7 +32,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	/**
 	 * Asks the associated {@link ContextTracker} to set this {@code Context} as the current one for
 	 * the calling {@code Thread} and executes {@code task} synchronously.
-	 * Afterwards clears the current context.
+	 * Afterwards clears the current {@code Context} for the {@code Thread}.
 	 * @see #executeWithinAll(List, Callable)
 	 */
 	public <T> T executeWithinSelf(Callable<T> task) throws Exception {
@@ -58,7 +58,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 	/**
 	 * Executes {@code task} synchronously on the current {@code Thread} within all
-	 * {@code contexts}.
+	 * {@code Context}s.
 	 * Used to transfer {@code Contexts} saved with {@link ContextTracker#getActiveContexts(List)}
 	 * after dispatching to another {@code Thread}.
 	 */

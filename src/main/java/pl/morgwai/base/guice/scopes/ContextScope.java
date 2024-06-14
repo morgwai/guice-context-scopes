@@ -6,12 +6,12 @@ import com.google.inject.*;
 
 
 /**
- * Scopes objects to the {@link InjectionContext Context} that is current during a given
+ * Scopes {@code Object}s to the {@link InjectionContext Context} that is current during a given
  * {@link Provider#get() provisioning}.
  * <p>
  * A {@code  ContextScope} instance is associated with one particular subclass of
  * {@link InjectionContext}: for example an instance called {@code httpRequestScope} could be
- * associated with a class called {@code HttpRequestContext}, that stores objects scoped to
+ * associated with a class called {@code HttpRequestContext} that stores {@code Object}s scoped to
  * processing of HTTP requests.<br/>
  * By default a {@code ContextScope} instance is associated with {@code ContextT} class and its
  * instances are {@link #getCurrentContext()  obtained} directly from the associated
@@ -69,7 +69,7 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 
 		/**
-		 * Provides an object scoped to the {@code Context} returned by a call to
+		 * Provides an {@code Object} scoped to the {@code Context} returned by a call to
 		 * {@link #getCurrentContext()}.
 		 * @throws OutOfScopeException if the current {@code Thread} is running outside of any
 		 *     {@code Context} of the associated {@code ContextT} type. This most commonly happens
@@ -103,7 +103,7 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 
 	/**
-	 * Returns the {@code Context} from which a scoped object should be obtained.
+	 * Returns the {@code Context} from which a scoped {@code Object} should be obtained.
 	 * Called during each {@link ScopedProvider#get() provisioning}. By default returns a
 	 * {@code Context} {@link ContextTracker#getCurrentContext() obtained} directly from
 	 * {@link #tracker}. May be overridden for example to return some {@code Context} induced by the

@@ -12,10 +12,10 @@ import com.google.inject.TypeLiteral;
 
 /**
  * Allows to track which {@code Thread} is running within which {@link TrackableContext Context}.
- * A {@code ContextTracker} instance is associated with one particular type of contexts represented
- * as a subclass of {@link TrackableContext}, here denoted as {@code ContextT}. For example: a
- * {@code Tracker} of which {@code Thread} runs within a {@link TrackableContext Context} of which
- * {@code HttpServletRequest}.
+ * A {@code ContextTracker} instance is associated with one particular type of {@code Context}s
+ * represented as a subclass of {@link TrackableContext}, here denoted as {@code ContextT}. For
+ * example: a {@code Tracker} of which {@code Thread} runs within a {@link TrackableContext Context}
+ * of which {@code HttpServletRequest}.
  * <p>
  * {@code ContextTracker} instances are usually created at an app startup to be in turn used by
  * instances of {@link ContextScope}s. See code organization guidelines for deriving libs in
@@ -44,7 +44,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	/**
 	 * Sets {@code ctx} as {@link #currentContext the current Context} for the calling
 	 * {@code Thread} and executes {@code task} synchronously.
-	 * Afterwards clears {@link #currentContext}.
+	 * Afterwards clears {@link #currentContext} for the {@code Thread}.
 	 * <p>
 	 * For internal use by {@link TrackableContext#executeWithinSelf(Callable)}.</p>
 	 */
@@ -68,8 +68,8 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * by any of the returned {@link TrackableContext}s will also "follow" automatically their
 	 * inducers to the new {@code Thread}.
 	 * <p>
-	 * Deriving libs should bind {@code List<ContextTracker<?>>} to an instance containing all
-	 * possible {@link ContextTracker}s for use as an argument for this method.</p>
+	 * Deriving libs should bind {@link #ALL_TRACKERS_KEY} to a {@code List} containing all
+	 * {@link ContextTracker}s defined by the given lib for use as an argument for this method.</p>
 	 */
 	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
 		if (trackers.size() == 1) {  // optimize for the most common tracker count
