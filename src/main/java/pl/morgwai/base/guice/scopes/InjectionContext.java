@@ -135,8 +135,9 @@ public abstract class InjectionContext implements Serializable {
 	 * <p>
 	 * This method is safe to call several times between the most recent modification of this
 	 * {@code Context}'s state and the actual serialization in case it is unknown whether the
-	 * standard Java serialization or some other mechanism will be used. This will cause performance
-	 * penalty nevertheless, so should be avoided if possible.</p>
+	 * standard Java serialization or some other mechanism will be used. This may nevertheless cause
+	 * some performance penalty in case of a large number of slow to serialize scoped objects,
+	 * so it should be avoided if possible.</p>
 	 * <p>
 	 * It must be ensured, that no other {@code Threads} may access a given {@code Context} between
 	 * the call to this method and the actual serialization.</p>
@@ -151,7 +152,7 @@ public abstract class InjectionContext implements Serializable {
 			for (var scopedObjectEntry: scopedObjects.entrySet()) {
 				final var scopedObject = scopedObjectEntry.getValue();
 				if ( !(scopedObject instanceof Serializable)) continue;  // omit non-Serializable
-				try {  // test if the object actually serializes
+				try {  // test if scopedObject actually serializes
 					serializationTestStream.writeObject(scopedObject);
 				} catch (IOException e) {
 					continue;
@@ -166,7 +167,7 @@ public abstract class InjectionContext implements Serializable {
 					(Serializable) scopedObject
 				));
 			}
-		} catch (IOException ignored) {  // excp in serializationTestStream.close() is harmless
+		} catch (IOException ignored) {  // exception in serializationTestStream.close() is harmless
 		} finally {
 			serializationTestBuffer.reset();  // reuse the buffer during the next call
 		}
