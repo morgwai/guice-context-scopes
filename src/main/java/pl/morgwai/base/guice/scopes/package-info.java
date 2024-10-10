@@ -20,7 +20,8 @@
  *         {@link com.google.inject.Module#configure(com.google.inject.Binder) configure(binder)}
  *         method that creates the following bindings:
  *         <ul>
- *             <li>{@code List<ContextTracker<?>>} to {@code  allTrackers}</li>
+ *             <li>{@link pl.morgwai.base.guice.scopes.ContextTracker#ALL_TRACKERS_KEY} to
+ *                 {@code  allTrackers}</li>
  *             <li>Their respective types to the defined {@code  ContextTracker} instances</li>
  *             <li>Their respective types to {@link com.google.inject.Provider}s of the defined
  *                 {@code Context} instances, usually defined similarly to 1 of the below:

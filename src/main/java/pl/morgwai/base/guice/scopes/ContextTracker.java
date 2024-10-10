@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+
 
 
 /**
@@ -81,4 +84,13 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 		}
 		return activeCtxs;
 	}
+
+
+
+	static final TypeLiteral<List<ContextTracker<?>>> ALL_TRACKERS_TYPE = new TypeLiteral<>() {};
+	/**
+	 * {@code Key} for the global {@code List} of all {@code ContextTracker}s provided by a given
+	 * derived lib.
+	 */
+	public static final Key<List<ContextTracker<?>>> ALL_TRACKERS_KEY = Key.get(ALL_TRACKERS_TYPE);
 }
