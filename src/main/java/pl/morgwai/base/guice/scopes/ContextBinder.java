@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.*;
 
+import com.google.inject.Inject;
+
 import static pl.morgwai.base.guice.scopes.ContextTracker.getActiveContexts;
 
 
@@ -25,9 +27,6 @@ import static pl.morgwai.base.guice.scopes.ContextTracker.getActiveContexts;
  *         }));
  *     }
  * }</pre>
- * <p>
- * Deriving libs should bind this class in their main {@link com.google.inject.Module}.
- * </p>
  */
 public class ContextBinder {
 
@@ -37,6 +36,7 @@ public class ContextBinder {
 
 
 
+	@Inject
 	public ContextBinder(List<ContextTracker<?>> trackers) {
 		this.trackers = trackers;
 	}
