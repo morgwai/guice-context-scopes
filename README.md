@@ -56,7 +56,7 @@ class MyComponent {  // compare with the "low-level" version above
     }
 }
 ```
-Deriving libs should provide implementations of `ExecutorService` that fully automate `Context` transfers:
+`ContextBinder` may also be used to create `Exectuor`s that automatically transfer active `Context`s when executing tasks:
 ```java
 class MyContextTrackingExecutor extends ThreadPoolExecutor {
 
@@ -69,6 +69,8 @@ class MyContextTrackingExecutor extends ThreadPoolExecutor {
     // constructors here...
 }
 ```
+For convenience [ContextTrackingExecutorDecorator](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextTrackingExecutorDecorator.html) was provided to add `Context` transferring functionality to any `ExecutorService`.
+
 See the [package level javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/package-summary.html) for full code organization guidelines for deriving libs.
 
 

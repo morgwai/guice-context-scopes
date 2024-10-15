@@ -72,11 +72,12 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 		 * Provides an {@code Object} scoped to the {@code Context} returned by a call to
 		 * {@link #getCurrentContext()}.
 		 * @throws OutOfScopeException if the current {@code Thread} is running outside of any
-		 *     {@code Context} of the associated {@code ContextT} type. This most commonly happens
-		 *     if an async task was not
+		 *     {@code Context} of {@code ContextT} type associated with this {@link ContextScope}.
+		 *     This most commonly happens if some async task was not
 		 *     {@link ContextBinder#bindToContext(Runnable) bound to its current Context} before
-		 *     being dispatched to this {@code Thread}. Use {@code ContextTrackingExecutor}s that
-		 *     transfer {@code Context}s automatically or bind manually using {@link ContextBinder}.
+		 *     being dispatched to this {@code Thread}. Use {@link ContextTrackingExecutorDecorator}
+		 *     to transfer {@code Context}s automatically when passing tasks to
+		 *     {@link java.util.concurrent.Executor}s or bind manually using {@link ContextBinder}.
 		 */
 		@Override public T get() {
 			try {
