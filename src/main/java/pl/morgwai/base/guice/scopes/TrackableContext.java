@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
+import static java.util.concurrent.Executors.callable;
+
 
 
 /**
@@ -46,7 +48,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	/** Variant of {@link #executeWithinSelf(Callable)} for {@link Runnable} {@code task}s. */
 	public void executeWithinSelf(Runnable task) {
 		try {
-			executeWithinSelf(new CallableAdapter(task));
+			executeWithinSelf(callable(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception neverHappens) {
@@ -100,33 +102,11 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	/** Variant of {@link #executeWithinAll(List, Callable)} for {@link Runnable} {@code task}s. */
 	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
 		try {
-			executeWithinAll(contexts, new CallableAdapter(task));
+			executeWithinAll(contexts, callable(task));
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception neverHappens) {
 			// result of wrapping with a Callable
-		}
-	}
-
-
-
-	static class CallableAdapter implements Callable<Void> {
-
-		final Runnable wrappedTask;
-
-		protected CallableAdapter(Runnable taskToWrap) {
-			this.wrappedTask = taskToWrap;
-		}
-
-		@Override
-		public Void call() {
-			wrappedTask.run();
-			return null;
-		}
-
-		@Override
-		public String toString() {
-			return wrappedTask.toString();
 		}
 	}
 
