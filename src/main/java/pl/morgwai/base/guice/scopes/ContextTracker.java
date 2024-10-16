@@ -90,7 +90,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	static final TypeLiteral<List<ContextTracker<?>>> ALL_TRACKERS_TYPE = new TypeLiteral<>() {};
 	/**
 	 * {@code Key} for the global {@code List} of all {@code ContextTracker}s provided by a given
-	 * derived lib.
+	 * lib derived from {@code guice-context-scopes}.
 	 */
 	public static final Key<List<ContextTracker<?>>> ALL_TRACKERS_KEY = Key.get(ALL_TRACKERS_TYPE);
 }

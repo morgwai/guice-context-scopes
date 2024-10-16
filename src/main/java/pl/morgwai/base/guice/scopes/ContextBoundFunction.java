@@ -6,7 +6,7 @@ import java.util.function.Function;
 
 
 
-/** A decorator that executes its wrapped {@link Function} within supplied {@code Contexts}. */
+/** Executes its wrapped {@link Function} within supplied {@code Contexts}. */
 public class ContextBoundFunction<T, R> extends ContextBoundClosure<Function<T, R>>
 		implements Function<T, R> {
 

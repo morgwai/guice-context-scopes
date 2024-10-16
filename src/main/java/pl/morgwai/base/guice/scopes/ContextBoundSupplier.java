@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 
 
 
-/** A decorator that executes its wrapped {@link Supplier} within supplied {@code Contexts}. */
+/** Executes its wrapped {@link Supplier} within supplied {@code Contexts}. */
 public class ContextBoundSupplier<T> extends ContextBoundClosure<Supplier<T>>
 		implements Supplier<T> {
 

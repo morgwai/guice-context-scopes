@@ -6,7 +6,7 @@ import java.util.concurrent.Callable;
 
 
 
-/** A decorator that executes its wrapped {@link Callable} within supplied {@code Contexts}. */
+/** Executes its wrapped {@link Callable} within supplied {@code Contexts}. */
 public class ContextBoundCallable<T> extends ContextBoundClosure<Callable<T>> implements Callable<T>
 {
 

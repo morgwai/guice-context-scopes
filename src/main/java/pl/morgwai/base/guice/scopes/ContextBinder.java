@@ -14,7 +14,8 @@ import static pl.morgwai.base.guice.scopes.ContextTracker.getActiveContexts;
 /**
  * Binds closures to {@link InjectionContext Contexts} that were active at the time of a given
  * binding.
- * This can be used to transfer {@code Contexts} when passing callbacks to async functions:
+ * This can be used to transfer {@code Contexts} semi-automatically when switching {@code Thread}s,
+ * for example when passing callbacks to async functions:
  * <pre>
  * class MyComponent {
  *
@@ -79,7 +80,7 @@ public class ContextBinder {
 
 
 
-	// Callable and Supplier have indistinguishable lambdas, hence different method name
+	// Callable and Supplier have indistinguishable lambdas, hence a different method name
 	public <T> ContextBoundSupplier<T> bindSupplierToContext(Supplier<T> toBind) {
 		return new ContextBoundSupplier<>(getActiveContexts(trackers), toBind);
 	}
