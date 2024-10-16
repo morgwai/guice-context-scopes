@@ -6,7 +6,7 @@ import java.util.function.BiFunction;
 
 
 
-/** A decorator that executes its wrapped {@link BiFunction} within supplied {@code Contexts}. */
+/** Executes its wrapped {@link BiFunction} within supplied {@code Contexts}. */
 public class ContextBoundBiFunction<T, U, R> extends ContextBoundClosure<BiFunction<T, U, R>>
 		implements BiFunction<T, U, R> {
 

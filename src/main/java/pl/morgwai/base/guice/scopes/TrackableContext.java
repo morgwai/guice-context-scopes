@@ -10,7 +10,7 @@ import static java.util.concurrent.Executors.callable;
 
 
 /**
- * An {@link InjectionContext} that can
+ * {@link InjectionContext} that can
  * {@link #executeWithinSelf(Callable) execute tasks within itself}, so that it can be tracked
  * across {@code Thread}s using its associated {@link ContextTracker}.
  * <p>
