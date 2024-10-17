@@ -14,7 +14,8 @@ import static java.util.concurrent.Executors.callable;
  * {@link #executeWithinSelf(Callable) execute tasks within itself}, so that it can be tracked
  * across {@code Thread}s using its associated {@link ContextTracker}.
  * <p>
- * Subclasses must use themselves as {@code ContextT} type argument.</p>
+ * Subclasses must use themselves as {@code ContextT} type argument. Subclasses should be top-level
+ * or static-nested, {@code public} classes.</p>
  */
 public abstract class TrackableContext<ContextT extends TrackableContext<ContextT>>
 		extends InjectionContext {

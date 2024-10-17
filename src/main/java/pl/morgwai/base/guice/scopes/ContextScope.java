@@ -19,14 +19,15 @@ import com.google.inject.*;
  * </p>
  * <p>
  * {@code  ContextScope} instances are usually created at an app startup to be used in bindings in
- * user {@link com.google.inject.Module}s. See code organization guidelines for deriving libs in
- * {@link pl.morgwai.base.guice.scopes the package docs}.</p>
+ * user {@link com.google.inject.Module}s. See {@link ContextScopesModule} for details.</p>
  */
 public class ContextScope<ContextT extends TrackableContext<? super ContextT>> implements Scope {
 
 
 
-	protected final ContextTracker<ContextT> tracker;
+	/** For obtaining the current {@code ContextT} instance. */
+	public final ContextTracker<ContextT> tracker;
+	public ContextTracker<ContextT> getTracker() { return tracker; }
 
 	/** Name of this {@code Scope} for logging and debugging purposes. */
 	public final String name;

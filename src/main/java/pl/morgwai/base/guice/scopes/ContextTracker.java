@@ -18,8 +18,7 @@ import com.google.inject.TypeLiteral;
  * of which {@code HttpServletRequest}.
  * <p>
  * {@code ContextTracker} instances are usually created at an app startup to be in turn used by
- * instances of {@link ContextScope}s. See code organization guidelines for deriving libs in
- * {@link pl.morgwai.base.guice.scopes the package docs}.</p>
+ * instances of {@link ContextScope}s. See {@link ContextScopesModule} for details.</p>
  */
 public class ContextTracker<ContextT extends TrackableContext<? super ContextT>> {
 
@@ -67,9 +66,6 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * when switching to another {@code  Thread}. All {@link InducedContextScope Contexts induced}
 	 * by any of the returned {@link TrackableContext}s will also "follow" automatically their
 	 * inducers to the new {@code Thread}.
-	 * <p>
-	 * Deriving libs should bind {@link #ALL_TRACKERS_KEY} to a {@code List} containing all
-	 * {@link ContextTracker}s defined by the given lib for use as an argument for this method.</p>
 	 */
 	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
 		if (trackers.size() == 1) {  // optimize for the most common tracker count
