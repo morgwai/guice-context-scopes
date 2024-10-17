@@ -10,6 +10,12 @@ import java.util.concurrent.*;
  * Decorator for {@link ExecutorService} that automatically transfers active
  * {@link TrackableContext Contexts} from {@link ContextTracker Trackers} of the associated
  * {@link ContextBinder}.
+ * <p>
+ * If {@code ContextTrackingExecutorDecorator}s need to be created before an
+ * {@link com.google.inject.Injector}, then an instance of {@link ContextBinder} may be obtained
+ * with {@link ContextScopesModule#newContextBinder()}. Libs derived from
+ * {@code guice-context-scopes} usually create a {@code public final ContextBinder} field in their
+ * concrete subclasses of {@link ContextScopesModule}.</p>
  */
 public class ContextTrackingExecutorDecorator extends AbstractExecutorService {
 

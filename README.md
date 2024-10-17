@@ -17,13 +17,14 @@ To ease this up, this lib formally introduces a notion of an [InjectionContext](
 ## DEVELOPING SCOPES
 
 Creation of a (set of) custom `Scope`(s) boils down to the below things:
-1. Defining a concrete subclass of [TrackableContext](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/TrackableContext.html) (subclass of `InjectionContext`). For example `ServletRequestContext` in case of Java Servlet containers.
-1. Creating a `ContextTracker` instance and a `ContextScope` instance corresponding to the above `TrackableContext` subclass in some central, easy to access location.
+1. Defining at least one concrete subclass of [TrackableContext](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/TrackableContext.html) (subclass of `InjectionContext`). For example `ServletRequestContext` in case of Java Servlet containers.
+1. Defining a concrete subclass of [ContextScopesModule](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextScopesModule.html) with `public final ContextScope` fields corresponding to the above `TrackableContext` subclasses, initialized with [newContextScope(name, trackableCtxClass)](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextScopesModule.html#newContextScope(java.lang.String,java.lang.Class)) calls.
 1. Hooking creation of the above `TrackableContext` instances into a given existing framework: for example in case of Java Servlet containers, a `Filter` may be created that for each new incoming `ServletRequest` will [execute](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/TrackableContext.html#executeWithinSelf(java.util.concurrent.Callable)) `chain.doFilter(request, response)` within a newly created `ServletRequestContext` instance.
-1. Optionally defining subclasses of `InjectionContext` for `Context` types that are _induced_ by the above `TrackableContext`. For example entering into a `ServletRequestContext` may induce entering into the corresponding `HttpSessionContext`.
-1. Creating [InducedContextScope](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/InducedContextScope.html) instances corresponding to the above induced `Context` types, if any.
+1. Optionally defining subclasses of `InjectionContext` for `Context` types that are _induced_ by some `TrackableContext` subclass. For example entering into a `ServletRequestContext` may induce entering into the corresponding `HttpSessionContext`.
+1. Defining `public final InducedContextScope` fields in the `ContextScopesModule` subclass from the point 2, corresponding to the above induced `Context` types (if any) and initialized with [newInducedContextScope(...)](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextScopesModule.html#newInducedContextScope(java.lang.String,java.lang.Class,pl.morgwai.base.guice.scopes.ContextTracker,java.util.function.Function)) calls.
+1. For app-level code development convenience, defining a `public final ContextBinder` field in the `ContextScopesModule` subclass from the point 2, initialized with a [newContextBinder()](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextScopesModule.html#newContextBinder()) call. This may be useful for app developers when creating their global [ContextTrackingExecutorDecorator](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextTrackingExecutorDecorator.html) instances bound for injection with `toInstance(myGlobalCtxTrackingExecutor)` calls in their `Module`s: see [USAGE](#usage) section.
 
-See the [package level javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/package-summary.html) for full code organization guidelines for deriving libs.
+App developers should then create a global instance of this `ContextScopesModule` subclass defined in the point 2, pass its `Scopes` to their other `Module`s (as needed for scoping of their app components) and finally pass this `ContextScopesModule` instance to their `Guice.createInjector(...)` call(s) along with their other `Moudle`s.
 
 
 ## USAGE
@@ -32,7 +33,6 @@ When switching `Thread`s in a low level library code, static helper methods [get
 ```java
 class MyComponent {
 
-    // deriving libraries should bind List<ContextTracker<?>> appropriately
     @Inject List<ContextTracker<?>> allTrackers;
 
     void methodThatCallsSomeAsyncMethod(/* ... */) {
@@ -53,7 +53,7 @@ class MyComponent {
 }
 ```
 
-For higher level abstraction and for end users, [ContextBinder](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextBinder.html) class was introduced that allows to bind closures defined as common functional interfaces (`Runnable`, `Callable`, `Consumer`, `BiConsumer`, `Function`, `BiFunction`) to `Context`s that were active at the time of a given binding:
+For higher level abstraction and app-level code, [ContextBinder](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextBinder.html) class was introduced that allows to bind closures defined as common functional interfaces (`Runnable`, `Callable`, `Consumer`, `BiConsumer`, `Function`, `BiFunction`) to `Context`s that were active at the time of a given binding:
 ```java
 class MyComponent {  // compare with the "low-level" version above
 
@@ -86,7 +86,7 @@ class MyContextTrackingExecutor extends ThreadPoolExecutor {
     // constructors here...
 }
 ```
-For convenience [ContextTrackingExecutorDecorator](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextTrackingExecutorDecorator.html) class was provided to add the above `Context` transferring functionality to any existing `ExecutorService`.
+For app development convenience, [ContextTrackingExecutorDecorator](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextTrackingExecutorDecorator.html) class was provided to add the above `Context` transferring functionality to any existing `ExecutorService`.
 
 
 ## DERIVED LIBS
