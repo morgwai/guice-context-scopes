@@ -102,15 +102,24 @@ public abstract class ContextScopesModule implements Module {
 
 
 	/**
-	 * Creates a new {@link ContextBinder} based on all {@link ContextTracker}s created by previous
+	 * Returns all {@link ContextTracker}s created by previous
 	 * {@link #newContextScope(String, Class)} calls.
+	 */
+	public List<ContextTracker<?>> getAllTrackers() {
+		return List.copyOf(trackableCtxs.values());
+	}
+
+
+
+	/**
+	 * Creates a new {@link ContextBinder} based on the result of {@link #getAllTrackers()}.
 	 * <p>
 	 * This method should usually be called to initialize a {@code public final ContextBinder} field
 	 * in subclasses of {@code ContextScopesModule} <b>after</b> all
 	 * {@link ContextScope} fields initializations with {@link #newContextScope(String, Class)}.</p>
 	 */
-	protected ContextBinder newContextBinder() {
-		return new ContextBinder(List.copyOf(trackableCtxs.values()));
+	public ContextBinder newContextBinder() {
+		return new ContextBinder(getAllTrackers());
 	}
 
 
@@ -120,8 +129,8 @@ public abstract class ContextScopesModule implements Module {
 	 * {@link #newContextScope(String, Class)} and
 	 * {@link #newInducedContextScope(String, Class, ContextTracker, Function)} calls.
 	 * Specifically the following bindings are created:<ul>
-	 *   <li>{@link ContextTracker#ALL_TRACKERS_KEY} to all {@link ContextTracker}s created by
-	 *       previous {@link #newContextScope(String, Class)} calls.</li>
+	 *   <li>{@link ContextTracker#ALL_TRACKERS_KEY} to the result of
+	 *       {@link #getAllTrackers()}.</li>
 	 *   <li>{@link ContextBinder} type to an instance created with
 	 *       {@link #newContextBinder()}.</li>
 	 *   <li>Types of {@link TrackableContext}s for which {@link ContextScope}s were created with
