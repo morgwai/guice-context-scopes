@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import static java.util.concurrent.Executors.callable;
 import static org.junit.Assert.*;
 import static pl.morgwai.base.guice.scopes.TrackableContext.executeWithinAll;
 
@@ -23,68 +24,53 @@ public class TrackableContextTests {
 	final TestContext3 ctx3 = new TestContext3(tracker3);
 	final List<TrackableContext<?>> allCtxs = List.of(ctx1, ctx2, ctx3);
 
+	static final String RESULT = "result";
+
 
 
 	@Test
-	public void testExecuteWithinAllMultipleCtxs() {
-		executeWithinAll(  // method under test
-			allCtxs,
-			() -> {
-				assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
-				assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
-				assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
-			}
-		);
+	public void testExecuteWithinAllMultipleCtxs() throws Exception {
+		final Runnable task = () -> {
+			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
+			assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
+			assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
+		};
+		executeWithinAll(allCtxs, task);
+		assertSame("result should match",
+				RESULT, executeWithinAll(allCtxs, callable(task, RESULT)));
 	}
 
 
 
 	@Test
-	public void testExecuteWithinAllSingleCtx() {
-		executeWithinAll(  // method under test
-			List.of(ctx1),
-			() -> {
-				assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
+	public void testExecuteWithinAllSingleCtx() throws Exception {
+		final Runnable task = () -> {
+			assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
+			assertNull("ctx2 should not be active", tracker2.getCurrentContext());
+			assertNull("ctx3 should not be active", tracker3.getCurrentContext());
+		};
+		executeWithinAll(List.of(ctx1), task);
+		assertSame("result should match",
+				RESULT, executeWithinAll(List.of(ctx1), callable(task, RESULT)));
+	}
+
+
+
+	@Test
+	public void testExecuteWithinAllNoCtxs() throws Exception {
+		final var noCtxTestTask = new Runnable() {
+			@Override public void run() {
+				assertNull("ctx1 should not be active", tracker1.getCurrentContext());
 				assertNull("ctx2 should not be active", tracker2.getCurrentContext());
 				assertNull("ctx3 should not be active", tracker3.getCurrentContext());
 			}
-		);
-	}
-
-
-
-	@Test
-	public void testExecuteWithinAllNoCtxs() {
-		executeWithinAll(  // method under test
-			List.of(),
-			new Runnable() {
-				@Override public void run() {
-					assertNull("ctx1 should not be active", tracker1.getCurrentContext());
-					assertNull("ctx2 should not be active", tracker2.getCurrentContext());
-					assertNull("ctx3 should not be active", tracker3.getCurrentContext());
-				}
-				@Override public String toString() {
-					return "NoCtxTestTask";
-				}
+			@Override public String toString() {
+				return "noCtxTestTask";
 			}
-		);
-	}
-
-
-
-	@Test
-	public void testExecuteCallableWithinAll() throws Exception {
-		final var result = "result";
-		final var obtained = executeWithinAll(  // method under test
-			allCtxs,
-			() -> {
-				assertSame("ctx1 should be active", ctx1, tracker1.getCurrentContext());
-				assertSame("ctx2 should be active", ctx2, tracker2.getCurrentContext());
-				assertSame("ctx3 should be active", ctx3, tracker3.getCurrentContext());
-				return result;
-			}
-		);
-		assertSame("result should match", result, obtained);
+		};
+		executeWithinAll(List.of(), noCtxTestTask);
+		assertSame("result should match",
+				RESULT, executeWithinAll(List.of(), callable(noCtxTestTask, RESULT)));
 	}
 
 
