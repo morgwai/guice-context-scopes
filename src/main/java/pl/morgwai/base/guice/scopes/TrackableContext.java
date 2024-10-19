@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
-import static java.util.concurrent.Executors.callable;
-
 
 
 /**
@@ -43,17 +41,11 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 		return tracker.trackWhileExecuting(thisCtx, task);
 	}
 
-
-
 	/** Variant of {@link #executeWithinSelf(Callable)} for {@link Runnable} {@code task}s. */
 	public void executeWithinSelf(Runnable task) {
-		try {
-			executeWithinSelf(callable(task));
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception neverHappens) {
-			// result of wrapping with a Callable
-		}
+		@SuppressWarnings("unchecked")
+		final var thisCtx = (ContextT) this;
+		tracker.trackWhileExecuting(thisCtx, task);
 	}
 
 
@@ -70,13 +62,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 			case 1:
 				return contexts.get(0).executeWithinSelf(task);
 			case 0:
-				final var noCtxWarning = String.format(
-					NO_CONTEXT_WARNING,
-					Thread.currentThread().getName(),
-					task.toString()
-				);
-				System.err.println(noCtxWarning);
-				log.warning(noCtxWarning);
+				printNoCtxWarning(task);
 				return task.call();
 			default:
 				return executeWithinAll(
@@ -93,22 +79,44 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 		}
 	}
 
+	/** Variant of {@link #executeWithinAll(List, Callable)} for {@link Runnable} {@code task}s. */
+	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
+		switch (contexts.size()) {
+			case 1:
+				contexts.get(0).executeWithinSelf(task);
+				return;
+			case 0:
+				printNoCtxWarning(task);
+				task.run();
+				return;
+			default:
+				executeWithinAll(
+					contexts.subList(1, contexts.size()),
+					new Runnable() {
+						@Override public void run() {
+							contexts.get(0).executeWithinSelf(task);
+						}
+						@Override public String toString() {
+							return task.toString();
+						}
+					}
+				);
+		}
+	}
+
+	static void printNoCtxWarning(Object task) {
+		final var noCtxWarning = String.format(
+			NO_CONTEXT_WARNING,
+			Thread.currentThread().getName(),
+			task.toString()
+		);
+		System.err.println(noCtxWarning);
+		log.warning(noCtxWarning);
+	}
+
 	static final String NO_CONTEXT_WARNING =
 			"Thread \"%s\" is executing task %s outside of any Context";
 	static final Logger log = Logger.getLogger(TrackableContext.class.getName());
-
-
-
-	/** Variant of {@link #executeWithinAll(List, Callable)} for {@link Runnable} {@code task}s. */
-	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
-		try {
-			executeWithinAll(contexts, callable(task));
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception neverHappens) {
-			// result of wrapping with a Callable
-		}
-	}
 
 
 
@@ -125,5 +133,5 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	private static final long serialVersionUID = 5613154173540357269L;
+	private static final long serialVersionUID = -3750362153610890836L;
 }

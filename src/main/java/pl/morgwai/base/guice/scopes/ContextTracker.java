@@ -56,6 +56,16 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 		}
 	}
 
+	/** Variant of {@link #trackWhileExecuting(TrackableContext, Callable)} for {@link Runnable}. */
+	void trackWhileExecuting(ContextT ctx, Runnable task) {
+		currentContext.set(ctx);
+		try {
+			task.run();
+		} finally {
+			currentContext.remove();
+		}
+	}
+
 
 
 	/**
