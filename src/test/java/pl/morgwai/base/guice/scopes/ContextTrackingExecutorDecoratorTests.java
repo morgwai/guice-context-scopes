@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertTrue;
+import static pl.morgwai.base.guice.scopes.TestContexts.*;
 
 
 
@@ -15,7 +16,6 @@ public class ContextTrackingExecutorDecoratorTests {
 
 
 
-	final ContextTracker<TestContext> tracker = new ContextTracker<>();
 	final ContextBinder ctxBinder = new ContextBinder(List.of(tracker));
 	final ContextTrackingExecutorDecorator testSubject =
 			new ContextTrackingExecutorDecorator(Executors.newSingleThreadExecutor(), ctxBinder);
@@ -51,11 +51,5 @@ public class ContextTrackingExecutorDecoratorTests {
 		} finally {
 			if ( !testSubject.isTerminated()) testSubject.shutdownNow();
 		}
-	}
-
-
-
-	static class TestContext extends TrackableContext<TestContext> {
-		TestContext(ContextTracker<TestContext> tracker) { super(tracker); }
 	}
 }

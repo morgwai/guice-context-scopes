@@ -1,10 +1,12 @@
 // Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
-import com.google.inject.*;
 import org.junit.Test;
 
+import com.google.inject.*;
+
 import static org.junit.Assert.*;
+import static pl.morgwai.base.guice.scopes.TestContexts.*;
 
 
 
@@ -14,7 +16,6 @@ public class ContextScopeTests {
 
 	static final Key<Integer> INT_KEY = Key.get(Integer.class);
 
-	final ContextTracker<TestContext> tracker = new ContextTracker<>();
 	final ContextScope<TestContext> scope = new ContextScope<>("testScope", tracker);
 
 	int sequence = 0;
@@ -80,11 +81,5 @@ public class ContextScopeTests {
 	public void testScopedProviderToString() {
 		assertTrue("scopedProvider.toString() should contain result of producer.toString()",
 				scope.scope(INT_KEY, producer).toString().contains(producer.toString()));
-	}
-
-
-
-	static class TestContext extends TrackableContext<TestContext> {
-		TestContext(ContextTracker<TestContext> tracker) { super(tracker); }
 	}
 }

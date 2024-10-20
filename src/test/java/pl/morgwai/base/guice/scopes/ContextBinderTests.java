@@ -4,11 +4,11 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.*;
-
 import org.junit.Test;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static pl.morgwai.base.guice.scopes.TestContexts.*;
 
 
 
@@ -18,7 +18,6 @@ public class ContextBinderTests {
 
 	static final String RESULT = "result";
 
-	final ContextTracker<TestContext> tracker = new ContextTracker<>();
 	final ContextBinder testSubject = new ContextBinder(List.of(tracker));
 	final TestContext ctx = new TestContext(tracker);
 
@@ -137,7 +136,7 @@ public class ContextBinderTests {
 			callbackHolder[0] = testSubject.bindSupplierToContext(
 				() -> {
 					assertSame("callable should be bound to ctx",
-						ctx, tracker.getCurrentContext());
+							ctx, tracker.getCurrentContext());
 					return RESULT;
 				}
 			);
@@ -145,11 +144,5 @@ public class ContextBinderTests {
 		assertNull("sanity check", tracker.getCurrentContext());
 		assertSame("result should match",
 				RESULT, callbackHolder[0].get());
-	}
-
-
-
-	static class TestContext extends TrackableContext<TestContext> {
-		TestContext(ContextTracker<TestContext> tracker) { super(tracker); }
 	}
 }

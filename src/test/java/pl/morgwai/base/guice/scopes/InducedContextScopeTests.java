@@ -16,10 +16,10 @@ public class InducedContextScopeTests {
 
 	static final Key<Integer> INT_KEY = Key.get(Integer.class);
 
-	final ContextTracker<ChildContext> tracker = new ContextTracker<>();
-	final ContextScope<ChildContext> childScope = new ContextScope<>("childScope", tracker);
-	final InducedContextScope<ChildContext, InducedParentContext> parentScope =
-			new InducedContextScope<>("inducedParentScope", tracker, ChildContext::getParentCtx);
+	final ContextTracker<BaseContext> tracker = new ContextTracker<>();
+	final ContextScope<BaseContext> baseScope = new ContextScope<>("baseScope", tracker);
+	final InducedContextScope<BaseContext, InducedContext> inducedScope =
+			new InducedContextScope<>("inducedScope", tracker, BaseContext::getInducedCtx);
 
 	int sequence = 0;
 	final Provider<Integer> producer = () -> ++sequence;
@@ -28,13 +28,13 @@ public class InducedContextScopeTests {
 
 	@Test
 	public void testScoping() {
-		final var parentCtx = new InducedParentContext();
+		final var parentCtx = new InducedContext();
 		final var parentScopedIntHolder = new Integer[1];
 		final var childScopedIntHolder = new Integer[1];
-		final var childScopedProvider = childScope.scope(INT_KEY, producer);
-		new ChildContext(tracker, parentCtx).executeWithinSelf(
+		final var childScopedProvider = baseScope.scope(INT_KEY, producer);
+		new BaseContext(tracker, parentCtx).executeWithinSelf(
 			() -> {
-				final var parentScopedProvider = parentScope.scope(INT_KEY, producer);
+				final var parentScopedProvider = inducedScope.scope(INT_KEY, producer);
 				parentScopedIntHolder[0] = parentScopedProvider.get();
 				childScopedIntHolder[0] = childScopedProvider.get();
 				assertSame(
@@ -54,9 +54,9 @@ public class InducedContextScopeTests {
 				);
 			}
 		);
-		new ChildContext(tracker, parentCtx).executeWithinSelf(
+		new BaseContext(tracker, parentCtx).executeWithinSelf(
 			() -> {
-				final var parentScopedProvider = parentScope.scope(INT_KEY, producer);
+				final var parentScopedProvider = inducedScope.scope(INT_KEY, producer);
 				assertSame(
 					"parent scoped provider should keep providing the same object in a given"
 								+ " parent ctx across all its child ctxs",
@@ -74,16 +74,16 @@ public class InducedContextScopeTests {
 
 
 
-	static class InducedParentContext extends InjectionContext {}
+	static class InducedContext extends InjectionContext {}
 
-	static class ChildContext extends TrackableContext<ChildContext> {
+	static class BaseContext extends TrackableContext<BaseContext> {
 
-		InducedParentContext getParentCtx() { return parentCtx; }
-		final InducedParentContext parentCtx;
+		InducedContext getInducedCtx() { return inducedCtx; }
+		final InducedContext inducedCtx;
 
-		ChildContext(ContextTracker<ChildContext> tracker, InducedParentContext parentCtx) {
+		BaseContext(ContextTracker<BaseContext> tracker, InducedContext inducedCtx) {
 			super(tracker);
-			this.parentCtx = parentCtx;
+			this.inducedCtx = inducedCtx;
 		}
 	}
 }

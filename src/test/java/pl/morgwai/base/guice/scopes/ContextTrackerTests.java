@@ -2,11 +2,11 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
-
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 import static pl.morgwai.base.guice.scopes.ContextTracker.getActiveContexts;
+import static pl.morgwai.base.guice.scopes.TestContexts.*;
 
 
 
@@ -14,24 +14,19 @@ public class ContextTrackerTests {
 
 
 
-	final ContextTracker<TestContext1> tracker1 = new ContextTracker<>();
-	final ContextTracker<TestContext2> tracker2 = new ContextTracker<>();
-	final ContextTracker<TestContext3> tracker3 = new ContextTracker<>();
-	final List<ContextTracker<?>> allTrackers = List.of(tracker1, tracker2, tracker3);
-
-	final TestContext1 ctx1 = new TestContext1(tracker1);
-	final TestContext3 ctx3 = new TestContext3(tracker3);
+	final TestContext ctx1 = new TestContext(tracker);
+	final ThirdTestContext ctx3 = new ThirdTestContext(thirdTracker);
 
 
 
 	@Test
 	public void testTrackingRunnable() {
-		assertNull("current context should be unset initially", tracker1.getCurrentContext());
+		assertNull("current context should be unset initially", tracker.getCurrentContext());
 		ctx1.executeWithinSelf(
 			() -> assertSame("executing context should be set as the current",
-					ctx1, tracker1.getCurrentContext())
+					ctx1, tracker.getCurrentContext())
 		);
-		assertNull("current context should be cleared at the end", tracker1.getCurrentContext());
+		assertNull("current context should be cleared at the end", tracker.getCurrentContext());
 	}
 
 
@@ -39,15 +34,15 @@ public class ContextTrackerTests {
 	@Test
 	public void testTrackingCallable() throws Exception {
 		final var result = "result";
-		assertNull("current context should be unset initially", tracker1.getCurrentContext());
+		assertNull("current context should be unset initially", tracker.getCurrentContext());
 		final var obtained = ctx1.executeWithinSelf(
 			() -> {
 				assertSame("executing context should be set as the current",
-						ctx1, tracker1.getCurrentContext());
+						ctx1, tracker.getCurrentContext());
 				return result;
 			}
 		);
-		assertNull("current context should be cleared at the end", tracker1.getCurrentContext());
+		assertNull("current context should be cleared at the end", tracker.getCurrentContext());
 		assertSame("obtained object should be the same as returned",
 				result, obtained);
 	}
@@ -58,17 +53,17 @@ public class ContextTrackerTests {
 	public void testTrackingAcrossThreads() throws Exception {
 		final AssertionError[] errorHolder = {null};
 		ctx1.executeWithinSelf(() -> {
-			final var currentContext = tracker1.getCurrentContext();
+			final var currentContext = tracker.getCurrentContext();
 			final var thread = new Thread(() -> {
 				try {
 					assertNull("current context should be unset initially in a new thread",
-							tracker1.getCurrentContext());
+							tracker.getCurrentContext());
 					currentContext.executeWithinSelf(
 						() -> assertSame("executing context should be set as the current",
-									ctx1, tracker1.getCurrentContext())
+									ctx1, tracker.getCurrentContext())
 					);
 					assertNull("current context should be cleared at the end",
-							tracker1.getCurrentContext());
+							tracker.getCurrentContext());
 				} catch (AssertionError e) {
 					errorHolder[0] = e;
 				}
@@ -104,7 +99,7 @@ public class ContextTrackerTests {
 		ctx1.executeWithinSelf(
 			() -> ctx3.executeWithinSelf(
 				() -> {
-					final var activeCtxs = getActiveContexts(List.of(tracker1));
+					final var activeCtxs = getActiveContexts(List.of(tracker));
 					assertEquals("there should be 1 active ctx",
 							1, activeCtxs.size());
 					assertTrue("ctx1 should be active", activeCtxs.contains(ctx1));
@@ -119,7 +114,7 @@ public class ContextTrackerTests {
 	public void testGetActiveContextsSingleTrackerWithInactiveContext() {
 		ctx3.executeWithinSelf(
 			() -> assertTrue("there should be no active ctxs",
-					getActiveContexts(List.of(tracker1)).isEmpty())
+					getActiveContexts(List.of(tracker)).isEmpty())
 		);
 	}
 
@@ -133,19 +128,5 @@ public class ContextTrackerTests {
 						getActiveContexts(List.of()).isEmpty())
 			)
 		);
-	}
-
-
-
-	static class TestContext1 extends TrackableContext<TestContext1> {
-		TestContext1(ContextTracker<TestContext1> tracker) { super(tracker); }
-	}
-
-	static class TestContext2 extends TrackableContext<TestContext2> {
-		TestContext2(ContextTracker<TestContext2> tracker) { super(tracker); }
-	}
-
-	static class TestContext3 extends TrackableContext<TestContext3> {
-		TestContext3(ContextTracker<TestContext3> tracker) { super(tracker); }
 	}
 }
