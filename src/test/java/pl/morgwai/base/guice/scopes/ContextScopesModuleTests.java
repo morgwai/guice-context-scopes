@@ -1,12 +1,15 @@
 // Copyright 2024 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
 package pl.morgwai.base.guice.scopes;
 
+import java.lang.reflect.Type;
+import java.util.HashSet;
 import org.junit.Test;
 
 import com.google.inject.*;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.*;
+import static pl.morgwai.base.guice.scopes.ContextScopesModule.ContextTrackerType;
+import static pl.morgwai.base.guice.scopes.TestContexts.*;
 
 
 
@@ -129,5 +132,40 @@ public class ContextScopesModuleTests {
 				() -> component.bindToCtx(testTask)
 			)
 		).run();
+	}
+
+
+
+	HashSet<TestContext> testContextSet;
+
+	@Test
+	public void testParameterizedTypeImplEqualsAndHashCode() throws NoSuchFieldException {
+		final var reflectiveTrackerType =
+				TestContexts.class.getDeclaredField("tracker").getGenericType();
+		final var testContextTrackerType = new ContextTrackerType(TestContext.class);
+		assertEquals(reflectiveTrackerType, testContextTrackerType);
+		assertEquals(testContextTrackerType, reflectiveTrackerType);
+		assertEquals(reflectiveTrackerType.hashCode(), testContextTrackerType.hashCode());
+
+		final var typeSet = new HashSet<Type>();
+		typeSet.add(reflectiveTrackerType);
+		assertTrue("reflectiveTrackerType in a HashSet should be found by testContextTrackerType",
+				typeSet.remove(testContextTrackerType));
+		typeSet.add(testContextTrackerType);
+		assertTrue("testContextTrackerType in a HashSet should be found by reflectiveTrackerType",
+				typeSet.remove(reflectiveTrackerType));
+
+		final var secondTestContextTrackerType = new ContextTrackerType(SecondTestContext.class);
+		assertNotEquals(reflectiveTrackerType, secondTestContextTrackerType);
+		assertNotEquals(secondTestContextTrackerType, reflectiveTrackerType);
+		assertNotEquals(testContextTrackerType, secondTestContextTrackerType);
+		assertNotEquals(secondTestContextTrackerType, testContextTrackerType);
+		assertNotEquals(testContextTrackerType.hashCode(), secondTestContextTrackerType.hashCode());
+
+		final var reflectiveTestContextSetType =
+					getClass().getDeclaredField("testContextSet").getGenericType();
+		assertNotEquals(testContextTrackerType, reflectiveTestContextSetType);
+		assertNotEquals(reflectiveTestContextSetType, testContextTrackerType);
+		assertNotEquals(testContextTrackerType.hashCode(), reflectiveTestContextSetType.hashCode());
 	}
 }

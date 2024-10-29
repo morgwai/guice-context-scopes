@@ -166,28 +166,11 @@ public abstract class ContextScopesModule implements Module {
 		final var ctxClass = (Class<ContextT>) unboundCtxClass;
 		@SuppressWarnings("unchecked")
 		final var tracker = (ContextTracker<ContextT>) unboundTracker;
-		binder.bind(getTrackerKey(ctxClass)).toInstance(tracker);
-		binder.bind(ctxClass).toProvider(tracker::getCurrentContext);
-	}
-
-	<ContextT extends TrackableContext<ContextT>> Key<ContextTracker<ContextT>> getTrackerKey(
-		Class<ContextT> ctxClass
-	) {
 		@SuppressWarnings("unchecked")
-		final var trackerType = (TypeLiteral<ContextTracker<ContextT>>) TypeLiteral.get(
-			new ParameterizedType() {
-				@Override public Type[] getActualTypeArguments() {
-					return new Type[]{ctxClass};
-				}
-				@Override public Type getRawType() {
-					return ContextTracker.class;
-				}
-				@Override public Type getOwnerType() {
-					return null;  // top-level class
-				}
-			}
-		);
-		return Key.get(trackerType);
+		final var trackerKey = (Key<ContextTracker<ContextT>>)
+				Key.get(new ContextTrackerType(ctxClass));
+		binder.bind(trackerKey).toInstance(tracker);
+		binder.bind(ctxClass).toProvider(tracker::getCurrentContext);
 	}
 
 	<
@@ -205,5 +188,37 @@ public abstract class ContextScopesModule implements Module {
 				inducedCtxRetrievers.get(inducedCtxClass);
 		binder.bind(inducedCtxClass)
 			.toProvider(() -> inducedCtxRetriever.apply(baseCtxTracker.getCurrentContext()));
+	}
+
+
+
+	static class ContextTrackerType implements ParameterizedType {
+
+		final Type[] ctxClass;
+
+		ContextTrackerType(Class<? extends TrackableContext<?>> ctxClass) {
+			this.ctxClass = new Type[]{ctxClass};
+		}
+
+		@Override public Type[] getActualTypeArguments() {
+			return ctxClass;
+		}
+
+		@Override public Type getRawType() { return ContextTracker.class; }
+
+		@Override public Type getOwnerType() { return null; }  // top-level class
+
+		/** Specified by {@link ParameterizedType} javadoc. */
+		@Override public boolean equals(Object other) {
+			if ( !(other instanceof ParameterizedType)) return false;
+			final var otherType = (ParameterizedType) other;
+			return ContextTracker.class.equals(otherType.getRawType())
+					&& Arrays.equals(ctxClass, otherType.getActualTypeArguments());
+		}
+
+		/** Based on {@code sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl} source. */
+		@Override public int hashCode() {
+			return Arrays.hashCode(ctxClass) ^ ContextTracker.class.hashCode();
+		}
 	}
 }
