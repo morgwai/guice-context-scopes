@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertSame;
+import static pl.morgwai.base.guice.scopes.TestContexts.*;
 
 
 
@@ -16,10 +17,10 @@ public class InducedContextScopeTests {
 
 	static final Key<Integer> INT_KEY = Key.get(Integer.class);
 
-	final ContextTracker<BaseContext> tracker = new ContextTracker<>();
-	final ContextScope<BaseContext> baseScope = new ContextScope<>("baseScope", tracker);
-	final InducedContextScope<BaseContext, InducedContext> inducedScope =
-			new InducedContextScope<>("inducedScope", tracker, BaseContext::getInducedCtx);
+	final ContextTracker<TestContext> tracker = new ContextTracker<>();
+	final ContextScope<TestContext> baseScope = new ContextScope<>("baseScope", tracker);
+	final InducedContextScope<TestContext, InducedContext> inducedScope =
+			new InducedContextScope<>("inducedScope", tracker, TestContext::getInducedCtx);
 
 	int sequence = 0;
 	final Provider<Integer> producer = () -> ++sequence;
@@ -28,62 +29,49 @@ public class InducedContextScopeTests {
 
 	@Test
 	public void testScoping() {
-		final var parentCtx = new InducedContext();
-		final var parentScopedIntHolder = new Integer[1];
-		final var childScopedIntHolder = new Integer[1];
-		final var childScopedProvider = baseScope.scope(INT_KEY, producer);
-		new BaseContext(tracker, parentCtx).executeWithinSelf(
+		final var inducedCtx = new InducedContext();
+		final var inducedScopedIntHolder = new Integer[1];
+		final var baseScopedIntHolder = new Integer[1];
+		final var baseScopedProvider = baseScope.scope(INT_KEY, producer);
+		new TestContext(tracker, inducedCtx).executeWithinSelf(
 			() -> {
-				final var parentScopedProvider = inducedScope.scope(INT_KEY, producer);
-				parentScopedIntHolder[0] = parentScopedProvider.get();
-				childScopedIntHolder[0] = childScopedProvider.get();
+				final var inducedScopedProvider = inducedScope.scope(INT_KEY, producer);
+				inducedScopedIntHolder[0] = inducedScopedProvider.get();
+				baseScopedIntHolder[0] = baseScopedProvider.get();
 				assertSame(
-					"parent scoped provider should keep providing the same object in a child ctx",
-					parentScopedIntHolder[0],
-					parentScopedProvider.get()
+					"inducedScopedProvider should keep providing the same object within "
+							+ "its base TestContext",
+					inducedScopedIntHolder[0],
+					inducedScopedProvider.get()
 				);
 				assertSame(
-					"child scoped provider should keep providing the same object in a child ctx",
-					childScopedIntHolder[0],
-					childScopedProvider.get()
+					"baseScopedProvider should keep providing the same object within "
+							+ "a given base TestContext",
+					baseScopedIntHolder[0],
+					baseScopedProvider.get()
 				);
 				assertNotEquals(
-					"parent and child scoped providers should provide different objects",
-					childScopedIntHolder[0],
-					parentScopedIntHolder[0]
+					"base- and induced- scoped providers should provide different objects",
+					baseScopedIntHolder[0],
+					inducedScopedIntHolder[0]
 				);
 			}
 		);
-		new BaseContext(tracker, parentCtx).executeWithinSelf(
+		new TestContext(tracker, inducedCtx).executeWithinSelf(
 			() -> {
-				final var parentScopedProvider = inducedScope.scope(INT_KEY, producer);
+				final var inducedScopedProvider = inducedScope.scope(INT_KEY, producer);
 				assertSame(
-					"parent scoped provider should keep providing the same object in a given"
-								+ " parent ctx across all its child ctxs",
-					parentScopedIntHolder[0],
-					parentScopedProvider.get()
+					"inducedScopedProvider should keep providing the same object within "
+							+ "a given InducedContext across all its base TestContexts",
+					inducedScopedIntHolder[0],
+					inducedScopedProvider.get()
 				);
 				assertNotEquals(
-					"child scoped provider should provide a new object in a new child ctx",
-					childScopedIntHolder[0],
-					childScopedProvider.get()
+					"baseScopedProvider should provide a new object in a new base TestContext",
+					baseScopedIntHolder[0],
+					baseScopedProvider.get()
 				);
 			}
 		);
-	}
-
-
-
-	static class InducedContext extends InjectionContext {}
-
-	static class BaseContext extends TrackableContext<BaseContext> {
-
-		InducedContext getInducedCtx() { return inducedCtx; }
-		final InducedContext inducedCtx;
-
-		BaseContext(ContextTracker<BaseContext> tracker, InducedContext inducedCtx) {
-			super(tracker);
-			this.inducedCtx = inducedCtx;
-		}
 	}
 }

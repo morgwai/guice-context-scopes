@@ -3,6 +3,7 @@ package pl.morgwai.base.guice.scopes;
 
 import java.lang.reflect.Type;
 import java.util.HashSet;
+import java.util.List;
 import org.junit.Test;
 
 import com.google.inject.*;
@@ -17,47 +18,19 @@ public class ContextScopesModuleTests {
 
 
 
-	public static class FirstTrackableContext extends TrackableContext<FirstTrackableContext> {
-		public FirstTrackableContext(ContextTracker<FirstTrackableContext> tracker) {
-			super(tracker);
-		}
-	}
-
-
-
-	public static class InducedContext extends InjectionContext {}
-
-
-
-	public static class SecondTrackableContext extends TrackableContext<SecondTrackableContext> {
-
-		final InducedContext inducedCtx;
-		public InducedContext getInducedCtx() { return inducedCtx; }
-
-		public SecondTrackableContext(
-			ContextTracker<SecondTrackableContext> tracker,
-			InducedContext inducedCtx
-		) {
-			super(tracker);
-			this.inducedCtx = inducedCtx;
-		}
-	}
-
-
-
 	public static class TestModule extends ContextScopesModule {
 
-		public final ContextScope<FirstTrackableContext> firstScope =
-				newContextScope("firstScope", FirstTrackableContext.class);
+		public final ContextScope<TestContext> firstScope =
+				newContextScope("firstScope", TestContext.class);
 
-		public final ContextScope<SecondTrackableContext> secondScope =
-				newContextScope("secondScope", SecondTrackableContext.class);
+		public final ContextScope<SecondTestContext> secondScope =
+				newContextScope("secondScope", SecondTestContext.class);
 
 		public final Scope inducedScope = newInducedContextScope(
 			"inducedScope",
 			InducedContext.class,
-			secondScope.tracker,
-			SecondTrackableContext::getInducedCtx
+			firstScope.tracker,
+			TestContext::getInducedCtx
 		);
 
 		public final ContextBinder ctxBinder = newContextBinder();
@@ -66,28 +39,27 @@ public class ContextScopesModuleTests {
 
 
 	final TestModule testSubject = new TestModule();
-	final ContextTracker<FirstTrackableContext> firstTracker = testSubject.firstScope.tracker;
-	final ContextTracker<SecondTrackableContext> secondTracker = testSubject.secondScope.tracker;
+	final ContextTracker<TestContext> firstTracker = testSubject.firstScope.tracker;
+	final ContextTracker<SecondTestContext> secondTracker = testSubject.secondScope.tracker;
 	final Injector injector = Guice.createInjector(testSubject);
 	final InducedContext inducedCtx = new InducedContext();
-	final FirstTrackableContext firstCtx = new FirstTrackableContext(firstTracker);
-	final SecondTrackableContext secondCtx = new SecondTrackableContext(secondTracker, inducedCtx);
+	final TestContext firstCtx = new TestContext(firstTracker, inducedCtx);
+	final SecondTestContext secondCtx = new SecondTestContext(secondTracker);
 
 
 
 	@Test
 	public void testContextProviders() {
-		firstCtx.executeWithinSelf(
-			() -> secondCtx.executeWithinSelf(
-				() -> {
-					assertSame("enclosing firstCtx should be provided",
-							firstCtx, injector.getInstance(FirstTrackableContext.class));
-					assertSame("enclosing secondCtx should be provided",
-							secondCtx, injector.getInstance(SecondTrackableContext.class));
-					assertSame("inducedCtx associated with the secondCtx should be provided",
-							inducedCtx, injector.getInstance(InducedContext.class));
-				}
-			)
+		TrackableContext.executeWithinAll(
+			List.of(firstCtx, secondCtx),
+			() -> {
+				assertSame("enclosing firstCtx should be provided",
+						firstCtx, injector.getInstance(TestContext.class));
+				assertSame("enclosing secondCtx should be provided",
+						secondCtx, injector.getInstance(SecondTestContext.class));
+				assertSame("inducedCtx associated with the secondCtx should be provided",
+						inducedCtx, injector.getInstance(InducedContext.class));
+			}
 		);
 	}
 
