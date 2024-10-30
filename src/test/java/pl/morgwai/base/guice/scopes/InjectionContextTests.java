@@ -6,16 +6,15 @@ import java.lang.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Test;
 
 import com.google.inject.*;
 import com.google.inject.name.Named;
-import org.junit.Test;
 
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-import static com.google.inject.name.Names.named;
 import static org.junit.Assert.*;
+import static com.google.inject.name.Names.named;
 
 
 
