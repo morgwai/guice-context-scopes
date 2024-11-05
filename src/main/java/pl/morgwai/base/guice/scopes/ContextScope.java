@@ -19,7 +19,7 @@ import com.google.inject.*;
  * </p>
  * <p>
  * {@code  ContextScope} instances are usually created at an app startup to be used in bindings in
- * user {@link com.google.inject.Module}s. See {@link ContextScopesModule} for details.</p>
+ * user {@link com.google.inject.Module}s. See {@link ScopeModule} for details.</p>
  */
 public class ContextScope<ContextT extends TrackableContext<? super ContextT>> implements Scope {
 

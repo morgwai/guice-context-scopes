@@ -9,16 +9,16 @@ import org.junit.Test;
 import com.google.inject.*;
 
 import static org.junit.Assert.*;
-import static pl.morgwai.base.guice.scopes.ContextScopesModule.ContextTrackerType;
+import static pl.morgwai.base.guice.scopes.ScopeModule.ContextTrackerType;
 import static pl.morgwai.base.guice.scopes.TestContexts.*;
 
 
 
-public class ContextScopesModuleTests {
+public class ScopeModuleTests {
 
 
 
-	public static class TestModule extends ContextScopesModule {
+	public static class TestModule extends ScopeModule {
 
 		public final ContextScope<TestContext> firstScope =
 				newContextScope("firstScope", TestContext.class);

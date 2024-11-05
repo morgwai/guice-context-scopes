@@ -18,7 +18,7 @@ import com.google.inject.TypeLiteral;
  * of which {@code HttpServletRequest}.
  * <p>
  * {@code ContextTracker} instances are usually created at an app startup to be in turn used by
- * instances of {@link ContextScope}s. See {@link ContextScopesModule} for details.</p>
+ * instances of {@link ContextScope}s. See {@link ScopeModule} for details.</p>
  */
 public class ContextTracker<ContextT extends TrackableContext<? super ContextT>> {
 

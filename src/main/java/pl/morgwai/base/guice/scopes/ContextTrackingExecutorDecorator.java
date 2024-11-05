@@ -13,9 +13,9 @@ import java.util.concurrent.*;
  * <p>
  * If {@code ContextTrackingExecutorDecorator}s need to be created before an
  * {@link com.google.inject.Injector}, then an instance of {@link ContextBinder} may be obtained
- * with {@link ContextScopesModule#newContextBinder()}. Libs derived from
+ * with {@link ScopeModule#newContextBinder()}. Libs derived from
  * {@code guice-context-scopes} usually create a {@code public final ContextBinder} field in their
- * concrete subclasses of {@link ContextScopesModule}.</p>
+ * concrete subclasses of {@link ScopeModule}.</p>
  */
 public class ContextTrackingExecutorDecorator extends AbstractExecutorService {
 

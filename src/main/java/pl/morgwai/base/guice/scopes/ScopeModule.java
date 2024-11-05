@@ -27,14 +27,14 @@ import com.google.inject.Module;
  *       toInstance(myGlobalCtxTrackingExecutor)} calls in their {@link Module}s.</li>
  * </ol>
  * <p>
- * App developers should then create a global instance of such {@code ContextScopesModule} subclass,
+ * App developers should then create a global instance of such {@code ScopeModule} subclass,
  * pass its {@link Scope}s to their other {@link Module}s (as needed for scoping of their app
- * components) and finally pass this {@code ContextScopesModule} instance to their
+ * components) and finally pass this {@code ScopeModule} instance to their
  * {@link Guice#createInjector(Module...)} call(s) along with their other {@link Module}s.</p>
  * @see <a href="https://github.com/morgwai/guice-context-scopes#developing-portable-modules">
  *     Developing portable Modules</a>
  */
-public abstract class ContextScopesModule implements Module {
+public abstract class ScopeModule implements Module {
 
 
 
@@ -61,7 +61,7 @@ public abstract class ContextScopesModule implements Module {
 	 * </ul>
 	 * <p>
 	 * This method should usually be called to initialize {@code public final ContextScope} fields
-	 * in subclasses of {@code ContextScopesModule}.</p>
+	 * in subclasses of {@code ScopeModule}.</p>
 	 * @return the newly created {@link ContextScope}. A reference to the corresponding
 	 * {@link ContextTracker} may be obtained from {@link ContextScope#tracker}.
 	 */
@@ -85,7 +85,7 @@ public abstract class ContextScopesModule implements Module {
 	 * on {@code baseCtxTracker} and {@code inducedCtxRetriever}.
 	 * <p>
 	 * This method should usually be called to initialize {@code public final InducedContextScope}
-	 * fields in subclasses of {@code ContextScopesModule}.</p>
+	 * fields in subclasses of {@code ScopeModule}.</p>
 	 */
 	protected <
 		BaseContextT extends TrackableContext<? super BaseContextT>,
@@ -117,7 +117,7 @@ public abstract class ContextScopesModule implements Module {
 	 * Creates a new {@link ContextBinder} based on the result of {@link #getAllTrackers()}.
 	 * <p>
 	 * This method should usually be called to initialize a {@code public final ContextBinder} field
-	 * in subclasses of {@code ContextScopesModule} <b>after</b> all
+	 * in subclasses of {@code ScopeModule} <b>after</b> all
 	 * {@link ContextScope} fields initializations with {@link #newContextScope(String, Class)}.</p>
 	 */
 	public ContextBinder newContextBinder() {
