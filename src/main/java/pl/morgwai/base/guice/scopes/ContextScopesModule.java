@@ -31,6 +31,8 @@ import com.google.inject.Module;
  * pass its {@link Scope}s to their other {@link Module}s (as needed for scoping of their app
  * components) and finally pass this {@code ContextScopesModule} instance to their
  * {@link Guice#createInjector(Module...)} call(s) along with their other {@link Module}s.</p>
+ * @see <a href="https://github.com/morgwai/guice-context-scopes#developing-portable-modules">
+ *     Developing portable Modules</a>
  */
 public abstract class ContextScopesModule implements Module {
 
