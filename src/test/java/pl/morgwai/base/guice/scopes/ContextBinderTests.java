@@ -2,8 +2,6 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.function.*;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNull;
@@ -24,125 +22,118 @@ public class ContextBinderTests {
 
 
 	@Test
-	public void testBindingRunnable() {
-		final Runnable[] callbackHolder = {null};
-		ctx.executeWithinSelf(() -> {
-			callbackHolder[0] = testSubject.bindToContext(
-				() -> assertSame("runnable should be bound to ctx",
+	public void testBindingRunnable() throws Exception {
+		final var callback = ctx.executeWithinSelf(
+			() -> testSubject.bindToContext(
+				() -> assertSame("Runnable callback should be bound to ctx",
 						ctx, tracker.getCurrentContext())
-			);
-		});
+			)
+		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		callbackHolder[0].run();
+		callback.run();
 	}
 
 
 
 	@Test
-	public void testBindingConsumer() {
-		final Consumer<?>[] callbackHolder = {null};
-		ctx.executeWithinSelf(() -> {
-			callbackHolder[0] = testSubject.bindToContext(
+	public void testBindingConsumer() throws Exception {
+		final var callback = ctx.executeWithinSelf(
+			() -> testSubject.bindToContext(
 				(p) -> {
-					assertSame("consumer should be bound to ctx",
+					assertSame("Consumer callback should be bound to ctx",
 							ctx, tracker.getCurrentContext());
 				}
-			);
-		});
+			)
+		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		callbackHolder[0].accept(null);
+		callback.accept(null);
 	}
 
 
 
 	@Test
-	public void testBindingBiConsumer() {
-		final BiConsumer<?, ?>[] callbackHolder = {null};
-		ctx.executeWithinSelf(() -> {
-			callbackHolder[0] = testSubject.bindToContext(
+	public void testBindingBiConsumer() throws Exception {
+		final var callback = ctx.executeWithinSelf(
+			() -> testSubject.bindToContext(
 				(p1, p2) -> {
-					assertSame("biConsumer should be bound to ctx",
+					assertSame("BiConsumer callback should be bound to ctx",
 							ctx, tracker.getCurrentContext());
 				}
-			);
-		});
+			)
+		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		callbackHolder[0].accept(null, null);
+		callback.accept(null, null);
 	}
 
 
 
 	@Test
 	public void testBindingCallable() throws Exception {
-		final Callable<?>[] callbackHolder = {null};
-		ctx.executeWithinSelf(() -> {
-			callbackHolder[0] = testSubject.bindToContext(
+		final var callback = ctx.executeWithinSelf(
+			() -> testSubject.bindToContext(
 				() -> {
-					assertSame("callable should be bound to ctx",
+					assertSame("Callable callback should be bound to ctx",
 							ctx, tracker.getCurrentContext());
 					return RESULT;
 				}
-			);
-		});
+			)
+		);
 		assertNull("sanity check", tracker.getCurrentContext());
 		assertSame("result should match",
-				RESULT, callbackHolder[0].call());
+				RESULT, callback.call());
 	}
 
 
 
 	@Test
-	public void testBindingFunction() {
-		final Function<?, ?>[] callbackHolder = {null};
-		ctx.executeWithinSelf(() -> {
-			callbackHolder[0] = testSubject.bindToContext(
+	public void testBindingFunction() throws Exception {
+		final var callback = ctx.executeWithinSelf(
+			() -> testSubject.bindToContext(
 				(p) -> {
-					assertSame("function should be bound to ctx",
+					assertSame("Function callback should be bound to ctx",
 							ctx, tracker.getCurrentContext());
 					return RESULT;
 				}
-			);
-		});
+			)
+		);
 		assertNull("sanity check", tracker.getCurrentContext());
 		assertSame("result should match",
-				RESULT, callbackHolder[0].apply(null));
+				RESULT, callback.apply(null));
 	}
 
 
 
 	@Test
-	public void testBindingBiFunction() {
-		final BiFunction<?, ?, ?>[] callbackHolder = {null};
-		ctx.executeWithinSelf(() -> {
-			callbackHolder[0] = testSubject.bindToContext(
+	public void testBindingBiFunction() throws Exception {
+		final var callback = ctx.executeWithinSelf(
+			() -> testSubject.bindToContext(
 				(p1, p2) -> {
-					assertSame("biFunction should be bound to ctx",
+					assertSame("BiFunction callback should be bound to ctx",
 							ctx, tracker.getCurrentContext());
 					return RESULT;
 				}
-			);
-		});
+			)
+		);
 		assertNull("sanity check", tracker.getCurrentContext());
 		assertSame("result should match",
-				RESULT, callbackHolder[0].apply(null, null));
+				RESULT, callback.apply(null, null));
 	}
 
 
 
 	@Test
-	public void testBindingSupplier() {
-		final Supplier<?>[] callbackHolder = {null};
-		ctx.executeWithinSelf(() -> {
-			callbackHolder[0] = testSubject.bindSupplierToContext(
+	public void testBindingSupplier() throws Exception {
+		final var callback = ctx.executeWithinSelf(
+			() -> testSubject.bindSupplierToContext(
 				() -> {
-					assertSame("callable should be bound to ctx",
+					assertSame("Supplier callback should be bound to ctx",
 							ctx, tracker.getCurrentContext());
 					return RESULT;
 				}
-			);
-		});
+			)
+		);
 		assertNull("sanity check", tracker.getCurrentContext());
 		assertSame("result should match",
-				RESULT, callbackHolder[0].get());
+				RESULT, callback.get());
 	}
 }
