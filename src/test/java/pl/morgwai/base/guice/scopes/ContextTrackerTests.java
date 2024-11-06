@@ -32,7 +32,7 @@ public class ContextTrackerTests {
 
 
 	@Test
-	public void testTrackingCallable() throws Exception {
+	public void testTrackingThrowingTask() {
 		final var result = "result";
 		assertNull("current context should be unset initially", tracker.getCurrentContext());
 		final var obtained = ctx1.executeWithinSelf(

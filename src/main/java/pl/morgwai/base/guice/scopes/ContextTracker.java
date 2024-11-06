@@ -3,7 +3,6 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
@@ -45,18 +44,22 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * {@code Thread} and executes {@code task} synchronously.
 	 * Afterwards clears {@link #currentContext} for the {@code Thread}.
 	 * <p>
-	 * For internal use by {@link TrackableContext#executeWithinSelf(Callable)}.</p>
+	 * For internal use by{@link TrackableContext#executeWithinSelf(ThrowingTask)}.</p>
 	 */
-	<T> T trackWhileExecuting(ContextT ctx, Callable<T> task) throws Exception {
+	<R, E1 extends Exception, E2 extends Exception, E3 extends Exception>
+	R trackWhileExecuting(ContextT ctx, ThrowingTask<R, E1, E2, E3> task) throws E1, E2, E3 {
 		currentContext.set(ctx);
 		try {
-			return task.call();
+			return task.execute();
 		} finally {
 			currentContext.remove();
 		}
 	}
 
-	/** Variant of {@link #trackWhileExecuting(TrackableContext, Callable)} for {@link Runnable}. */
+	/**
+	 * Variant of {@link #trackWhileExecuting(TrackableContext, ThrowingTask)} for{@link Runnable}
+	 * tasks.
+	 */
 	void trackWhileExecuting(ContextT ctx, Runnable task) {
 		currentContext.set(ctx);
 		try {
@@ -72,10 +75,10 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * Retrieves from {@code trackers} all {@link TrackableContext}s active (current within their
 	 * type) for the calling {@code  Thread}.
 	 * The returned {@code List} can be then used as an argument to
-	 * {@link TrackableContext#executeWithinAll(List, Callable)} to transfer the {@code Contexts}
-	 * when switching to another {@code  Thread}. All {@link InducedContextScope Contexts induced}
-	 * by any of the returned {@link TrackableContext}s will also "follow" automatically their
-	 * inducers to the new {@code Thread}.
+	 * {@link TrackableContext#executeWithinAll(List, ThrowingTask)} to transfer the
+	 * {@code Context}s when switching to another {@code  Thread}. All
+	 * {@link InducedContextScope Contexts induced} by any of the returned {@link TrackableContext}s
+	 * will also "follow" automatically their inducers to the new {@code Thread}.
 	 */
 	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
 		if (trackers.size() == 1) {  // optimize for the most common tracker count

@@ -2,7 +2,6 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 
 
 
@@ -42,14 +41,14 @@ public abstract class ContextBoundClosure<ClosureT> {
 	 */
 	protected class RunnableWrapper implements Runnable {
 
-		final Runnable wrappedLambda;
+		final Runnable wrappedTask;
 
-		public RunnableWrapper(Runnable lambdaToWrap) {
-			this.wrappedLambda = lambdaToWrap;
+		public RunnableWrapper(Runnable taskToWrap) {
+			this.wrappedTask = taskToWrap;
 		}
 
 		@Override public void run() {
-			wrappedLambda.run();
+			wrappedTask.run();
 		}
 
 		@Override public String toString() {
@@ -61,18 +60,23 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 	/**
 	 * Provides nice {@link Object#toString() toString()} for wrapped lambdas passed to
-	 * {@link TrackableContext#executeWithinAll(List, Runnable)} in subclasses.
+	 * {@link TrackableContext#executeWithinAll(List, ThrowingTask)} in subclasses.
 	 */
-	protected class CallableWrapper<T> implements Callable<T> {
+	protected class ThrowingTaskWrapper<
+		R,
+		E1 extends Exception,
+		E2 extends Exception,
+		E3 extends Exception
+	> implements ThrowingTask<R, E1, E2, E3> {
 
-		final Callable<T> wrappedLambda;
+		final ThrowingTask<R, E1, E2, E3> wrappedTask;
 
-		public CallableWrapper(Callable<T> lambdaToWrap) {
-			this.wrappedLambda = lambdaToWrap;
+		public ThrowingTaskWrapper(ThrowingTask<R, E1, E2, E3> taskToWrap) {
+			this.wrappedTask = taskToWrap;
 		}
 
-		@Override public T call() throws Exception {
-			return wrappedLambda.call();
+		@Override public R execute() throws E1, E2, E3 {
+			return wrappedTask.execute();
 		}
 
 		@Override public String toString() {

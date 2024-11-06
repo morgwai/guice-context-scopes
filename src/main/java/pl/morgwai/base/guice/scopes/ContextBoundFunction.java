@@ -20,15 +20,9 @@ public class ContextBoundFunction<T, R> extends ContextBoundClosure<Function<T, 
 
 	@Override
 	public R apply(T param) {
-		try {
-			return TrackableContext.executeWithinAll(
-				contexts,
-				new CallableWrapper<>(() -> boundClosure.apply(param))
-			);
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception neverHappens) {  // result of wrapping boundClosure with a Callable
-			throw new RuntimeException(neverHappens);
-		}
+		return TrackableContext.executeWithinAll(
+			contexts,
+			new ThrowingTaskWrapper<>(() -> boundClosure.apply(param))
+		);
 	}
 }

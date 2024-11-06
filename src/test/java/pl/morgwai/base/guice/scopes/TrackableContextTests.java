@@ -4,7 +4,6 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import org.junit.Test;
 
-import static java.util.concurrent.Executors.callable;
 import static org.junit.Assert.*;
 import static pl.morgwai.base.guice.scopes.TestContexts.*;
 import static pl.morgwai.base.guice.scopes.TrackableContext.executeWithinAll;
@@ -25,7 +24,7 @@ public class TrackableContextTests {
 
 
 	@Test
-	public void testExecuteWithinAllMultipleCtxs() throws Exception {
+	public void testExecuteWithinAllMultipleCtxs() {
 		final Runnable task = () -> {
 			assertSame("ctx1 should be active", ctx1, tracker.getCurrentContext());
 			assertSame("ctx2 should be active", ctx2, secondTracker.getCurrentContext());
@@ -33,13 +32,13 @@ public class TrackableContextTests {
 		};
 		executeWithinAll(allCtxs, task);
 		assertSame("result should match",
-				RESULT, executeWithinAll(allCtxs, callable(task, RESULT)));
+				RESULT, executeWithinAll(allCtxs, () -> { task.run(); return RESULT; }));
 	}
 
 
 
 	@Test
-	public void testExecuteWithinAllSingleCtx() throws Exception {
+	public void testExecuteWithinAllSingleCtx() {
 		final Runnable task = () -> {
 			assertSame("ctx1 should be active", ctx1, tracker.getCurrentContext());
 			assertNull("ctx2 should not be active", secondTracker.getCurrentContext());
@@ -47,13 +46,13 @@ public class TrackableContextTests {
 		};
 		executeWithinAll(List.of(ctx1), task);
 		assertSame("result should match",
-				RESULT, executeWithinAll(List.of(ctx1), callable(task, RESULT)));
+				RESULT, executeWithinAll(List.of(ctx1), () -> { task.run(); return RESULT; }));
 	}
 
 
 
 	@Test
-	public void testExecuteWithinAllNoCtxs() throws Exception {
+	public void testExecuteWithinAllNoCtxs() {
 		final var noCtxTestTask = new Runnable() {
 			@Override public void run() {
 				assertNull("ctx1 should not be active", tracker.getCurrentContext());
@@ -66,7 +65,7 @@ public class TrackableContextTests {
 		};
 		executeWithinAll(List.of(), noCtxTestTask);
 		assertSame("result should match",
-				RESULT, executeWithinAll(List.of(), callable(noCtxTestTask, RESULT)));
+				RESULT, executeWithinAll(List.of(), () -> { noCtxTestTask.run(); return RESULT; }));
 	}
 
 

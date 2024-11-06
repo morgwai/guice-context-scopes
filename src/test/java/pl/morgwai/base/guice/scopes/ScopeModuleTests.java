@@ -90,7 +90,7 @@ public class ScopeModuleTests {
 		testContextBinderWiring(new TestComponent(testSubject.ctxBinder));
 	}
 
-	void testContextBinderWiring(TestComponent component) throws Exception {
+	void testContextBinderWiring(TestComponent component) {
 		assertNotNull("an instance of ContextBinder should be properly injected",
 				component.ctxBinder);
 		final Runnable testTask = () -> {

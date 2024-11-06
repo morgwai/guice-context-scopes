@@ -23,15 +23,9 @@ public class ContextBoundBiFunction<T, U, R> extends ContextBoundClosure<BiFunct
 
 	@Override
 	public R apply(T param1, U param2) {
-		try {
-			return TrackableContext.executeWithinAll(
-				contexts,
-				new CallableWrapper<>(() -> boundClosure.apply(param1, param2))
-			);
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception neverHappens) {  // result of wrapping boundClosure with a Callable
-			throw new RuntimeException(neverHappens);
-		}
+		return TrackableContext.executeWithinAll(
+			contexts,
+			new ThrowingTaskWrapper<>(() -> boundClosure.apply(param1, param2))
+		);
 	}
 }

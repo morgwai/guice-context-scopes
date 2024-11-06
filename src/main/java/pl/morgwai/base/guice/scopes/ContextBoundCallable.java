@@ -20,6 +20,9 @@ public class ContextBoundCallable<T> extends ContextBoundClosure<Callable<T>> im
 
 	@Override
 	public T call() throws Exception {
-		return TrackableContext.executeWithinAll(contexts, boundClosure);
+		return TrackableContext.executeWithinAll(
+			contexts,
+			new ThrowingTaskWrapper<>(boundClosure::call)
+		);
 	}
 }

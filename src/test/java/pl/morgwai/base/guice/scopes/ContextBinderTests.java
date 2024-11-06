@@ -22,7 +22,7 @@ public class ContextBinderTests {
 
 
 	@Test
-	public void testBindingRunnable() throws Exception {
+	public void testBindingRunnable() {
 		final var callback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				() -> assertSame("Runnable callback should be bound to ctx",
@@ -36,7 +36,7 @@ public class ContextBinderTests {
 
 
 	@Test
-	public void testBindingConsumer() throws Exception {
+	public void testBindingConsumer() {
 		final var callback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				(p) -> {
@@ -52,7 +52,7 @@ public class ContextBinderTests {
 
 
 	@Test
-	public void testBindingBiConsumer() throws Exception {
+	public void testBindingBiConsumer() {
 		final var callback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				(p1, p2) -> {
@@ -86,7 +86,7 @@ public class ContextBinderTests {
 
 
 	@Test
-	public void testBindingFunction() throws Exception {
+	public void testBindingFunction() {
 		final var callback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				(p) -> {
@@ -104,7 +104,7 @@ public class ContextBinderTests {
 
 
 	@Test
-	public void testBindingBiFunction() throws Exception {
+	public void testBindingBiFunction() {
 		final var callback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				(p1, p2) -> {
@@ -122,7 +122,7 @@ public class ContextBinderTests {
 
 
 	@Test
-	public void testBindingSupplier() throws Exception {
+	public void testBindingSupplier() {
 		final var callback = ctx.executeWithinSelf(
 			() -> testSubject.bindSupplierToContext(
 				() -> {
@@ -135,5 +135,23 @@ public class ContextBinderTests {
 		assertNull("sanity check", tracker.getCurrentContext());
 		assertSame("result should match",
 				RESULT, callback.get());
+	}
+
+
+
+	@Test
+	public void testBindingThrowingTask() {
+		final var callback = ctx.executeWithinSelf(
+			() -> testSubject.bindTaskToContext(
+				() -> {
+					assertSame("ThrowingTask callback should be bound to ctx",
+							ctx, tracker.getCurrentContext());
+					return RESULT;
+				}
+			)
+		);
+		assertNull("sanity check", tracker.getCurrentContext());
+		assertSame("result should match",
+				RESULT, callback.execute());
 	}
 }

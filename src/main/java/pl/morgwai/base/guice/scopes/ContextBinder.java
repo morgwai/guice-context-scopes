@@ -81,4 +81,12 @@ public class ContextBinder {
 	public <T> ContextBoundSupplier<T> bindSupplierToContext(Supplier<T> toBind) {
 		return new ContextBoundSupplier<>(getActiveContexts(trackers), toBind);
 	}
+
+
+
+	// Callable and ThrowingTask have indistinguishable lambdas, hence a different method name
+	public <R, E1 extends Exception, E2 extends Exception, E3 extends Exception>
+	ContextBoundThrowingTask<R, E1, E2, E3> bindTaskToContext(ThrowingTask<R, E1, E2, E3> toBind) {
+		return new ContextBoundThrowingTask<>(getActiveContexts(trackers), toBind);
+	}
 }

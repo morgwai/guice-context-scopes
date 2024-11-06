@@ -20,15 +20,9 @@ public class ContextBoundSupplier<T> extends ContextBoundClosure<Supplier<T>>
 
 	@Override
 	public T get() {
-		try {
-			return TrackableContext.executeWithinAll(
-				contexts,
-				new CallableWrapper<>(boundClosure::get)
-			);
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception neverHappens) {  // result of wrapping boundClosure with a Callable
-			throw new RuntimeException(neverHappens);
-		}
+		return TrackableContext.executeWithinAll(
+			contexts,
+			new ThrowingTaskWrapper<>(boundClosure::get)
+		);
 	}
 }
