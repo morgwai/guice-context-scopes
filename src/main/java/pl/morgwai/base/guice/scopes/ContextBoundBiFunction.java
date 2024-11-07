@@ -4,6 +4,8 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.function.BiFunction;
 
+import static pl.morgwai.base.guice.scopes.ThrowingTask.newThrowingTask;
+
 
 
 /** Executes its wrapped {@link BiFunction} within supplied {@code Contexts}. */
@@ -25,7 +27,7 @@ public class ContextBoundBiFunction<T, U, R> extends ContextBoundClosure<BiFunct
 	public R apply(T param1, U param2) {
 		return TrackableContext.executeWithinAll(
 			contexts,
-			new ThrowingTaskWrapper<>(() -> boundClosure.apply(param1, param2))
+			newThrowingTask(boundClosure, param1, param2)
 		);
 	}
 }

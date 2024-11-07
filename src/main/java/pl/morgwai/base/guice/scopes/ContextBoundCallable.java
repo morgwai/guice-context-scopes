@@ -4,6 +4,8 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import static pl.morgwai.base.guice.scopes.ThrowingTask.newThrowingTask;
+
 
 
 /** Executes its wrapped {@link Callable} within supplied {@code Contexts}. */
@@ -22,7 +24,7 @@ public class ContextBoundCallable<T> extends ContextBoundClosure<Callable<T>> im
 	public T call() throws Exception {
 		return TrackableContext.executeWithinAll(
 			contexts,
-			new ThrowingTaskWrapper<>(boundClosure::call)
+			newThrowingTask(boundClosure)
 		);
 	}
 }

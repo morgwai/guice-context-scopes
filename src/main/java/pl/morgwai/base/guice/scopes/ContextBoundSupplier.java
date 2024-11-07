@@ -4,6 +4,8 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static pl.morgwai.base.guice.scopes.ThrowingTask.newThrowingTaskOfSupplier;
+
 
 
 /** Executes its wrapped {@link Supplier} within supplied {@code Contexts}. */
@@ -22,7 +24,7 @@ public class ContextBoundSupplier<T> extends ContextBoundClosure<Supplier<T>>
 	public T get() {
 		return TrackableContext.executeWithinAll(
 			contexts,
-			new ThrowingTaskWrapper<>(boundClosure::get)
+			newThrowingTaskOfSupplier(boundClosure)
 		);
 	}
 }

@@ -4,6 +4,8 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.function.Function;
 
+import static pl.morgwai.base.guice.scopes.ThrowingTask.newThrowingTask;
+
 
 
 /** Executes its wrapped {@link Function} within supplied {@code Contexts}. */
@@ -22,7 +24,7 @@ public class ContextBoundFunction<T, R> extends ContextBoundClosure<Function<T, 
 	public R apply(T param) {
 		return TrackableContext.executeWithinAll(
 			contexts,
-			new ThrowingTaskWrapper<>(() -> boundClosure.apply(param))
+			newThrowingTask(boundClosure, param)
 		);
 	}
 }
