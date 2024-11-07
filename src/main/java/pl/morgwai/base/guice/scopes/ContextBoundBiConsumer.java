@@ -25,7 +25,18 @@ public class ContextBoundBiConsumer<T, U> extends ContextBoundClosure<BiConsumer
 	public void accept(T param1, U param2) {
 		TrackableContext.executeWithinAll(
 			contexts,
-			new RunnableWrapper(() -> boundClosure.accept(param1, param2))
+			new Runnable() {
+				@Override public void run() {
+					boundClosure.accept(param1, param2);
+				}
+				@Override
+				public String toString() {
+					final var q1 = quote(param1);
+					final var q2 = quote(param2);
+					return "ThrowingTask { biConsumer = " + boundClosure + ", param1 = " + q1
+							+ param1 + q1 + ", param2 = " + q2 + param2 + q2 + " }";
+				}
+			}
 		);
 	}
 }

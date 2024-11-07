@@ -22,7 +22,17 @@ public class ContextBoundConsumer<T> extends ContextBoundClosure<Consumer<T>>
 	public void accept(T param) {
 		TrackableContext.executeWithinAll(
 			contexts,
-			new RunnableWrapper(() -> boundClosure.accept(param))
+			new Runnable() {
+				@Override public void run() {
+					boundClosure.accept(param);
+				}
+				@Override
+				public String toString() {
+					final var q = quote(param);
+					return "ThrowingTask { consumer = " + boundClosure + ", param = " + q + param
+							+ q + " }";
+				}
+			}
 		);
 	}
 }

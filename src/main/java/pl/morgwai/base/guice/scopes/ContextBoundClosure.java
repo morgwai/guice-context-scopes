@@ -35,24 +35,7 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 
 
-	/**
-	 * Provides nice {@link Object#toString() toString()} for wrapped lambdas passed to
-	 * {@link TrackableContext#executeWithinAll(List, Runnable)} in subclasses.
-	 */
-	protected class RunnableWrapper implements Runnable {
-
-		final Runnable wrappedTask;
-
-		public RunnableWrapper(Runnable taskToWrap) {
-			this.wrappedTask = taskToWrap;
-		}
-
-		@Override public void run() {
-			wrappedTask.run();
-		}
-
-		@Override public String toString() {
-			return boundClosure.toString();
-		}
+	static String quote(Object o) {
+		return o instanceof String ? "\"" : o instanceof Character ? "'" : "";
 	}
 }
