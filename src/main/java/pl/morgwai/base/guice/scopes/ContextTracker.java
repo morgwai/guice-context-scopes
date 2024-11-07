@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
+import pl.morgwai.base.function.Throwing5Task;
 
 
 

@@ -4,6 +4,8 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.logging.Logger;
 
+import pl.morgwai.base.function.Throwing5Task;
+
 
 
 /**

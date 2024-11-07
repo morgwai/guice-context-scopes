@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.*;
 
+import pl.morgwai.base.function.Throwing5Task;
+
 import static pl.morgwai.base.guice.scopes.ContextTracker.getActiveContexts;
 
 

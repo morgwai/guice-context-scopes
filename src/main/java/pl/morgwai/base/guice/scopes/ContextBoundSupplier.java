@@ -4,7 +4,7 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static pl.morgwai.base.guice.scopes.ThrowingTask.newThrowingTaskOfSupplier;
+import static pl.morgwai.base.function.ThrowingTask.newThrowingTaskOfSupplier;
 
 
 

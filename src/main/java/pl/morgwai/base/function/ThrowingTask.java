@@ -1,5 +1,5 @@
 // Copyright 2024 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0
-package pl.morgwai.base.guice.scopes;
+package pl.morgwai.base.function;
 
 import java.util.concurrent.Callable;
 import java.util.function.*;

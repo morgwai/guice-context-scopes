@@ -3,9 +3,11 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
 
+import pl.morgwai.base.function.Throwing5Task;
 
 
-/** Executes its wrapped {@link ThrowingTask} within supplied {@code Contexts}. */
+
+/** Executes its wrapped {@link Throwing5Task} within supplied {@code Contexts}. */
 public class ContextBoundThrowingTask<
 	R,
 	E1 extends Exception,
