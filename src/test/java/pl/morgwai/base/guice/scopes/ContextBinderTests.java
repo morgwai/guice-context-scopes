@@ -2,6 +2,7 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNull;
@@ -23,14 +24,61 @@ public class ContextBinderTests {
 
 	@Test
 	public void testBindingRunnable() {
+		final Runnable runnableToBind =
+			() -> assertSame("Runnable callback should be bound to ctx",
+					ctx, tracker.getCurrentContext());
+		final var callback = ctx.executeWithinSelf(
+				() -> testSubject.bindToContext(runnableToBind));
+		assertNull("sanity check", tracker.getCurrentContext());
+		callback.run();
+	}
+
+
+
+	@Test
+	public void testBindingCallable() throws Exception {
+		final Callable<String> callableToBind = () -> {
+			assertSame("Callable callback should be bound to ctx",
+					ctx, tracker.getCurrentContext());
+			return RESULT;
+		};
+		final var callback = ctx.executeWithinSelf(
+				() -> testSubject.bindToContext(callableToBind));
+		assertNull("sanity check", tracker.getCurrentContext());
+		assertSame("result should match",
+				RESULT, callback.call());
+	}
+
+
+
+	@Test
+	public void testBindingThrowingTask() {
 		final var callback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
-				() -> assertSame("Runnable callback should be bound to ctx",
+				() -> assertSame("ThrowingTask callback should be bound to ctx",
 						ctx, tracker.getCurrentContext())
 			)
 		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		callback.run();
+		callback.execute();
+	}
+
+
+
+	@Test
+	public void testBindingThrowingComputation() {
+		final var callback = ctx.executeWithinSelf(
+			() -> testSubject.bindToContext(
+				() -> {
+					assertSame("ThrowingTask callback should be bound to ctx",
+							ctx, tracker.getCurrentContext());
+					return RESULT;
+				}
+			)
+		);
+		assertNull("sanity check", tracker.getCurrentContext());
+		assertSame("result should match",
+				RESULT, callback.perform());
 	}
 
 
@@ -63,24 +111,6 @@ public class ContextBinderTests {
 		);
 		assertNull("sanity check", tracker.getCurrentContext());
 		callback.accept(null, null);
-	}
-
-
-
-	@Test
-	public void testBindingCallable() throws Exception {
-		final var callback = ctx.executeWithinSelf(
-			() -> testSubject.bindToContext(
-				() -> {
-					assertSame("Callable callback should be bound to ctx",
-							ctx, tracker.getCurrentContext());
-					return RESULT;
-				}
-			)
-		);
-		assertNull("sanity check", tracker.getCurrentContext());
-		assertSame("result should match",
-				RESULT, callback.call());
 	}
 
 
@@ -135,23 +165,5 @@ public class ContextBinderTests {
 		assertNull("sanity check", tracker.getCurrentContext());
 		assertSame("result should match",
 				RESULT, callback.get());
-	}
-
-
-
-	@Test
-	public void testBindingThrowingTask() {
-		final var callback = ctx.executeWithinSelf(
-			() -> testSubject.bindTaskToContext(
-				() -> {
-					assertSame("ThrowingTask callback should be bound to ctx",
-							ctx, tracker.getCurrentContext());
-					return RESULT;
-				}
-			)
-		);
-		assertNull("sanity check", tracker.getCurrentContext());
-		assertSame("result should match",
-				RESULT, callback.execute());
 	}
 }

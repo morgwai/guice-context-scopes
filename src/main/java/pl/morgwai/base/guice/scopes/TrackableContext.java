@@ -4,13 +4,13 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.logging.Logger;
 
-import pl.morgwai.base.function.Throwing5Task;
+import pl.morgwai.base.function.*;
 
 
 
 /**
  * {@link InjectionContext} that can
- * {@link #executeWithinSelf(Throwing5Task) execute tasks within itself}, so that it can be
+ * {@link #executeWithinSelf(Throwing4Computation) execute tasks within itself}, so that it can be
  * tracked across {@code Thread}s using its associated {@link ContextTracker}.
  * <p>
  * Subclasses must use themselves as {@code ContextT} type argument.</p>
@@ -36,23 +36,26 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	 * Asks the associated {@link #getTracker() Tracker} to set this {@code Context} as the current
 	 * one for the calling {@code Thread} and executes {@code task} synchronously.
 	 * Afterwards clears the current {@code Context} for the {@code Thread}.
-	 * @see #executeWithinAll(List, Throwing5Task)
+	 * @see #executeWithinAll(List, Throwing4Computation)
 	 */
 	public <
-		R,
-		E1 extends Exception,
-		E2 extends Exception,
-		E3 extends Exception,
-		E4 extends Exception,
-		E5 extends Exception
-	> R executeWithinSelf(Throwing5Task<R, E1, E2, E3, E4, E5> task) throws E1, E2, E3, E4, E5 {
+		R, E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
+	> R executeWithinSelf(Throwing4Computation<R, E1, E2, E3, E4> task) throws E1, E2, E3, E4 {
 		@SuppressWarnings("unchecked")
 		final var thisCtx = (ContextT) this;
 		return tracker.trackWhileExecuting(thisCtx, task);
 	}
 
-	/** Variant of {@link #executeWithinSelf(Throwing5Task)} for {@link Runnable} {@code task}s.*/
+	/** Variant of {@link #executeWithinSelf(Throwing4Computation)} for {@link ThrowingTask}s. */
+	public <
+		E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
+	> void executeWithinSelf(Throwing4Task<E1, E2, E3, E4> task) throws E1, E2, E3, E4 {
+		executeWithinSelf(ThrowingComputation.of(task));
+	}
+
+	/** Variant of {@link #executeWithinSelf(Throwing4Computation)} for {@link Runnable}s. */
 	public void executeWithinSelf(Runnable task) {
+		// implemented directly to avoid additional wrapping of tiny tasks passed between Executors
 		@SuppressWarnings("unchecked")
 		final var thisCtx = (ContextT) this;
 		tracker.trackWhileExecuting(thisCtx, task);
@@ -67,27 +70,22 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 	 * after dispatching to another {@code Thread}.
 	 */
 	public static <
-		R,
-		E1 extends Exception,
-		E2 extends Exception,
-		E3 extends Exception,
-		E4 extends Exception,
-		E5 extends Exception
+		R, E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
 	> R executeWithinAll(
 		List<TrackableContext<?>> contexts,
-		Throwing5Task<R, E1, E2, E3, E4, E5> task
-	) throws E1, E2, E3, E4, E5 {
+		Throwing4Computation<R, E1, E2, E3, E4> task
+	) throws E1, E2, E3, E4 {
 		switch (contexts.size()) {
 			case 1:
 				return contexts.get(0).executeWithinSelf(task);
 			case 0:
 				printNoCtxWarning(task);
-				return task.execute();
+				return task.perform();
 			default:
 				return executeWithinAll(
 					contexts.subList(1, contexts.size()),
-					new Throwing5Task<R, E1, E2, E3, E4, E5>() {
-						@Override public R execute() throws E1, E2, E3, E4, E5 {
+					new Throwing4Computation<R, E1, E2, E3, E4>() {
+						@Override public R perform() throws E1, E2, E3, E4 {
 							return contexts.get(0).executeWithinSelf(task);
 						}
 						@Override public String toString() {
@@ -98,8 +96,21 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 		}
 	}
 
-	/** Variant of {@link #executeWithinAll(List, Throwing5Task)} for {@link Runnable} tasks. */
+	/**
+	 * Variant of {@link #executeWithinAll(List, Throwing4Computation)} for {@link ThrowingTask}s.
+	 */
+	public static <
+		E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
+	> void executeWithinAll(
+		List<TrackableContext<?>> contexts,
+		Throwing4Task<E1, E2, E3, E4> task
+	) throws E1, E2, E3, E4 {
+		executeWithinAll(contexts, ThrowingComputation.of(task));
+	}
+
+	/** Variant of {@link #executeWithinAll(List, Throwing4Computation)} for {@link Runnable}s. */
 	public static void executeWithinAll(List<TrackableContext<?>> contexts, Runnable task) {
+		// implemented directly to avoid additional wrapping of tiny tasks passed between Executors
 		switch (contexts.size()) {
 			case 1:
 				contexts.get(0).executeWithinSelf(task);
@@ -152,5 +163,5 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	private static final long serialVersionUID = -7387829122326042943L;
+	private static final long serialVersionUID = -2010720346863369767L;
 }

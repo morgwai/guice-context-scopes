@@ -47,6 +47,11 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
+			<groupId>pl.morgwai.base</groupId>
+			<artifactId>functional-interfaces</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>[4.13.2,4.999.0]</version>
@@ -86,12 +91,17 @@
 					<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
 					<links>
 						<link>https://google.github.io/guice/api-docs/${guice.version}/javadoc</link>
+						<link>https://javadoc.io/doc/pl.morgwai.base/functional-interfaces/1.0</link>
 					</links>
 					<offlineLinks>
 						<!-- to setup offline javadoc generation run ./setup-offline-javadocs.sh -->
 						<offlineLink>
 							<url>https://google.github.io/guice/api-docs/${guice.version}/javadoc</url>
 							<location>${settings.localRepository}/com/google/inject/guice/${guice.version}</location>
+						</offlineLink>
+						<offlineLink>
+							<url>https://javadoc.io/doc/pl.morgwai.base/functional-interfaces/1.0</url>
+							<location>${settings.localRepository}/pl/morgwai/base/functional-interfaces/1.0</location>
 						</offlineLink>
 					</offlineLinks>
 				</configuration>

@@ -4,27 +4,27 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static pl.morgwai.base.function.ThrowingTask.newThrowingTaskOfSupplier;
+import pl.morgwai.base.function.ThrowingComputation;
 
 
 
 /** Executes its wrapped {@link Supplier} within supplied {@code Contexts}. */
-public class ContextBoundSupplier<T> extends ContextBoundClosure<Supplier<T>>
-		implements Supplier<T> {
+public class ContextBoundSupplier<R> extends ContextBoundClosure<Supplier<R>>
+		implements Supplier<R> {
 
 
 
-	public ContextBoundSupplier(List<TrackableContext<?>> contexts, Supplier<T> supplierToBind) {
+	public ContextBoundSupplier(List<TrackableContext<?>> contexts, Supplier<R> supplierToBind) {
 		super(contexts, supplierToBind);
 	}
 
 
 
 	@Override
-	public T get() {
+	public R get() {
 		return TrackableContext.executeWithinAll(
 			contexts,
-			newThrowingTaskOfSupplier(boundClosure)
+			ThrowingComputation.ofSupplier(boundClosure)
 		);
 	}
 }

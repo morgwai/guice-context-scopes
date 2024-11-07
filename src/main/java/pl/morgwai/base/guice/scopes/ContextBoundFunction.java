@@ -4,7 +4,7 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import java.util.function.Function;
 
-import static pl.morgwai.base.function.ThrowingTask.newThrowingTask;
+import pl.morgwai.base.function.ThrowingComputation;
 
 
 
@@ -24,7 +24,7 @@ public class ContextBoundFunction<T, R> extends ContextBoundClosure<Function<T, 
 	public R apply(T param) {
 		return TrackableContext.executeWithinAll(
 			contexts,
-			newThrowingTask(boundClosure, param)
+			ThrowingComputation.of(boundClosure, param)
 		);
 	}
 }

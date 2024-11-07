@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
-import pl.morgwai.base.function.Throwing5Task;
+import pl.morgwai.base.function.Throwing4Computation;
 
 
 
@@ -45,30 +45,27 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * {@code Thread} and executes {@code task} synchronously.
 	 * Afterwards clears {@link #currentContext} for the {@code Thread}.
 	 * <p>
-	 * For internal use by{@link TrackableContext#executeWithinSelf(Throwing5Task)}.</p>
+	 * For internal use by{@link TrackableContext#executeWithinSelf(Throwing4Computation)}.</p>
 	 */
 	<
-		R,
-		E1 extends Exception,
-		E2 extends Exception,
-		E3 extends Exception,
-		E4 extends Exception,
-		E5 extends Exception
+		R, E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
 	> R trackWhileExecuting(
 		ContextT ctx,
-		Throwing5Task<R, E1, E2, E3, E4, E5> task
-	) throws E1, E2, E3, E4, E5 {
+		Throwing4Computation<R, E1, E2, E3, E4> task
+	) throws E1, E2, E3, E4 {
 		currentContext.set(ctx);
 		try {
-			return task.execute();
+			return task.perform();
 		} finally {
 			currentContext.remove();
 		}
 	}
 
 	/**
-	 * Variant of {@link #trackWhileExecuting(TrackableContext, Throwing5Task)} for
+	 * Variant of {@link #trackWhileExecuting(TrackableContext, Throwing4Computation)} for
 	 * {@link Runnable} tasks.
+	 * Implemented directly to avoid additional wrapping of tiny tasks passed between
+	 * {@link java.util.concurrent.Executor}s.
 	 */
 	void trackWhileExecuting(ContextT ctx, Runnable task) {
 		currentContext.set(ctx);
@@ -85,7 +82,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * Retrieves from {@code trackers} all {@link TrackableContext}s active (current within their
 	 * type) for the calling {@code  Thread}.
 	 * The returned {@code List} can be then used as an argument to
-	 * {@link TrackableContext#executeWithinAll(List, Throwing5Task)} to transfer the
+	 * {@link TrackableContext#executeWithinAll(List, Throwing4Computation)} to transfer the
 	 * {@code Contexts} when switching to another {@code  Thread}. All
 	 * {@link InducedContextScope Contexts induced} by any of the returned {@link TrackableContext}s
 	 * will also "follow" automatically their inducers to the new {@code Thread}.

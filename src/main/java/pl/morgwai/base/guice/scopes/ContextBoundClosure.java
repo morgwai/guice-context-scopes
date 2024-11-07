@@ -32,10 +32,4 @@ public abstract class ContextBoundClosure<ClosureT> {
 	public String toString() {
 		return "ContextBoundClosure { closure = " + boundClosure + " }";
 	}
-
-
-
-	static String quote(Object o) {
-		return o instanceof String ? "\"" : o instanceof Character ? "'" : "";
-	}
 }

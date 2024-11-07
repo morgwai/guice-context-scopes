@@ -3,27 +3,21 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
 
-import pl.morgwai.base.function.Throwing5Task;
+import pl.morgwai.base.function.*;
 
 
 
-/** Executes its wrapped {@link Throwing5Task} within supplied {@code Contexts}. */
+/** Executes its wrapped {@link ThrowingTask} within supplied {@code Contexts}. */
 public class ContextBoundThrowingTask<
-	R,
-	E1 extends Exception,
-	E2 extends Exception,
-	E3 extends Exception,
-	E4 extends Exception,
-	E5 extends Exception
-> extends ContextBoundClosure<
-	Throwing5Task<R, E1, E2, E3, E4, E5>
-> implements Throwing5Task<R, E1, E2, E3, E4, E5> {
+	E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
+> extends ContextBoundClosure<Throwing4Task<E1, E2, E3, E4>>
+		implements Throwing4Task<E1, E2, E3, E4> {
 
 
 
 	public ContextBoundThrowingTask(
 		List<TrackableContext<?>> contexts,
-		Throwing5Task<R, E1, E2, E3, E4, E5> taskToBind
+		Throwing4Task<E1, E2, E3, E4> taskToBind
 	) {
 		super(contexts, taskToBind);
 	}
@@ -31,7 +25,7 @@ public class ContextBoundThrowingTask<
 
 
 	@Override
-	public R execute() throws E1, E2, E3, E4, E5 {
-		return TrackableContext.executeWithinAll(contexts, boundClosure);
+	public void execute() throws E1, E2, E3, E4 {
+		TrackableContext.executeWithinAll(contexts, boundClosure);
 	}
 }

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.*;
 
-import pl.morgwai.base.function.Throwing5Task;
+import pl.morgwai.base.function.*;
 
 import static pl.morgwai.base.guice.scopes.ContextTracker.getActiveContexts;
 
@@ -49,6 +49,40 @@ public class ContextBinder {
 
 
 
+	public <
+		E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
+	> ContextBoundThrowingTask<E1, E2, E3, E4> bindToContext(
+		Throwing4Task<E1, E2, E3, E4> taskToBind
+	) {
+		return new ContextBoundThrowingTask<>(getActiveContexts(trackers), taskToBind);
+	}
+
+
+
+	public <
+		R, E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
+	> ContextBoundThrowingComputation<R, E1, E2, E3, E4> bindToContext(
+		Throwing4Computation<R, E1, E2, E3, E4> computationToBind
+	) {
+		return new ContextBoundThrowingComputation<>(
+			getActiveContexts(trackers),
+			computationToBind
+		);
+	}
+
+
+
+	public <R> ContextBoundThrowingComputation<
+		R, Exception, RuntimeException, RuntimeException, RuntimeException
+	> bindToContext(Callable<R> callableToBind) {
+		return new ContextBoundThrowingComputation<>(
+			getActiveContexts(trackers),
+			ThrowingComputation.of(callableToBind)
+		);
+	}
+
+
+
 	public <T> ContextBoundConsumer<T> bindToContext(Consumer<T> consumerToBind) {
 		return new ContextBoundConsumer<>(getActiveContexts(trackers), consumerToBind);
 	}
@@ -57,12 +91,6 @@ public class ContextBinder {
 
 	public <T, U> ContextBoundBiConsumer<T, U> bindToContext(BiConsumer<T, U> biConsumerToBind) {
 		return new ContextBoundBiConsumer<>(getActiveContexts(trackers), biConsumerToBind);
-	}
-
-
-
-	public <T> ContextBoundCallable<T> bindToContext(Callable<T> callableToBind) {
-		return new ContextBoundCallable<>(getActiveContexts(trackers), callableToBind);
 	}
 
 
@@ -84,21 +112,5 @@ public class ContextBinder {
 	// Callable and Supplier have indistinguishable lambdas, hence a different method name
 	public <T> ContextBoundSupplier<T> bindSupplierToContext(Supplier<T> supplierToBind) {
 		return new ContextBoundSupplier<>(getActiveContexts(trackers), supplierToBind);
-	}
-
-
-
-	// Callable and ThrowingTask have indistinguishable lambdas, hence a different method name
-	public <
-		R,
-		E1 extends Exception,
-		E2 extends Exception,
-		E3 extends Exception,
-		E4 extends Exception,
-		E5 extends Exception
-	> ContextBoundThrowingTask<R, E1, E2, E3, E4, E5> bindTaskToContext(
-		Throwing5Task<R, E1, E2, E3, E4, E5> taskToBind
-	) {
-		return new ContextBoundThrowingTask<>(getActiveContexts(trackers), taskToBind);
 	}
 }
