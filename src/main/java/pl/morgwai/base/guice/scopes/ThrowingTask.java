@@ -4,22 +4,32 @@ package pl.morgwai.base.guice.scopes;
 
 
 /**
- * Task that can throw configurable {@link Exception}s.
+ * Task that can throw "configurable" {@link Exception} types.
  * This allows to precisely declare thrown types and avoid boilerplate try-catch-rethrow blocks.
  * <p>
- * Note: Java compiler as of version 11 is unable to reasonably infer types if a lambda expression
- * throws more than 1 {@link Exception}. In such cases it is necessary to cast such an expression to
- * {@code ThrowingTask} with specific type arguments:</p>
+ * Note: Java compiler as of version 11 is able to accurately infer types of 0 or 1
+ * {@link Exception}s thrown by a lambda expression (inferring {@link RuntimeException} to "fill the
+ * blanks" where needed). However if a lambda throws 2 (or more) {@link Exception}s, it is necessary
+ * to cast such an expression to {@code ThrowingTask} (or {@link Throwing5Task}) with specific type
+ * arguments:</p>
  * <pre>{@code
- * ctx.executeWithinSelf(
- *     (ThrowingTask<Void, IOException, ServletException, RuntimeException>) () -> {
- *         chain.doFilter(request, response);
- *         return null;  // Void
- *     }
- * );}</pre>
+ * public void doFilter(
+ *     ServletRequest request,
+ *     ServletResponse response,
+ *     FilterChain chain
+ * ) throws IOException, ServletException {
+ *     final var ctx = getContext((HttpServletRequest) request);
+ *     ctx.executeWithinSelf(
+ *         (ThrowingTask<Void, IOException, ServletException>) () -> {
+ *             chain.doFilter(request, response);
+ *             return null;  // Void
+ *         }
+ *     );
+ * }}</pre>
  * <p>...Or to pass explicit arguments to a given generic method:</p>
  * <pre>{@code
- * ctx.<Void, IOException, ServletException, RuntimeException>executeWithinSelf(
+ * ctx.<Void, IOException, ServletException, RuntimeException, RuntimeException, RuntimeException>
+ *         executeWithinSelf(
  *     () -> {
  *         chain.doFilter(request, response);
  *         return null;  // Void
@@ -27,7 +37,11 @@ package pl.morgwai.base.guice.scopes;
  * );}</pre>
  */
 @FunctionalInterface
-public interface ThrowingTask<R, E1 extends Exception, E2 extends Exception, E3 extends Exception> {
+public interface ThrowingTask<
+	R,
+	E1 extends Exception,
+	E2 extends Exception
+> extends Throwing5Task<R, E1, E2, RuntimeException, RuntimeException, RuntimeException> {
 
-	R execute() throws E1, E2, E3;
+	R execute() throws E1, E2;
 }

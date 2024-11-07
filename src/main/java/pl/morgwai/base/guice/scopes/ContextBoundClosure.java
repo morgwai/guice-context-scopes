@@ -60,22 +60,24 @@ public abstract class ContextBoundClosure<ClosureT> {
 
 	/**
 	 * Provides nice {@link Object#toString() toString()} for wrapped lambdas passed to
-	 * {@link TrackableContext#executeWithinAll(List, ThrowingTask)} in subclasses.
+	 * {@link TrackableContext#executeWithinAll(List, Runnable)} in subclasses.
 	 */
 	protected class ThrowingTaskWrapper<
 		R,
 		E1 extends Exception,
 		E2 extends Exception,
-		E3 extends Exception
-	> implements ThrowingTask<R, E1, E2, E3> {
+		E3 extends Exception,
+		E4 extends Exception,
+		E5 extends Exception
+	> implements Throwing5Task<R, E1, E2, E3, E4, E5> {
 
-		final ThrowingTask<R, E1, E2, E3> wrappedTask;
+		final Throwing5Task<R, E1, E2, E3, E4, E5> wrappedTask;
 
-		public ThrowingTaskWrapper(ThrowingTask<R, E1, E2, E3> taskToWrap) {
+		public ThrowingTaskWrapper(Throwing5Task<R, E1, E2, E3, E4, E5> taskToWrap) {
 			this.wrappedTask = taskToWrap;
 		}
 
-		@Override public R execute() throws E1, E2, E3 {
+		@Override public R execute() throws E1, E2, E3, E4, E5 {
 			return wrappedTask.execute();
 		}
 

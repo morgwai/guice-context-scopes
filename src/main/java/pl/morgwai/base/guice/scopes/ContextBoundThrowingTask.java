@@ -2,7 +2,6 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 
 
 
@@ -11,14 +10,18 @@ public class ContextBoundThrowingTask<
 	R,
 	E1 extends Exception,
 	E2 extends Exception,
-	E3 extends Exception
-> extends ContextBoundClosure<ThrowingTask<R, E1, E2, E3>> implements ThrowingTask<R, E1, E2, E3> {
+	E3 extends Exception,
+	E4 extends Exception,
+	E5 extends Exception
+> extends ContextBoundClosure<
+	Throwing5Task<R, E1, E2, E3, E4, E5>
+> implements Throwing5Task<R, E1, E2, E3, E4, E5> {
 
 
 
 	public ContextBoundThrowingTask(
 		List<TrackableContext<?>> contexts,
-		ThrowingTask<R, E1, E2, E3> taskToBind
+		Throwing5Task<R, E1, E2, E3, E4, E5> taskToBind
 	) {
 		super(contexts, taskToBind);
 	}
@@ -26,7 +29,7 @@ public class ContextBoundThrowingTask<
 
 
 	@Override
-	public R execute() throws E1, E2, E3 {
+	public R execute() throws E1, E2, E3, E4, E5 {
 		return TrackableContext.executeWithinAll(contexts, boundClosure);
 	}
 }
