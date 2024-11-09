@@ -20,6 +20,8 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
+	/** Associated {@link ContextTracker} that tracks this {@code Context} across {@code Thread}s.*/
+	public ContextTracker<ContextT> getTracker() { return tracker; }
 	private transient ContextTracker<ContextT> tracker;
 
 
@@ -31,8 +33,8 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 	/**
-	 * Asks the associated {@link ContextTracker} to set this {@code Context} as the current one for
-	 * the calling {@code Thread} and executes {@code task} synchronously.
+	 * Asks the associated {@link #getTracker() Tracker} to set this {@code Context} as the current
+	 * one for the calling {@code Thread} and executes {@code task} synchronously.
 	 * Afterwards clears the current {@code Context} for the {@code Thread}.
 	 * @see #executeWithinAll(List, Throwing5Task)
 	 */
@@ -138,7 +140,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 	/**
-	 * Sets a {@link ContextTracker} that will be used for tracking this {@code Context}.
+	 * Sets a {@link #getTracker() Tracker} that will be used for tracking this {@code Context}.
 	 * This method must be called once immediately after each deserialization of this
 	 * {@code Context}.
 	 * @throws IllegalStateException if a tracker for this {@code Context} has already been set.
@@ -150,5 +152,5 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	private static final long serialVersionUID = 4613040709966280900L;
+	private static final long serialVersionUID = -7387829122326042943L;
 }
