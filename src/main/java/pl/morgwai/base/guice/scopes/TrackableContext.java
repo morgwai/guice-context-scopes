@@ -62,7 +62,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 	/**
 	 * Executes {@code task} synchronously on the current {@code Thread} within all
-	 * {@code Context}s.
+	 * {@code contexts}.
 	 * Used to transfer {@code Contexts} saved with {@link ContextTracker#getActiveContexts(List)}
 	 * after dispatching to another {@code Thread}.
 	 */
