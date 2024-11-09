@@ -43,45 +43,47 @@ public class ContextBinder {
 
 
 
-	public ContextBoundRunnable bindToContext(Runnable toBind) {
-		return new ContextBoundRunnable(getActiveContexts(trackers), toBind);
+	public ContextBoundRunnable bindToContext(Runnable runnableToBind) {
+		return new ContextBoundRunnable(getActiveContexts(trackers), runnableToBind);
 	}
 
 
 
-	public <T> ContextBoundConsumer<T> bindToContext(Consumer<T> toBind) {
-		return new ContextBoundConsumer<>(getActiveContexts(trackers), toBind);
+	public <T> ContextBoundConsumer<T> bindToContext(Consumer<T> consumerToBind) {
+		return new ContextBoundConsumer<>(getActiveContexts(trackers), consumerToBind);
 	}
 
 
 
-	public <T, U> ContextBoundBiConsumer<T, U> bindToContext(BiConsumer<T, U> toBind) {
-		return new ContextBoundBiConsumer<>(getActiveContexts(trackers), toBind);
+	public <T, U> ContextBoundBiConsumer<T, U> bindToContext(BiConsumer<T, U> biConsumerToBind) {
+		return new ContextBoundBiConsumer<>(getActiveContexts(trackers), biConsumerToBind);
 	}
 
 
 
-	public <T> ContextBoundCallable<T> bindToContext(Callable<T> toBind) {
-		return new ContextBoundCallable<>(getActiveContexts(trackers), toBind);
+	public <T> ContextBoundCallable<T> bindToContext(Callable<T> callableToBind) {
+		return new ContextBoundCallable<>(getActiveContexts(trackers), callableToBind);
 	}
 
 
 
-	public <T, R> ContextBoundFunction<T, R> bindToContext(Function<T, R> toBind) {
-		return new ContextBoundFunction<>(getActiveContexts(trackers), toBind);
+	public <T, R> ContextBoundFunction<T, R> bindToContext(Function<T, R> functionToBind) {
+		return new ContextBoundFunction<>(getActiveContexts(trackers), functionToBind);
 	}
 
 
 
-	public <T, U, R> ContextBoundBiFunction<T, U, R> bindToContext(BiFunction<T, U, R> toBind) {
-		return new ContextBoundBiFunction<>(getActiveContexts(trackers), toBind);
+	public <T, U, R> ContextBoundBiFunction<T, U, R> bindToContext(
+		BiFunction<T, U, R> biFunctionToBind
+	) {
+		return new ContextBoundBiFunction<>(getActiveContexts(trackers), biFunctionToBind);
 	}
 
 
 
 	// Callable and Supplier have indistinguishable lambdas, hence a different method name
-	public <T> ContextBoundSupplier<T> bindSupplierToContext(Supplier<T> toBind) {
-		return new ContextBoundSupplier<>(getActiveContexts(trackers), toBind);
+	public <T> ContextBoundSupplier<T> bindSupplierToContext(Supplier<T> supplierToBind) {
+		return new ContextBoundSupplier<>(getActiveContexts(trackers), supplierToBind);
 	}
 
 
@@ -95,8 +97,8 @@ public class ContextBinder {
 		E4 extends Exception,
 		E5 extends Exception
 	> ContextBoundThrowingTask<R, E1, E2, E3, E4, E5> bindTaskToContext(
-		Throwing5Task<R, E1, E2, E3, E4, E5> toBind
+		Throwing5Task<R, E1, E2, E3, E4, E5> taskToBind
 	) {
-		return new ContextBoundThrowingTask<>(getActiveContexts(trackers), toBind);
+		return new ContextBoundThrowingTask<>(getActiveContexts(trackers), taskToBind);
 	}
 }
