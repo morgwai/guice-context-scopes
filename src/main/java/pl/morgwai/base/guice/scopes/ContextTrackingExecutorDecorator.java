@@ -21,7 +21,7 @@ public class ContextTrackingExecutorDecorator extends AbstractExecutorService {
 
 
 
-	final ExecutorService backingExecutor;
+	final ExecutorService wrappedExecutor;
 	final ContextBinder ctxBinder;
 
 
@@ -30,7 +30,7 @@ public class ContextTrackingExecutorDecorator extends AbstractExecutorService {
 		ExecutorService executorToWrap,
 		ContextBinder ctxBinder
 	) {
-		this.backingExecutor = executorToWrap;
+		this.wrappedExecutor = executorToWrap;
 		this.ctxBinder = ctxBinder;
 	}
 
@@ -38,31 +38,31 @@ public class ContextTrackingExecutorDecorator extends AbstractExecutorService {
 
 	@Override
 	public void execute(Runnable task) {
-		backingExecutor.execute(ctxBinder.bindToContext(task));
+		wrappedExecutor.execute(ctxBinder.bindToContext(task));
 	}
 
 
 
-	// only dumb delegations to backingExecutor below:
+	// only dumb delegations to wrappedExecutor below:
 
 	@Override public void shutdown() {
-		backingExecutor.shutdown();
+		wrappedExecutor.shutdown();
 	}
 
 	@Override public List<Runnable> shutdownNow() {
-		return backingExecutor.shutdownNow();
+		return wrappedExecutor.shutdownNow();
 	}
 
 	@Override public boolean isShutdown() {
-		return backingExecutor.isShutdown();
+		return wrappedExecutor.isShutdown();
 	}
 
 	@Override public boolean isTerminated() {
-		return backingExecutor.isTerminated();
+		return wrappedExecutor.isTerminated();
 	}
 
 	@Override
 	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-		return backingExecutor.awaitTermination(timeout, unit);
+		return wrappedExecutor.awaitTermination(timeout, unit);
 	}
 }
