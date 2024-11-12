@@ -76,7 +76,7 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 		 *     {@code Context} of {@code ContextT} type associated with this {@link ContextScope}.
 		 *     This most commonly happens if some async task was not
 		 *     {@link ContextBinder#bindToContext(Runnable) bound to its current Context} before
-		 *     being dispatched to this {@code Thread}. Use {@link ContextTrackingExecutorDecorator}
+		 *     being dispatched to this {@code Thread}. Use {@link ContextTrackingExecutor}
 		 *     to transfer {@code Context}s automatically when passing tasks to
 		 *     {@link java.util.concurrent.Executor}s or bind manually using {@link ContextBinder}.
 		 */

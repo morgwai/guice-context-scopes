@@ -12,13 +12,14 @@ import static pl.morgwai.base.guice.scopes.TestContexts.*;
 
 
 
-public class ContextTrackingExecutorDecoratorTests {
+public class ContextTrackingExecutorTests {
 
 
 
 	final ContextBinder ctxBinder = new ContextBinder(List.of(tracker));
-	final ContextTrackingExecutorDecorator testSubject =
-			new ContextTrackingExecutorDecorator(Executors.newSingleThreadExecutor(), ctxBinder);
+	final ExecutorService wrappedExecutor = Executors.newSingleThreadExecutor();
+	final ContextTrackingExecutor testSubject =
+			ContextTrackingExecutor.of(wrappedExecutor, ctxBinder);
 
 	Throwable asyncError;
 
@@ -44,12 +45,12 @@ public class ContextTrackingExecutorDecoratorTests {
 
 	@After
 	public void shutdown() throws InterruptedException {
-		testSubject.shutdown();
+		wrappedExecutor.shutdown();
 		try {
 			assertTrue("testSubject Executor should terminate cleanly",
-					testSubject.awaitTermination(50L, MILLISECONDS));
+				wrappedExecutor.awaitTermination(50L, MILLISECONDS));
 		} finally {
-			if ( !testSubject.isTerminated()) testSubject.shutdownNow();
+			if ( !wrappedExecutor.isTerminated()) wrappedExecutor.shutdownNow();
 		}
 	}
 }

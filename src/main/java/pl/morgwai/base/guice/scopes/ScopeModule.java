@@ -22,7 +22,7 @@ import com.google.inject.Module;
  *       {@link #newInducedContextScope(String, Class, ContextTracker, Function)} calls.</li>
  *   <li>{@link ContextBinder} field for app-level development convenience, initialized with a
  *       {@link #newContextBinder()} call. This may be useful for app developers when creating their
- *       global {@link ContextTrackingExecutorDecorator} instances bound for injection with
+ *       global {@link ContextTrackingExecutor} instances bound for injection with
  *       {@link com.google.inject.binder.LinkedBindingBuilder#toInstance(Object)
  *       toInstance(myGlobalCtxTrackingExecutor)} calls in their {@link Module}s.</li>
  * </ol>
