@@ -27,6 +27,12 @@ public class InjectionContextTests {
 
 	public static class TestContext extends InjectionContext {
 		private static final long serialVersionUID = 647980192537461531L;
+
+		public TestContext() {}
+
+		public TestContext(TestContext enclosingCtx) {
+			super(enclosingCtx);
+		}
 	}
 
 	final TestContext ctx = new TestContext();
@@ -65,6 +71,34 @@ public class InjectionContextTests {
 		ctx.removeScopedObject(STRING_KEY);
 		assertSame("null should be correctly removed and replaced by NON_NULL object",
 				NON_NULL, ctx.produceIfAbsent(STRING_KEY, () -> NON_NULL));
+	}
+
+
+
+	@Test
+	public void testNesting() {
+		final var stringFromEnclosing = "from enclosing";
+		final var stringFromNested = "from nested";
+		final var anotherString = "another";
+		final var intFromEnclosing = 1;
+		final var intFromNested = 2;
+		final var anotherInt = 3;
+		final var enclosingCtx = new TestContext();
+		final var nestedCtx = new TestContext(enclosingCtx);
+
+		enclosingCtx.produceIfAbsent(STRING_KEY, () -> stringFromEnclosing);
+		assertSame("nestedCtx should obtain String from enclosingCtx",
+				stringFromEnclosing, nestedCtx.produceIfAbsent(STRING_KEY, () -> stringFromNested));
+		nestedCtx.removeScopedObject(STRING_KEY);
+		assertSame("removing String from nestedCtx should remove it from enclosingCtx as well",
+				anotherString, enclosingCtx.produceIfAbsent(STRING_KEY, () -> anotherString));
+
+		nestedCtx.produceIfAbsent(INT_KEY, () -> intFromNested);
+		assertSame("enclosingCtx should obtain Integer from nestedCtx",
+				intFromNested, enclosingCtx.produceIfAbsent(INT_KEY, () -> intFromEnclosing));
+		enclosingCtx.removeScopedObject(INT_KEY);
+		assertSame("removing String from enclosingCtx should remove it from nestedCtx as well",
+				anotherInt, nestedCtx.produceIfAbsent(INT_KEY, () -> anotherInt));
 	}
 
 

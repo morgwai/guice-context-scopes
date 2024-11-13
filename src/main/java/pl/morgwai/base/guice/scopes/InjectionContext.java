@@ -48,6 +48,27 @@ public abstract class InjectionContext implements Serializable {
 
 
 	private transient ConcurrentMap<Key<?>, Object> scopedObjects = new ConcurrentHashMap<>();
+	private transient InjectionContext enclosingCtx;
+
+
+
+	/** Constructs a new instance nested in {@code enclosingCtx}. */
+	protected InjectionContext() {}
+
+
+
+	/**
+	 * Constructs a new instance nested in {@code enclosingCtx}.
+	 * The new instance will delegate {@link #produceIfAbsent(Key, Provider)} and
+	 * {@link #removeScopedObject(Key)} calls to {@code enclosingCtx}.
+	 * <p>
+	 * Reference to {@code enclosingCtx} is {@code transient}.
+	 * {@link #setEnclosingCtx(InjectionContext)} may be used to restore it after a deserialization.
+	 * </p>
+	 */
+	protected InjectionContext(InjectionContext enclosingCtx) {
+		this.enclosingCtx = enclosingCtx;
+	}
 
 
 
@@ -58,6 +79,8 @@ public abstract class InjectionContext implements Serializable {
 	 * stored for subsequent calls and then returned.
 	 */
 	protected <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
+		if (enclosingCtx != null) return enclosingCtx.produceIfAbsent(key, producer);
+
 		final var stored = scopedObjects.computeIfAbsent(
 			key,
 			(ignored) -> {
@@ -87,6 +110,7 @@ public abstract class InjectionContext implements Serializable {
 	 * taken to prevent some of them from retaining the old stale instances.</p>
 	 */
 	public void removeScopedObject(Key<?> key) {
+		if (enclosingCtx != null) enclosingCtx.removeScopedObject(key);
 		scopedObjects.remove(key);
 	}
 
@@ -235,5 +259,12 @@ public abstract class InjectionContext implements Serializable {
 
 
 
-	private static final long serialVersionUID = 2497090317063335154L;
+	protected void setEnclosingCtx(InjectionContext enclosingCtx) {
+		if (this.enclosingCtx != null) throw new IllegalStateException("enclosingCtx already set");
+		this.enclosingCtx = enclosingCtx;
+	}
+
+
+
+	private static final long serialVersionUID = -4981310657992279148L;
 }
