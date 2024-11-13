@@ -7,7 +7,10 @@ import pl.morgwai.base.function.*;
 
 
 
-/** Executes its wrapped {@link ThrowingComputation} within supplied {@code Contexts}. */
+/**
+ * Executes its wrapped {@link ThrowingComputation} within supplied
+ * {@link TrackableContext Contexts}.
+ */
 public class ContextBoundThrowingComputation<
 	R, E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
 > extends ContextBoundClosure<Throwing4Computation<R, E1, E2, E3, E4>>

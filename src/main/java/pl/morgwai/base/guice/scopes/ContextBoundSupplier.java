@@ -8,7 +8,7 @@ import pl.morgwai.base.function.ThrowingComputation;
 
 
 
-/** Executes its wrapped {@link Supplier} within supplied {@code Contexts}. */
+/** Executes its wrapped {@link Supplier} within supplied {@link TrackableContext Contexts}. */
 public class ContextBoundSupplier<R> extends ContextBoundClosure<Supplier<R>>
 		implements Supplier<R> {
 

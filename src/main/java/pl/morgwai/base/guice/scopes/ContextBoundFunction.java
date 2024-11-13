@@ -8,7 +8,7 @@ import pl.morgwai.base.function.ThrowingComputation;
 
 
 
-/** Executes its wrapped {@link Function} within supplied {@code Contexts}. */
+/** Executes its wrapped {@link Function} within supplied {@link TrackableContext Contexts}. */
 public class ContextBoundFunction<T, R> extends ContextBoundClosure<Function<T, R>>
 		implements Function<T, R> {
 

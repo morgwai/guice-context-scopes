@@ -8,7 +8,7 @@ import pl.morgwai.base.function.ThrowingTask;
 
 
 
-/** Executes its wrapped {@link Consumer} within supplied {@code Contexts}. */
+/** Executes its wrapped {@link Consumer} within supplied {@link TrackableContext Contexts}. */
 public class ContextBoundConsumer<T> extends ContextBoundClosure<Consumer<T>>
 		implements Consumer<T> {
 

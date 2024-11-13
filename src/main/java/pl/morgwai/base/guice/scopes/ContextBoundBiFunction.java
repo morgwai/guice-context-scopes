@@ -8,7 +8,7 @@ import pl.morgwai.base.function.ThrowingComputation;
 
 
 
-/** Executes its wrapped {@link BiFunction} within supplied {@code Contexts}. */
+/** Executes its wrapped {@link BiFunction} within supplied {@link TrackableContext Contexts}. */
 public class ContextBoundBiFunction<T, U, R> extends ContextBoundClosure<BiFunction<T, U, R>>
 		implements BiFunction<T, U, R> {
 

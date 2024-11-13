@@ -27,10 +27,10 @@ public class ContextBinderTests {
 		final Runnable runnableToBind =
 			() -> assertSame("Runnable callback should be bound to ctx",
 					ctx, tracker.getCurrentContext());
-		final var callback = ctx.executeWithinSelf(
+		final var boundCallback = ctx.executeWithinSelf(
 				() -> testSubject.bindToContext(runnableToBind));
 		assertNull("sanity check", tracker.getCurrentContext());
-		callback.run();
+		boundCallback.run();
 	}
 
 
@@ -42,32 +42,32 @@ public class ContextBinderTests {
 					ctx, tracker.getCurrentContext());
 			return RESULT;
 		};
-		final var callback = ctx.executeWithinSelf(
+		final var boundCallback = ctx.executeWithinSelf(
 				() -> testSubject.bindToContext(callableToBind));
 		assertNull("sanity check", tracker.getCurrentContext());
-		assertSame("result should match",
-				RESULT, callback.call());
+		assertSame("result returned by boundCallback should remain the same",
+				RESULT, boundCallback.call());
 	}
 
 
 
 	@Test
 	public void testBindingThrowingTask() {
-		final var callback = ctx.executeWithinSelf(
+		final var boundCallback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				() -> assertSame("ThrowingTask callback should be bound to ctx",
 						ctx, tracker.getCurrentContext())
 			)
 		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		callback.execute();
+		boundCallback.execute();
 	}
 
 
 
 	@Test
 	public void testBindingThrowingComputation() {
-		final var callback = ctx.executeWithinSelf(
+		final var boundCallback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				() -> {
 					assertSame("ThrowingTask callback should be bound to ctx",
@@ -77,15 +77,15 @@ public class ContextBinderTests {
 			)
 		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		assertSame("result should match",
-				RESULT, callback.perform());
+		assertSame("result returned by boundCallback should remain the same",
+				RESULT, boundCallback.perform());
 	}
 
 
 
 	@Test
 	public void testBindingConsumer() {
-		final var callback = ctx.executeWithinSelf(
+		final var boundCallback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				(p) -> {
 					assertSame("Consumer callback should be bound to ctx",
@@ -94,14 +94,14 @@ public class ContextBinderTests {
 			)
 		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		callback.accept(null);
+		boundCallback.accept(null);
 	}
 
 
 
 	@Test
 	public void testBindingBiConsumer() {
-		final var callback = ctx.executeWithinSelf(
+		final var boundCallback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				(p1, p2) -> {
 					assertSame("BiConsumer callback should be bound to ctx",
@@ -110,14 +110,14 @@ public class ContextBinderTests {
 			)
 		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		callback.accept(null, null);
+		boundCallback.accept(null, null);
 	}
 
 
 
 	@Test
 	public void testBindingFunction() {
-		final var callback = ctx.executeWithinSelf(
+		final var boundCallback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				(p) -> {
 					assertSame("Function callback should be bound to ctx",
@@ -127,15 +127,15 @@ public class ContextBinderTests {
 			)
 		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		assertSame("result should match",
-				RESULT, callback.apply(null));
+		assertSame("result returned by boundCallback should remain the same",
+				RESULT, boundCallback.apply(null));
 	}
 
 
 
 	@Test
 	public void testBindingBiFunction() {
-		final var callback = ctx.executeWithinSelf(
+		final var boundCallback = ctx.executeWithinSelf(
 			() -> testSubject.bindToContext(
 				(p1, p2) -> {
 					assertSame("BiFunction callback should be bound to ctx",
@@ -145,15 +145,15 @@ public class ContextBinderTests {
 			)
 		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		assertSame("result should match",
-				RESULT, callback.apply(null, null));
+		assertSame("result returned by boundCallback should remain the same",
+				RESULT, boundCallback.apply(null, null));
 	}
 
 
 
 	@Test
 	public void testBindingSupplier() {
-		final var callback = ctx.executeWithinSelf(
+		final var boundCallback = ctx.executeWithinSelf(
 			() -> testSubject.bindSupplierToContext(
 				() -> {
 					assertSame("Supplier callback should be bound to ctx",
@@ -163,7 +163,7 @@ public class ContextBinderTests {
 			)
 		);
 		assertNull("sanity check", tracker.getCurrentContext());
-		assertSame("result should match",
-				RESULT, callback.get());
+		assertSame("result returned by boundCallback should remain the same",
+				RESULT, boundCallback.get());
 	}
 }
