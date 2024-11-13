@@ -84,14 +84,8 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 			default:
 				return executeWithinAll(
 					contexts.subList(1, contexts.size()),
-					new Throwing4Computation<R, E1, E2, E3, E4>() {
-						@Override public R perform() throws E1, E2, E3, E4 {
-							return contexts.get(0).executeWithinSelf(task);
-						}
-						@Override public String toString() {
-							return task.toString();
-						}
-					}
+					(Throwing4Computation<R, E1, E2, E3, E4>)
+							() -> contexts.get(0).executeWithinSelf(task)
 				);
 		}
 	}
@@ -122,14 +116,7 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 			default:
 				executeWithinAll(
 					contexts.subList(1, contexts.size()),
-					new Runnable() {
-						@Override public void run() {
-							contexts.get(0).executeWithinSelf(task);
-						}
-						@Override public String toString() {
-							return task.toString();
-						}
-					}
+					(Runnable) () -> contexts.get(0).executeWithinSelf(task)
 				);
 		}
 	}

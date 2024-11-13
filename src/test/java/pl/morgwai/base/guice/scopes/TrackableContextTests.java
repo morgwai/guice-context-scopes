@@ -4,6 +4,8 @@ package pl.morgwai.base.guice.scopes;
 import java.util.List;
 import org.junit.Test;
 
+import pl.morgwai.base.function.ThrowingComputation;
+
 import static org.junit.Assert.*;
 import static pl.morgwai.base.guice.scopes.TestContexts.*;
 import static pl.morgwai.base.guice.scopes.TrackableContext.executeWithinAll;
@@ -23,6 +25,21 @@ public class TrackableContextTests {
 
 
 
+	static ThrowingComputation<String, RuntimeException, RuntimeException> newThrowingComputation(
+			Runnable task) {
+		return new ThrowingComputation<>() {
+			@Override public String perform() {
+				task.run();
+				return RESULT;
+			}
+			@Override public String toString() {
+				return task.toString();
+			}
+		};
+	}
+
+
+
 	@Test
 	public void testExecuteWithinAllMultipleCtxs() {
 		final Runnable task = () -> {
@@ -32,7 +49,7 @@ public class TrackableContextTests {
 		};
 		executeWithinAll(allCtxs, task);
 		assertSame("result returned by executeWithinAll(...) should match the one returned by task",
-				RESULT, executeWithinAll(allCtxs, () -> { task.run(); return RESULT; }));
+				RESULT, executeWithinAll(allCtxs, newThrowingComputation(task)));
 	}
 
 
@@ -46,7 +63,7 @@ public class TrackableContextTests {
 		};
 		executeWithinAll(List.of(ctx1), task);
 		assertSame("result returned by executeWithinAll(...) should match the one returned by task",
-				RESULT, executeWithinAll(List.of(ctx1), () -> { task.run(); return RESULT; }));
+				RESULT, executeWithinAll(List.of(ctx1), newThrowingComputation(task)));
 	}
 
 
@@ -65,7 +82,7 @@ public class TrackableContextTests {
 		};
 		executeWithinAll(List.of(), noCtxTestTask);
 		assertSame("result returned by executeWithinAll(...) should match the one returned by task",
-				RESULT, executeWithinAll(List.of(), () -> { noCtxTestTask.run(); return RESULT; }));
+				RESULT, executeWithinAll(List.of(), newThrowingComputation(noCtxTestTask)));
 	}
 
 
