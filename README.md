@@ -45,7 +45,8 @@ class MyComponent {
             (callbackParamIfNeeded) -> TrackableContext.executeWithinAll(
                 activeCtxs,
                 () -> {
-                    // callback code here...
+                    // callback code here will run within the same Contexts
+                    // as methodThatDispatchesToExecutor(...)
                 }
             )
         );
@@ -66,7 +67,8 @@ class MyComponent {  // compare with the "low-level" version above
             /* ... */
             argN,
             ctxBinder.bindToContext((callbackParamIfNeeded) -> {
-                // callback code here...
+                // callback code here will run within the same Contexts
+                // as methodThatDispatchesToExecutor(...)
             })
         );
     }
@@ -74,6 +76,24 @@ class MyComponent {  // compare with the "low-level" version above
 ```
 
 For app development convenience, [ContextTrackingExecutor](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextTrackingExecutor.html) interface and decorator was provided that uses `ContextBinder`to automatically transfer active `Context`s when executing tasks.
+```java
+class MyOtherComponent {
+
+    ContextTrackingExecutor executor;
+
+    @Inject void setContextBinder(ContextBinder ctxBinder) {
+        executor = ContextTrackingExecutor.of(Executors.newFixedThreadPool(5), ctxBinder);
+    }
+
+    void methodThatDispatchesToExecutor(/* ... */) {
+        // other code here...
+        executor.execute(() -> {
+            // task code here will run within the same Contexts
+            // as methodThatDispatchesToExecutor(...)
+        });
+    }
+}
+```
 
 
 ## DERIVED LIBS
