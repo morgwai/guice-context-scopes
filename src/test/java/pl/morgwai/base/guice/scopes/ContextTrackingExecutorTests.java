@@ -3,8 +3,7 @@ package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
 import java.util.concurrent.*;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertTrue;
@@ -17,13 +16,21 @@ public class ContextTrackingExecutorTests {
 
 
 	final ContextBinder ctxBinder = new ContextBinder(List.of(tracker));
-	final ExecutorService wrappedExecutor = Executors.newSingleThreadExecutor();
-	final ContextTrackingExecutor testSubject =
-			ContextTrackingExecutor.of(wrappedExecutor, ctxBinder);
+
+
+
+	protected ContextTrackingExecutor testSubject;
+	protected ExecutorService executorToShutdown;
+
+	@Before
+	public void setup() {
+		executorToShutdown = Executors.newSingleThreadExecutor();
+		testSubject = ContextTrackingExecutor.of(executorToShutdown, ctxBinder);
+	}
+
+
 
 	Throwable asyncError;
-
-
 
 	@Test
 	public void testExecute() throws Throwable {
@@ -45,12 +52,12 @@ public class ContextTrackingExecutorTests {
 
 	@After
 	public void shutdown() throws InterruptedException {
-		wrappedExecutor.shutdown();
+		executorToShutdown.shutdown();
 		try {
 			assertTrue("testSubject Executor should terminate cleanly",
-				wrappedExecutor.awaitTermination(50L, MILLISECONDS));
+					executorToShutdown.awaitTermination(50L, MILLISECONDS));
 		} finally {
-			if ( !wrappedExecutor.isTerminated()) wrappedExecutor.shutdownNow();
+			if ( !executorToShutdown.isTerminated()) executorToShutdown.shutdownNow();
 		}
 	}
 }

@@ -21,10 +21,13 @@ public interface ContextTrackingExecutor extends Executor {
 
 	/**
 	 * The underlying {@link Executor} that actually runs tasks.
-	 * If this interface is implemented by some concrete {@link Executor} class (for example by some
-	 * subclass of {@link java.util.concurrent.ThreadPoolExecutor}), then this method should simply
-	 * return {@code this}. If this interface is implemented as a decorator wrapping some other
-	 * {@link Executor}, this method should return this wrapped {@link Executor}.
+	 * <p>
+	 * If this interface is implemented as a decorator wrapping some other {@link Executor}, this
+	 * method should return such wrapped {@link Executor}.</p>
+	 * <p>
+	 * If this interface is implemented as a subclass of some concrete {@link Executor} class (for
+	 * example as a subclass of {@link java.util.concurrent.ThreadPoolExecutor}), then this method
+	 * should return a wrapper around {@code super::execute}.</p>
 	 */
 	Executor getExecutor();
 
