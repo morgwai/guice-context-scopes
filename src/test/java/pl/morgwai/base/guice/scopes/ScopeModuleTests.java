@@ -81,12 +81,12 @@ public class ScopeModuleTests {
 
 
 	@Test
-	public void testInjectingContextBinder() throws Exception {
+	public void testInjectingContextBinder() {
 		testContextBinderWiring(injector.getInstance(TestComponent.class));
 	}
 
 	@Test
-	public void testContextBinderFromModule() throws Exception {
+	public void testContextBinderFromModule() {
 		testContextBinderWiring(new TestComponent(testSubject.ctxBinder));
 	}
 
@@ -111,7 +111,7 @@ public class ScopeModuleTests {
 	HashSet<TestContext> testContextSet;
 
 	@Test
-	public void testParameterizedTypeImplEqualsAndHashCode() throws NoSuchFieldException {
+	public void testContextTrackerTypeEqualsAndHashCode() throws NoSuchFieldException {
 		final var reflectiveTrackerType =
 				TestContexts.class.getDeclaredField("tracker").getGenericType();
 		final var testContextTrackerType = new ContextTrackerType(TestContext.class);
