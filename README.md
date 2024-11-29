@@ -107,7 +107,9 @@ class MyOtherComponent {
 As the official [Guice Servlet Scopes lib](https://github.com/google/guice/wiki/Servlets) stores its `Scope` instances as static vars (`ServletScopes.REQUEST` and `ServletScopes.SESSION`), developers tended to scope their components using these static references directly in their `Module`s or even worse using `@RequestScoped` and `@SessionScoped` annotations. This makes such `Module`s (or even whole components in case of annotations) tightly tied to Java Servlet framework and if there's a need to use them with gRPC or websockets, they must be rewritten.
 
 To avoid this problem, first, scoping annotations should never be used in components that are meant to be portable, so that they are not tied to any given framework. Instead they should be explicitly bound in appropriate `Scope`s in their corresponding `Module`s.<br/>
-Second, `Module`s should not use static references to `Scope`s, but instead accept `Scope`s as their constructor params. In case of most technologies, usually 2 types of `Scope`s make sense: a short-term one for storing stuff like `EntityManager`s, pooled JDBC `Connection`s or enclosing transactions and a long-term one for storing stuff like auth-tokens, credentials, client conversation state (like the immortal shopping cart) etc.
+Second, `Module`s should not use static references to `Scope`s, but instead accept `Scope`s as their constructor params. In case of most technologies, usually 2 types of `Scope`s make sense:
+* a short-term one for storing stuff like `EntityManager`s, pooled JDBC `Connection`s or enclosing transactions;
+* a long-term one for storing stuff like auth-tokens, credentials, client conversation state (like the immortal shopping cart) etc;
 
 Therefore most `Module`s should have a constructor that accepts such 2 `Scope` references (`public MyModule(Scope shortTermScope, Scope longTermScope) {...}`) and then use these to bind components. This allows to reuse such `Module`s in several environments:
 * When developing a Servlet app using the official Guice Servlet Scopes lib, `MyModule` may be created with `new MyModule(ServletScopes.REQUEST, ServletScopes.SESSION)`.
