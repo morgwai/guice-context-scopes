@@ -101,6 +101,23 @@ public abstract class ScopeModule implements Module {
 		return new InducedContextScope<>(name, baseCtxTracker, inducedCtxRetriever);
 	}
 
+	/**
+	 * Calls {@link #newInducedContextScope(String, Class, ContextTracker, Function)
+	 * newInducedContextScope(name, inducedCtxClass, baseCtxScope.tracker, inducedCtxRetriever)}.
+	 */
+	protected <
+		BaseContextT extends TrackableContext<? super BaseContextT>,
+		InducedContextT extends InjectionContext
+	> InducedContextScope<BaseContextT, InducedContextT> newInducedContextScope(
+		String name,
+		Class<InducedContextT> inducedCtxClass,
+		ContextScope<BaseContextT> baseCtxScope,
+		Function<BaseContextT, InducedContextT> inducedCtxRetriever
+	) {
+		return newInducedContextScope(
+				name, inducedCtxClass, baseCtxScope.tracker, inducedCtxRetriever);
+	}
+
 
 
 	/**

@@ -29,7 +29,7 @@ public class ScopeModuleTests {
 		public final Scope inducedScope = newInducedContextScope(
 			"inducedScope",
 			InducedContext.class,
-			firstScope.tracker,
+			firstScope,
 			TestContext::getInducedCtx
 		);
 
