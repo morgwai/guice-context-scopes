@@ -2,6 +2,8 @@
 package pl.morgwai.base.guice.scopes;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.Test;
 
 import pl.morgwai.base.function.ThrowingComputation;
@@ -48,8 +50,11 @@ public class TrackableContextTests {
 			assertSame("ctx3 should be active", ctx3, thirdTracker.getCurrentContext());
 		};
 		executeWithinAll(allCtxs, task);
-		assertSame("result returned by executeWithinAll(...) should match the one returned by task",
-				RESULT, executeWithinAll(allCtxs, newThrowingComputation(task)));
+		assertSame(
+			"result of executeWithinAll(...) should match the one returned by the passed task",
+			RESULT,
+			executeWithinAll(allCtxs, newThrowingComputation(task))
+		);
 	}
 
 
@@ -62,28 +67,42 @@ public class TrackableContextTests {
 			assertNull("ctx3 should not be active", thirdTracker.getCurrentContext());
 		};
 		executeWithinAll(List.of(ctx1), task);
-		assertSame("result returned by executeWithinAll(...) should match the one returned by task",
-				RESULT, executeWithinAll(List.of(ctx1), newThrowingComputation(task)));
+		assertSame(
+			"result of executeWithinAll(...) should match the one returned by the passed task",
+			RESULT,
+			executeWithinAll(List.of(ctx1), newThrowingComputation(task))
+		);
 	}
 
 
 
 	@Test
 	public void testExecuteWithinAllNoCtxs() {
-		final var noCtxTestTask = new Runnable() {
-			@Override public void run() {
-				assertNull("ctx1 should not be active", tracker.getCurrentContext());
-				assertNull("ctx2 should not be active", secondTracker.getCurrentContext());
-				assertNull("ctx3 should not be active", thirdTracker.getCurrentContext());
-			}
-			@Override public String toString() {
-				return "noCtxTestTask";
-			}
-		};
-		executeWithinAll(List.of(), noCtxTestTask);
-		assertSame("result returned by executeWithinAll(...) should match the one returned by task",
-				RESULT, executeWithinAll(List.of(), newThrowingComputation(noCtxTestTask)));
+		final var logLevelBackup = trackableCtxLogger.getLevel();
+		trackableCtxLogger.setLevel(Level.OFF);
+		try {
+			final var noCtxTestTask = new Runnable() {
+				@Override public void run() {
+					assertNull("ctx1 should not be active", tracker.getCurrentContext());
+					assertNull("ctx2 should not be active", secondTracker.getCurrentContext());
+					assertNull("ctx3 should not be active", thirdTracker.getCurrentContext());
+				}
+				@Override public String toString() {
+					return "noCtxTestTask";
+				}
+			};
+			executeWithinAll(List.of(), noCtxTestTask);
+			assertSame(
+				"result of executeWithinAll(...) should match the one returned by the passed task",
+				RESULT,
+				executeWithinAll(List.of(), newThrowingComputation(noCtxTestTask))
+			);
+		} finally {
+			trackableCtxLogger.setLevel(logLevelBackup);
+		}
 	}
+
+	static final Logger trackableCtxLogger = Logger.getLogger(TrackableContext.class.getName());
 
 
 
