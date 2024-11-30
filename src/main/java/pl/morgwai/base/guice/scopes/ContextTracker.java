@@ -47,7 +47,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * <p>
 	 * For internal use by{@link TrackableContext#executeWithinSelf(Throwing4Computation)}.</p>
 	 */
-	<
+	final <
 		R, E1 extends Throwable, E2 extends Throwable, E3 extends Throwable, E4 extends Throwable
 	> R trackWhileExecuting(
 		ContextT ctx,
@@ -67,7 +67,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * Implemented directly to avoid additional wrapping of tiny tasks passed between
 	 * {@link java.util.concurrent.Executor}s.
 	 */
-	void trackWhileExecuting(ContextT ctx, Runnable task) {
+	final void trackWhileExecuting(ContextT ctx, Runnable task) {
 		currentContext.set(ctx);
 		try {
 			task.run();
