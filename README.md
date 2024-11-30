@@ -3,8 +3,8 @@
 Classes for building Guice [Scope](https://google.github.io/guice/api-docs/6.0.0/javadoc/com/google/inject/Scope.html)s easily transferable when dispatching work to other `Thread`s.<br/>
 Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0<br/>
 <br/>
-**latest release: [11.1](https://search.maven.org/artifact/pl.morgwai.base/guice-context-scopes/11.1/jar)**
-([javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/11.1))
+**latest release: [12.0](https://search.maven.org/artifact/pl.morgwai.base/guice-context-scopes/12.0/jar)**
+([javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/12.0))
 
 
 ## OVERVIEW
