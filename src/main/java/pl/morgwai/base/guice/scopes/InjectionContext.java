@@ -77,7 +77,7 @@ public abstract class InjectionContext implements Serializable {
 	 * returned immediately. Otherwise, a new instance is first obtained from {@code producer},
 	 * stored for subsequent calls and then returned.
 	 */
-	protected <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
+	final <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
 		if (enclosingCtx != null) return enclosingCtx.produceIfAbsent(key, producer);
 
 		final var stored = scopedObjects.computeIfAbsent(
@@ -265,5 +265,5 @@ public abstract class InjectionContext implements Serializable {
 
 
 
-	private static final long serialVersionUID = -4981310657992279148L;
+	private static final long serialVersionUID = -6824486721443294188L;
 }
