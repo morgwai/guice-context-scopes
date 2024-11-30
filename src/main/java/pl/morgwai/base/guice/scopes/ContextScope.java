@@ -95,9 +95,8 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 
 
 
-	/** Returns {@link #name}. */
 	@Override
 	public String toString() {
-		return name;
+		return "ContextScope { name = \"" + name + "\" }";
 	}
 }
