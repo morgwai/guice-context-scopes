@@ -51,9 +51,9 @@ public class ContextScope<ContextT extends TrackableContext<? super ContextT>> i
 	 * associated with this {@link ContextScope}.<br/>
 	 * This most commonly happens if some async task was not
 	 * {@link ContextBinder#bindToContext(Runnable) bound to its current Context} before being
-	 * dispatched to this {@code Thread}. Use {@link ContextTrackingExecutor} to transfer
+	 * dispatched to that {@code Thread}. Use a {@link ContextTrackingExecutor} wrapper to transfer
 	 * {@code Context}s automatically when passing tasks to {@link java.util.concurrent.Executor}s
-	 * or bind manually using {@link ContextBinder}.</p>
+	 * or bind manually using a {@link ContextBinder}.</p>
 	 */
 	@Override
 	public <T> Provider<T> scope(Key<T> key, Provider<T> producer) {
