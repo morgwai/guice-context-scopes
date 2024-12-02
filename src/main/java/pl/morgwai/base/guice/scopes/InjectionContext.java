@@ -52,7 +52,6 @@ public abstract class InjectionContext implements Serializable {
 
 
 
-	/** Constructs a new instance nested in {@code enclosingCtx}. */
 	protected InjectionContext() {}
 
 
