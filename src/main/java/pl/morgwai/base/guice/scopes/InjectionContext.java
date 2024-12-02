@@ -97,20 +97,21 @@ public abstract class InjectionContext implements Serializable {
 
 
 	/**
-	 * Removes the {@code Object} given by {@code key} from this {@code Context}.
+	 * Removes the scoped {@code Object} given by {@code key} from this {@code Context}.
 	 * This forces production of a new instance during the next
 	 * {@link #produceIfAbsent(Key, Provider) provisioning} within the
-	 * {@link ContextScope Scope of this Context}. This is useful if the currently stored instance
-	 * is no longer usable (for example a broken connection, expired token, etc).<br/>
-	 * If there's no {@code Object} stored under {@code key} in this {@code Context}, this method
-	 * has no effect.
+	 * {@link ContextScope Scope of this Context}. This is useful if the current instance is no
+	 * longer usable (for example a broken connection, expired token, etc).
 	 * <p>
-	 * <b>Note:</b> If multiple {@code Thread}s run within the same {@code Context}, care must be
-	 * taken to prevent some of them from retaining the old stale instances.</p>
+	 * Note: If multiple {@code Thread}s run within the same {@code Context}, care must be taken to
+	 * prevent some of them from retaining the old stale instances when they are removed.</p>
+	 * @return {@code true} if there was an {@code Object} scoped under {@code key} and it was
+	 *     successfully removed, {@code false} if there was nothing there and this method had no
+	 *     effect.
 	 */
-	public void removeScopedObject(Key<?> key) {
-		if (enclosingCtx != null) enclosingCtx.removeScopedObject(key);
-		scopedObjects.remove(key);
+	public boolean removeScopedObject(Key<?> key) {
+		if (enclosingCtx != null) return enclosingCtx.removeScopedObject(key);
+		return scopedObjects.remove(key) != null;
 	}
 
 
@@ -265,5 +266,5 @@ public abstract class InjectionContext implements Serializable {
 
 
 
-	private static final long serialVersionUID = -6824486721443294188L;
+	private static final long serialVersionUID = -7124708620374312754L;
 }
