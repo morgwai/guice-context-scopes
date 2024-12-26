@@ -180,7 +180,10 @@ public abstract class InjectionContext implements Serializable {
 				if ( !(scopedObject instanceof Serializable)) continue;  // omit non-Serializable
 				try {  // test if scopedObject actually serializes
 					serializationTestStream.writeObject(scopedObject);
-				} catch (IOException e) {
+					// to reuse data from serializationTestStream to avoid double serialization,
+					// ObjectOutputStream would need to be reimplemented from scratch due to the way
+					// possible cross-references between scoped object graphs are handled
+				} catch (IOException serializationFailure) {
 					continue;
 				}
 
@@ -193,9 +196,9 @@ public abstract class InjectionContext implements Serializable {
 					(Serializable) scopedObject
 				));
 			}
-		} catch (IOException ignored) {  // exception in serializationTestStream.close() is harmless
+		} catch (IOException ignoredHarmlessTestStreamClosureFailure) {
 		} finally {
-			serializationTestBuffer.reset();  // reuse the buffer during the next call
+			serializationTestBuffer.reset();  // the buffer will be reused during the next call
 		}
 		this.serializableScopedObjectEntries = serializableScopedObjectEntries;
 	}
