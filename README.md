@@ -4,7 +4,9 @@ Classes for building Guice [Scope](https://google.github.io/guice/api-docs/6.0.0
 Copyright 2021 Piotr Morgwai Kotarbinski, Licensed under the Apache License, Version 2.0<br/>
 <br/>
 **latest release: [12.0](https://search.maven.org/artifact/pl.morgwai.base/guice-context-scopes/12.0/jar)**
-([javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/12.0))
+([javadoc](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/12.0))<br/>
+<br/>
+See [CHANGES](CHANGES.md) for the summary of changes between releases. If the major version of a subsequent release remains unchanged, it is supposed to be backwards compatible in terms of API and behaviour with previous ones with the same major version (meaning that it should be safe to just blindly update in dependent projects and things should not break under normal circumstances).
 
 
 ## OVERVIEW
