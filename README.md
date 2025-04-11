@@ -11,7 +11,7 @@ See [CHANGES](CHANGES.md) for the summary of changes between releases. If the ma
 
 ## OVERVIEW
 
-Asynchronous servers (such as gRPC or asynchronous `Servlet`s) often need to switch between various `Thread`s. This requires extra care to not lose a given current Guice `Scope`: it needs to be preserved as long as we are in the  _context_  of a given event/request/call/session, regardless of `Thread` switching.
+Asynchronous apps (such as gRPC, websockets, async `Servlet`s etc) often need to switch between various `Thread`s. This requires an extra care not to lose the Guice `Scope` associated with a given event/request/call/session: it needs to be preserved as long as we are in the  _context_  of such an event/request/call/session, regardless of `Thread` switching.
 
 To ease this up, this lib formally introduces a notion of an [InjectionContext](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/InjectionContext.html) that stores scoped `Object`s and can be tracked using [ContextTracker](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextTracker.html)s when switching between `Thread`s. `Tracker`s are in turn used by [ContextScope](https://javadoc.io/doc/pl.morgwai.base/guice-context-scopes/latest/pl/morgwai/base/guice/scopes/ContextScope.html)s to obtain the `Context` that is current at a given moment and from which scoped `Object`s will be obtained.
 
@@ -42,7 +42,7 @@ class MyComponent {
         final var activeCtxs = ContextTracker.getActiveContexts(allTrackers);
         someAsyncMethod(
             arg1,
-            /* ... */
+            // ...
             argN,
             (callbackParamIfNeeded) -> TrackableContext.executeWithinAll(
                 activeCtxs,
@@ -66,7 +66,7 @@ class MyComponent {  // compare with the "low-level" version above
         // other code here...
         someAsyncMethod(
             arg1,
-            /* ... */
+            // ...
             argN,
             ctxBinder.bindToContext((callbackParamIfNeeded) -> {
                 // callback code here will run within the same Contexts
@@ -83,8 +83,8 @@ class MyOtherComponent {
 
     ContextTrackingExecutor executor;
 
-    @Inject void setContextBinder(ContextBinder ctxBinder) {
-        executor = ContextTrackingExecutor.of(Executors.newFixedThreadPool(5), ctxBinder);
+    @Inject void setExecutorAndBinder(ExecutorService executor, ContextBinder ctxBinder) {
+        this.executor = ContextTrackingExecutor.of(executor, ctxBinder);
     }
 
     void methodThatDispatchesToExecutor(/* ... */) {
