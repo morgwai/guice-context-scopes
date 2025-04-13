@@ -9,7 +9,7 @@
 	<version>12.1-SNAPSHOT</version>
 
 	<name>Guice Context Scopes</name>
-	<description>Classes for building Guice scopes, that get automatically transferred when dispatching work to other threads</description>
+	<description>Classes for building Guice Scopes easily transferable when dispatching work to other Threads</description>
 	<url>https://github.com/morgwai/guice-context-scopes</url>
 
 	<licenses>
