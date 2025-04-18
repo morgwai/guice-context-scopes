@@ -98,7 +98,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 			final var ctx = tracker.getCurrentContext();
 			if (ctx != null) activeCtxs.add(ctx);
 		}
-		return activeCtxs;
+		return activeCtxs;  // consider List.copyOf(activeCtxs)
 	}
 
 
