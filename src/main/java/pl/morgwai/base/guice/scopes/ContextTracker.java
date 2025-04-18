@@ -88,17 +88,18 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 	 * will also "follow" automatically their inducers to the new {@code Thread}.
 	 */
 	public static List<TrackableContext<?>> getActiveContexts(List<ContextTracker<?>> trackers) {
-		if (trackers.size() == 1) {  // optimize for the most common tracker count
+		final var trackersCount = trackers.size();
+		if (trackersCount == 1) {  // optimize for the most common tracker count
 			final var ctx = trackers.get(0).getCurrentContext();
 			return ctx != null ? List.of(ctx) : List.of();
 		}
 
-		final var activeCtxs = new ArrayList<TrackableContext<?>>(trackers.size());
+		final var activeCtxs = new ArrayList<TrackableContext<?>>(trackersCount);
 		for (var tracker: trackers) {
 			final var ctx = tracker.getCurrentContext();
 			if (ctx != null) activeCtxs.add(ctx);
 		}
-		return activeCtxs;
+		return activeCtxs;  // consider List.copyOf(activeCtxs)
 	}
 
 
