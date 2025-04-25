@@ -26,14 +26,26 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	/** See {@link InjectionContext#InjectionContext(InjectionContext) super}. */
-	protected TrackableContext(InjectionContext parentCtx, ContextTracker<ContextT> tracker) {
-		super(parentCtx);
+	/** See {@link InjectionContext#InjectionContext(InjectionContext, boolean) super}. */
+	protected TrackableContext(
+		InjectionContext enclosingCtx,
+		boolean joinedWithEnclosing,
+		ContextTracker<ContextT> tracker
+	) {
+		super(enclosingCtx, joinedWithEnclosing);
 		this.tracker = tracker;
 	}
 
+	/**
+	 * Calls {@link #TrackableContext(InjectionContext, boolean, ContextTracker)
+	 * this(enclosingCtx, true, tracker)}.
+	 */
+	protected TrackableContext(InjectionContext enclosingCtx, ContextTracker<ContextT> tracker) {
+		this(enclosingCtx, true, tracker);
+	}
+
 	protected TrackableContext(ContextTracker<ContextT> tracker) {
-		this(null, tracker);
+		this(null, false, tracker);
 	}
 
 
@@ -156,5 +168,5 @@ public abstract class TrackableContext<ContextT extends TrackableContext<Context
 
 
 
-	private static final long serialVersionUID = 1563722492904416901L;
+	private static final long serialVersionUID = 8313935411182965807L;
 }
