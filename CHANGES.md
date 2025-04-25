@@ -1,5 +1,8 @@
 # Summaries of visible changes between releases
 
+### 12.1
+- Support for `Context` nesting without joining scoped `Object`s and ability to get a reference to an enclosing `Context`. **NOTE:** this induced a change of the serialized form, so any persistent `Context` stores need to be drained.
+
 ### 12.0
 - `InjectionContext`: `removeScopedObject(key)` now returns `boolean`, `produceIfAbsent(...)` is now package-private.
 - `ScopeModule`: add `newInducedContextScope(...)` variant accepting a base `Scope` instead of a `Tracker`.

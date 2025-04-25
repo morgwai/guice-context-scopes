@@ -26,12 +26,16 @@ public class InjectionContextTests {
 	static final Key<String> STRING_KEY = Key.get(String.class);
 
 	public static class TestContext extends InjectionContext {
-		private static final long serialVersionUID = 647980192537461531L;
+		private static final long serialVersionUID = -6566897325454611866L;
 
 		public TestContext() {}
 
 		public TestContext(TestContext enclosingCtx) {
 			super(enclosingCtx);
+		}
+
+		public TestContext(TestContext enclosingCtx, boolean joinedWithEnclosing) {
+			super(enclosingCtx, joinedWithEnclosing);
 		}
 	}
 
@@ -76,13 +80,13 @@ public class InjectionContextTests {
 
 
 	@Test
-	public void testNesting() {
+	public void testNestingAndJoiningWithEnclosing() {
 		final var stringFromEnclosing = "from enclosing";
 		final var stringFromNested = "from nested";
 		final var anotherString = "another";
-		final var intFromEnclosing = 1;
-		final var intFromNested = 2;
-		final var anotherInt = 3;
+		final Integer intFromEnclosing = 1;
+		final Integer intFromNested = 2;
+		final Integer anotherInt = 3;
 		final var enclosingCtx = new TestContext();
 		final var nestedCtx = new TestContext(enclosingCtx);
 
@@ -97,8 +101,36 @@ public class InjectionContextTests {
 		assertSame("enclosingCtx should obtain Integer from nestedCtx",
 				intFromNested, enclosingCtx.produceIfAbsent(INT_KEY, () -> intFromEnclosing));
 		enclosingCtx.removeScopedObject(INT_KEY);
-		assertSame("removing String from enclosingCtx should remove it from nestedCtx as well",
+		assertSame("removing Integer from enclosingCtx should remove it from nestedCtx as well",
 				anotherInt, nestedCtx.produceIfAbsent(INT_KEY, () -> anotherInt));
+	}
+
+
+
+	@Test
+	public void testNestingWithoutJoining() {
+		final var stringFromEnclosing = "from enclosing";
+		final var stringFromNested = "from nested";
+		final var anotherString = "another";
+		final Integer intFromEnclosing = 1;
+		final Integer intFromNested = 2;
+		final Integer anotherInt = 3;
+		final var enclosingCtx = new TestContext();
+		final var nestedCtx = new TestContext(enclosingCtx, false);
+
+		enclosingCtx.produceIfAbsent(STRING_KEY, () -> stringFromEnclosing);
+		assertSame("nestedCtx should scope its own String different than enclosingCtx",
+				stringFromNested, nestedCtx.produceIfAbsent(STRING_KEY, () -> stringFromNested));
+		nestedCtx.removeScopedObject(STRING_KEY);
+		assertSame("removing String from nestedCtx should not affect enclosingCtx's String",
+				stringFromEnclosing, enclosingCtx.produceIfAbsent(STRING_KEY, () -> anotherString));
+
+		nestedCtx.produceIfAbsent(INT_KEY, () -> intFromNested);
+		assertSame("enclosingCtx should scope its own Integer different than nestedCtx",
+				intFromEnclosing, enclosingCtx.produceIfAbsent(INT_KEY, () -> intFromEnclosing));
+		enclosingCtx.removeScopedObject(INT_KEY);
+		assertSame("removing Integer from enclosingCtx should not affect nestedCtx's Integer",
+				intFromNested, nestedCtx.produceIfAbsent(INT_KEY, () -> anotherInt));
 	}
 
 

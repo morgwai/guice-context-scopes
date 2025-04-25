@@ -48,25 +48,53 @@ public abstract class InjectionContext implements Serializable {
 
 
 	private transient ConcurrentMap<Key<?>, Object> scopedObjects = new ConcurrentHashMap<>();
-	private transient InjectionContext enclosingCtx;
-
-
-
-	protected InjectionContext() {}
 
 
 
 	/**
-	 * Constructs a new instance nested in {@code enclosingCtx}.
-	 * The new instance will delegate {@link #produceIfAbsent(Key, Provider)} and
-	 * {@link #removeScopedObject(Key)} calls to {@code enclosingCtx}.
+	 * Instance of the same type of {@code Context} within which this {@code Context} was created.
+	 * For example if a server as a part of processing an RPC makes a nested client RPC, the
+	 * {@code Context} of such client RPC may be nested and {@link #isJoinedWithEnclosing() joined}
+	 * with the enclosing server RPC.
 	 * <p>
-	 * Reference to {@code enclosingCtx} is {@code transient}.
+	 * Reference to {@code enclosingCtx} is {@code transient},
 	 * {@link #setEnclosingCtx(InjectionContext)} may be used to restore it after a deserialization.
 	 * </p>
 	 */
-	protected InjectionContext(InjectionContext enclosingCtx) {
+	public InjectionContext getEnclosingCtx() { return enclosingCtx; }
+	private transient InjectionContext enclosingCtx;
+
+	/**
+	 * Whether this {@code Context} is joined with its {@link #getEnclosingCtx() enclosing Context}.
+	 * If {@code true}, the this {@code Context} will delegate all
+	 * {@link #produceIfAbsent(Key, Provider)} and {@link #removeScopedObject(Key)} calls to the
+	 * enclosing one.
+	 */
+	public boolean isJoinedWithEnclosing() { return joinedWithEnclosing; }
+	private boolean joinedWithEnclosing;
+
+
+
+	/** Constructs a standalone instance. */
+	protected InjectionContext() {
+		this(null, false);
+	}
+
+
+
+	/**
+	 * Constructs an instance {@link #getEnclosingCtx() nested} in {@code enclosingCtx}, possibly
+	 * {@link #isJoinedWithEnclosing() joined together with it} depending on
+	 * {@code joinWithEnclosing} param.
+	 */
+	protected InjectionContext(InjectionContext enclosingCtx, boolean joinedWithEnclosing) {
 		this.enclosingCtx = enclosingCtx;
+		this.joinedWithEnclosing = joinedWithEnclosing && enclosingCtx != null;
+	}
+
+	/** Calls {@link #InjectionContext(InjectionContext, boolean) this(enclosingCtx, true)}. */
+	protected InjectionContext(InjectionContext enclosingCtx) {
+		this(enclosingCtx, true);
 	}
 
 
@@ -77,8 +105,8 @@ public abstract class InjectionContext implements Serializable {
 	 * returned immediately. Otherwise, a new instance is first obtained from {@code producer},
 	 * stored for subsequent calls and then returned.
 	 */
-	final <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
-		if (enclosingCtx != null) return enclosingCtx.produceIfAbsent(key, producer);
+	protected final <T> T produceIfAbsent(Key<T> key, Provider<T> producer) {
+		if (joinedWithEnclosing) return enclosingCtx.produceIfAbsent(key, producer);
 
 		final var stored = scopedObjects.computeIfAbsent(
 			key,
@@ -110,7 +138,7 @@ public abstract class InjectionContext implements Serializable {
 	 *     effect.
 	 */
 	public boolean removeScopedObject(Key<?> key) {
-		if (enclosingCtx != null) return enclosingCtx.removeScopedObject(key);
+		if (joinedWithEnclosing) return enclosingCtx.removeScopedObject(key);
 		return scopedObjects.remove(key) != null;
 	}
 
@@ -262,12 +290,20 @@ public abstract class InjectionContext implements Serializable {
 
 
 
+	/**
+	 * Sets {@link #getEnclosingCtx() enclosing Context} after deserialization.
+	 * If the original {@link #getEnclosingCtx() enclosing Context} cannot be obtained after
+	 * deserialization this method should be called with {@code null} as an argument to disable
+	 * {@link #isJoinedWithEnclosing() joining} that would result in a {@link NullPointerException}.
+	 * @throws IllegalStateException if {@link #getEnclosingCtx() enclosing Context} is already set.
+	 */
 	protected void setEnclosingCtx(InjectionContext enclosingCtx) {
 		if (this.enclosingCtx != null) throw new IllegalStateException("enclosingCtx already set");
 		this.enclosingCtx = enclosingCtx;
+		if (enclosingCtx == null) this.joinedWithEnclosing = false;
 	}
 
 
 
-	private static final long serialVersionUID = -7124708620374312754L;
+	private static final long serialVersionUID = 6191541220863697587L;
 }
