@@ -91,7 +91,7 @@ public class ContextTracker<ContextT extends TrackableContext<? super ContextT>>
 		final var trackersCount = trackers.size();
 		if (trackersCount == 1) {  // optimize for the most common tracker count
 			final var ctx = trackers.get(0).getCurrentContext();
-			return ctx != null ? List.of(ctx) : List.of();
+			return (ctx != null) ? List.of(ctx) : List.of();
 		}
 
 		final var activeCtxs = new ArrayList<TrackableContext<?>>(trackersCount);

@@ -84,11 +84,11 @@ public abstract class InjectionContext implements Serializable {
 			key,
 			(ignored) -> {
 				final T fresh = producer.get();
-				return fresh == null ? NULL : fresh;
+				return (fresh == null) ? NULL : fresh;
 			}
 		);
 		@SuppressWarnings("unchecked")
-		final T result = stored == NULL ? null : (T) stored;
+		final T result = (stored == NULL) ? null : (T) stored;
 		return result;
 	}
 
@@ -191,7 +191,7 @@ public abstract class InjectionContext implements Serializable {
 				final var key = scopedObjectEntry.getKey();
 				serializableScopedObjectEntries.add(new SerializableScopedObjectEntry(
 					key.getTypeLiteral().getType(),
-					key.getAnnotationType() != null ? key.getAnnotationType().getName() : null,
+					(key.getAnnotationType() != null) ? key.getAnnotationType().getName() : null,
 					key.getAnnotation(),
 					(Serializable) scopedObject
 				));
