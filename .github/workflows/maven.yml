@@ -17,7 +17,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         java-version: '11'
-        distribution: 'jetbrains'
+        distribution: 'temurin'
         cache: maven
     - name: Build with Maven
       run: ./mvnw -B package
